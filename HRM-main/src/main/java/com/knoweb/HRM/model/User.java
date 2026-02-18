@@ -17,9 +17,9 @@ import java.io.Serializable;
 public class User implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_id")
-    private long id;
+    private Long id;
 
     private String name;
 
@@ -31,7 +31,7 @@ public class User implements Serializable {
     private String role;
 
     @Column(name = "cmp_id")
-    private long cmpId;
+    private Long cmpId = null;
 
 
 }

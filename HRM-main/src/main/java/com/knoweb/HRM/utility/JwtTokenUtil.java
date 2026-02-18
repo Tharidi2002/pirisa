@@ -32,14 +32,14 @@ public class JwtTokenUtil {
 
     public String generateToken(Company company) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("Role", company.getRole());
+        claims.put("role", company.getRole());
         return createToken(claims, company.getUsername());
     }
 
 
     public String generateToken(Employee employee) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("Role", employee.getRole());
+        claims.put("role", employee.getRole());
         return createToken(claims, employee.getUsername());
 
 
@@ -72,7 +72,7 @@ public class JwtTokenUtil {
     }
 
     public String extractRole(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractAllClaims(token).get("role", String.class);
     }
 
     public Date extractExpiration(String token) {

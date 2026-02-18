@@ -32,7 +32,8 @@ public class PasswordResetService {
     public String resetPasswordFor(String identifier) {
         // 1) Look up by email or username in each repo:
         Company c = companyRepo.findByCmpEmail(identifier);
-        User u = userRepo.findByUsername(identifier);
+        java.util.List<User> users = userRepo.findByUsername(identifier);
+        User u = users != null && !users.isEmpty() ? users.get(0) : null;
         Employee e = empRepo.findByUsername(identifier);
 
         Object account;
@@ -70,7 +71,8 @@ public class PasswordResetService {
     /** Return the e-mail address for a given identifier */
     public String getEmailFor(String identifier) {
         Company  c = companyRepo.findByCmpEmail(identifier);
-        User     u = userRepo.findByUsername(identifier);
+        java.util.List<User> users = userRepo.findByUsername(identifier);
+        User     u = users != null && !users.isEmpty() ? users.get(0) : null;
         Employee e = empRepo.findByUsername(identifier);
 
         if (c != null)      return c.getCmpEmail();
