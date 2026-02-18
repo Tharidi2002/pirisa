@@ -1,0 +1,23 @@
+package com.knoweb.HRM.service;
+
+import com.knoweb.HRM.model.Department;
+import com.knoweb.HRM.model.Designation;
+import com.knoweb.HRM.repository.DepartmentRepository;
+import com.knoweb.HRM.repository.DesignationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class DesignationService {
+
+    @Autowired
+    private DesignationRepository designationRepository;
+
+    public Designation createDesignation(Designation designation) {
+        return designationRepository.save(designation);
+    }
+
+    public void deleteDesignation(Long designation_id) {
+        designationRepository.deleteById(designation_id);
+    }
+}

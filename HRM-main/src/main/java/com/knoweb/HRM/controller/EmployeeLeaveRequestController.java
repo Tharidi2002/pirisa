@@ -1,0 +1,111 @@
+package com.knoweb.HRM.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.knoweb.HRM.model.Employee;
+import com.knoweb.HRM.model.EmployeeLeave;
+import com.knoweb.HRM.repository.EmployeeRepository;
+import com.knoweb.HRM.service.EmailService;
+import com.knoweb.HRM.service.EmployeeLeaveRequestService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/emp_leave")
+public class EmployeeLeaveRequestController {
+
+
+    @Autowired
+    private EmployeeLeaveRequestService employeeLeaveRequestService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+
+    @PostMapping(value = "/add_leave", produces = {"application/json"})
+    public ResponseEntity<?> addLeave(@RequestBody EmployeeLeave employeeLeave) {
+        try {
+            EmployeeLeave createdEmployeeLeave = employeeLeaveRequestService.createEmployeeLeave(employeeLeave);
+            if (createdEmployeeLeave != null) {
+                Map<String, Object> leaveResponse = new HashMap<>();
+                leaveResponse.put("resultCode", 100);
+                leaveResponse.put("resultDesc", "Successfully Saved");
+
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("Add_EmployeeLeave", createdEmployeeLeave);
+                responseBody.put("response", leaveResponse);
+
+                return new ResponseEntity<>(responseBody, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+
+    @PutMapping(value = "/{empleave_id}", produces = {"application/json"})
+    public ResponseEntity<?> updateEmployeeLeave(@PathVariable Long empleave_id, @RequestBody EmployeeLeave updateEmployeeLeave) {
+
+        EmployeeLeave employeeLeave = employeeLeaveRequestService.updateEmployeeLeave(empleave_id, updateEmployeeLeave);
+        EmployeeLeave email = employeeLeaveRequestService.getEmployeeLeaveById(empleave_id);
+        if (employeeLeave != null) {
+            Map<String, Object> employeeResponse = new HashMap<>();
+            employeeResponse.put("resultCode", 100);
+            employeeResponse.put("resultDesc", "Successfully Updated");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("Employee Leave", employeeLeave);
+            responseBody.put("response", employeeResponse);
+
+            Employee employee = employeeRepository.findById(email.getEmpId()).orElse(null);
+            if (employee.getEmail() != null) {
+
+
+                String subject = "Leave Request Approval!";
+                String content = "<p>Your Leave Request on "
+                        + email.getLeaveStartDay()
+                        + " to "
+                        + email.getLeaveEndDay()
+                        + " has been <strong>"
+                        + updateEmployeeLeave.getLeaveStatus()
+                        + "</strong></p>"
+                        + "<p>Please contact HRM Division if you need any further details.</p>";;
+
+
+                emailService.sendEmail(employee.getEmail(), subject, content);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "There is no Email to this employee"));
+            }
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("resultCode", 101);
+        errorResponse.put("resultDesc", "ERROR");
+
+        String jsonResponse;
+        try {
+            jsonResponse = new ObjectMapper().writeValueAsString(errorResponse);
+        } catch (Exception ex) {
+            jsonResponse = "{\"resultCode\":101,\"resultDesc\":\"ERROR\"}";
+        }
+        return new ResponseEntity<>(jsonResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
