@@ -38,6 +38,10 @@ public class CompanyOTDetails {
     @Column(name = "cmp_id" , unique = true)
     private long cmpId;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
+    private Company company;
+
     @PrePersist
     @PreUpdate
     public void calculateTotalTime() {

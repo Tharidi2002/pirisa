@@ -33,5 +33,9 @@ public class User implements Serializable {
     @Column(name = "cmp_id")
     private Long cmpId = null;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
+    private Company company;
+
 
 }
