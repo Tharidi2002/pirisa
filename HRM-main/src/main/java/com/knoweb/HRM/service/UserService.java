@@ -74,11 +74,10 @@ public class UserService {
 
 
     public String forgotPassword(String usename) {
-        List<User> users = userRepository.findByUsername(usename);
-        if (users == null || users.isEmpty()) {
+        User user = userRepository.findByUsername(usename);
+        if (user == null) {
             throw new IllegalArgumentException("No company found with the provided email");
         }
-        User user = users.get(0);
         String randomPassword = UUID.randomUUID().toString().substring(0, 8);
         String hashedPassword = securityConfig.passwordEncoder().encode(randomPassword);
         user.setPassword(hashedPassword);

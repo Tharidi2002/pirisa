@@ -27,8 +27,4 @@ public class Allowance implements Serializable {
 
     @Column(name = "cmp_id")
     private long cmpId;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
-    private Company company;
 }

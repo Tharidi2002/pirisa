@@ -17,9 +17,9 @@ import java.io.Serializable;
 public class User implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    private long id;
 
     private String name;
 
@@ -31,11 +31,7 @@ public class User implements Serializable {
     private String role;
 
     @Column(name = "cmp_id")
-    private Long cmpId = null;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
-    private Company company;
+    private long cmpId;
 
 
 }

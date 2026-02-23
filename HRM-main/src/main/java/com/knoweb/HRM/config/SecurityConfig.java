@@ -62,7 +62,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/login","/company/add_company","/company/forgetPassword","/api/**" ,"/success" ,"/cancel","/api/webhook/stripe","/password/forgotPassword","/user/add_user","/department/add_department","/designation/add_designation","/company_leave/add_leave","/allowance/add_allowance","/companyOT/add_OTDetails","/employee/add").permitAll()
+                .antMatchers("/login","/company/add_company","/company/forgetPassword","/api/**" ,"/success" ,"/cancel","/api/webhook/stripe","/password/forgotPassword").permitAll()
                 .antMatchers( "/user/all").hasAnyAuthority( "USER")
                 .antMatchers( "/employee/all").hasAnyAuthority( "HRM")
                 .antMatchers( "/employee/emp/**","/employee/payroleListEmp/**","/employee/EmpDetailsListByEmp/**","/emp_leave/add_leave","/document/view/**","/company_leave/company/**","/employee/changePassword/**","/document/update/**").hasAnyAuthority( "EMPLOYEE","CMPNY")

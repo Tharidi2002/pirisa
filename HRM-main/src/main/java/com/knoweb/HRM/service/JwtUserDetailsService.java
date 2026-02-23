@@ -39,10 +39,9 @@ public class JwtUserDetailsService implements UserDetailsService {
             );
         }
 
-        // Check in User repository
-        java.util.List<User> users = userRepository.findByUsername(username);
-        if (users != null && !users.isEmpty()) {
-            User user = users.get(0);
+        // Check in Clients repository
+        User user = userRepository.findByUsername(username);
+        if (user != null) {
             return new org.springframework.security.core.userdetails.User(
                     user.getUsername(),
                     user.getPassword(),

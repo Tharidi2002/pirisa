@@ -5,7 +5,6 @@ import com.stripe.model.checkout.Session;
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.service.CompanyService;
 import com.knoweb.HRM.service.PaymentService;
-import com.stripe.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +56,7 @@ public class CheckoutController {
 
         // Create Stripe customer if not exists
         if (company.getStripeCustomerId() == null || company.getStripeCustomerId().isEmpty()) {
-            Customer customer = paymentService.createStripeCustomer(company);
+            com.stripe.model.Customer customer = paymentService.createStripeCustomer(company);
             company.setStripeCustomerId(customer.getId());
             companyService.updateCompany(company);
         }

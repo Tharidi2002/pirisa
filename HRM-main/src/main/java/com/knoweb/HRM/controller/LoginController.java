@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -48,10 +47,8 @@ public class LoginController {
         String password = loginRequest.get("password");
 
         Company company = companyRepository.findByUsername(username);
-        List<User> users = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username);
         Employee employee = employeeRepository.findByUsername(username);
-
-        User user = users != null && !users.isEmpty() ? users.get(0) : null;
 
         if (company != null && passwordEncoder.matches(password, company.getCmp_password())) {
             String token = jwtTokenUtil.generateToken(company);

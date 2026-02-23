@@ -59,21 +59,27 @@ public class Company implements Serializable {
 
     private String stripeCustomerId;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = User.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<User> userList;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = Employee.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<Employee> eployeeList;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = Department.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<Department> departmentList;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
     private CompanyLeave companyLeave;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
     private Allowance allowance;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
     private CompanyOTDetails companyOTDetails;
 }
