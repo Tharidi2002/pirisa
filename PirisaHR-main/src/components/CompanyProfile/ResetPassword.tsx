@@ -91,9 +91,9 @@ const PasswordReset = () => {
       };
 
       if (role === "EMPLOYEE" && empId) {
-        apiUrl = `http://64.227.152.179:8080/HRM-1/employee/changePassword/${empId}`;
+        apiUrl = `http://localhost:8080/employee/changePassword/${empId}`;
       } else if (role === "CMPNY" && cmpId) {
-        apiUrl = `http://64.227.152.179:8080/HRM-1/company/changePassword/${cmpId}`;
+        apiUrl = `http://localhost:8080/company/changePassword/${cmpId}`;
       } else {
         throw new Error("Invalid user role or missing ID");
       }

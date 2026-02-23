@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { TranslatableText } from "../../components/languages/TranslatableText";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ProfileImageUpload from "../../components/ProfileImageUpload";
 interface EmployeeDetails {
   epf_no: string;
   emp_no: string;
@@ -65,6 +66,7 @@ const EmployeeUpdate: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasProfileImage, setHasProfileImage] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -97,7 +99,7 @@ const EmployeeUpdate: React.FC = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/emp/${id}`,
+        `http://localhost:8080/employee/emp/${id}`,
         {
           method: "GET",
           headers: {
@@ -168,7 +170,7 @@ const EmployeeUpdate: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/department/company/${cmpId}`,
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -301,7 +303,7 @@ const EmployeeUpdate: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/${id}`,
+        `http://localhost:8080/employee/${id}`,
         {
           method: "PUT",
           headers: {
@@ -318,7 +320,11 @@ const EmployeeUpdate: React.FC = () => {
       if (data.response?.resultCode === 100) {
         //console.log("Success! Showing toast and navigating...");
 
-        toast.success("Employee details updated successfully!");
+        const message = hasProfileImage 
+          ? "Employee details and profile image updated successfully!"
+          : "Employee details updated successfully!";
+        
+        toast.success(message);
         navigate("/employee/all");
       } else {
         console.error("API error:", {
@@ -374,6 +380,15 @@ const EmployeeUpdate: React.FC = () => {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Image Section */}
+        <div className="flex justify-center mb-8">
+          <ProfileImageUpload
+            employeeId={id || ""}
+            token={token || ""}
+            onImageChange={(hasImage) => setHasProfileImage(hasImage)}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700">

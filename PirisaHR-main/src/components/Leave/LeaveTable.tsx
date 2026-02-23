@@ -57,14 +57,14 @@ const LeaveTable = () => {
       let endpoint = "";
       switch (status) {
         case "APPROVED":
-          endpoint = `http://64.227.152.179:8080/HRM-1/employee/ApprovedEmpDetailsList/${cmpId}`;
+          endpoint = `http://localhost:8080/employee/ApprovedEmpDetailsList/${cmpId}`;
           break;
         case "REJECTED":
-          endpoint = `http://64.227.152.179:8080/HRM-1/employee/RejectedEmpDetailsList/${cmpId}`;
+          endpoint = `http://localhost:8080/employee/RejectedEmpDetailsList/${cmpId}`;
           break;
         case "PENDING":
         default:
-          endpoint = `http://64.227.152.179:8080/HRM-1/employee/PendingEmpDetailsList/${cmpId}`;
+          endpoint = `http://localhost:8080/employee/PendingEmpDetailsList/${cmpId}`;
       }
 
       const response = await fetch(endpoint, {
@@ -142,7 +142,7 @@ const LeaveTable = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/emp_leave/${leaveId}`,
+        `http://localhost:8080/emp_leave/${leaveId}`,
         {
           method: "PUT",
           headers: {

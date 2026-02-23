@@ -4,12 +4,12 @@ import com.knoweb.HRM.model.CompanyLogoes;
 import com.knoweb.HRM.repository.CompanyLogoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Service
 public class CompanyLogoService {
@@ -18,10 +18,11 @@ public class CompanyLogoService {
     private CompanyLogoRepository companyLogoRepository;
 
     public byte[] viewLogo(Long cmpId) {
-        CompanyLogoes logo = companyLogoRepository.findByCmpId(cmpId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "No Logo found for this Company ID"));
-        return logo.getLogo();
+        Optional<CompanyLogoes> logoOptional = companyLogoRepository.findByCmpId(cmpId);
+        if (logoOptional.isPresent()) {
+            return logoOptional.get().getLogo();
+        }
+        return new byte[0]; // Return empty array instead of 404
     }
 
     public CompanyLogoes uploadLogo(Long cmpId, MultipartFile logo) throws IOException {

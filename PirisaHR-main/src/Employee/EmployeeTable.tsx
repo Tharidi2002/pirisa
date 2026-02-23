@@ -70,7 +70,7 @@ const EmployeeTable = () => {
         //console.log("Fetching employees for Company ID:", companyId); // Log companyId
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/EmpDetailsList/${companyId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -140,8 +140,9 @@ const EmployeeTable = () => {
   ) => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
-        const photoResponse = await fetch(
-          `http://64.227.152.179:8080/HRM-1/document/view/emp/${employee.id}/photo`,
+        // First check if employee has a profile image
+        const existsResponse = await fetch(
+          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -149,10 +150,25 @@ const EmployeeTable = () => {
           }
         );
 
-        if (photoResponse.ok) {
-          const blob = await photoResponse.blob();
-          const imageUrl = URL.createObjectURL(blob);
-          return { id: employee.id, url: imageUrl };
+        if (existsResponse.ok) {
+          const existsData = await existsResponse.json();
+          if (existsData.hasProfileImage) {
+            // If image exists, fetch it
+            const photoResponse = await fetch(
+              `http://localhost:8080/api/profile-image/view/${employee.id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (photoResponse.ok) {
+              const blob = await photoResponse.blob();
+              const imageUrl = URL.createObjectURL(blob);
+              return { id: employee.id, url: imageUrl };
+            }
+          }
         }
         return { id: employee.id, url: null };
       } catch {
@@ -197,7 +213,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://64.227.152.179:8080/HRM-1/employee/${id}`,
+                  `http://localhost:8080/employee/${id}`,
                   {
                     method: "DELETE",
                     headers: {
@@ -410,7 +426,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://64.227.152.179:8080/HRM-1/employee/EmpDetailsList/${companyId}`,
+                  `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,

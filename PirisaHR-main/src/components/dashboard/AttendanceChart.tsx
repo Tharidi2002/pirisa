@@ -137,6 +137,7 @@ const AttendanceChart = () => {
                 const highlight = currentData[props.index]?.highlight;
                 return (
                   <circle
+                    key={`dot-${props.index}`}
                     cx={props.cx}
                     cy={props.cy}
                     r={highlight ? 6 : 4}

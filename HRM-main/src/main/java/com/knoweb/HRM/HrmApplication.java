@@ -19,9 +19,10 @@ public class HrmApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOriginPatterns("*")  // Allow your React frontend URL
-						.allowedMethods("GET", "POST", "PUT", "DELETE")
-						.allowCredentials(false);
+						.allowedOriginPatterns("http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
+						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+						.allowCredentials(true)
+						.allowedHeaders("*");
 			}
 		};
 	}

@@ -22,7 +22,7 @@ const LeaveCard: React.FC<LeaveCardProps> = ({ title, items, gradient, textColor
         
         <div className="space-y-4">
           {items.map((item, index) => (
-            <div key={index} className="flex justify-between items-center">
+            <div key={`${item.label}-${index}`} className="flex justify-between items-center">
               <span className={`text-sm font-medium ${textColor}`}>{item.label}</span>
               <span className={`px-3 py-1 rounded-full text-sm font-bold bg-white bg-opacity-50 ${textColor}`}>
                 {item.value} days

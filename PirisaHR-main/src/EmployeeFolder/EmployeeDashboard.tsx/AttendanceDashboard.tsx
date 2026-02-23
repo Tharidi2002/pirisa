@@ -79,7 +79,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
 
         // Fetch employee data
         const employeeResponse = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/emp/${empId}`,
+          `http://localhost:8080/employee/emp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
 
         // Fetch leave data
         const leaveResponse = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/EmpDetailsListByEmp/${empId}`,
+          `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

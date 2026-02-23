@@ -41,7 +41,7 @@ export const ProfileCard = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/document/update/${empId}`,
+        `http://localhost:8080/document/update/${empId}`,
         {
           method: "PUT",
           headers: {

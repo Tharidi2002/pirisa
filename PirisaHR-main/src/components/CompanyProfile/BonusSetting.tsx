@@ -44,7 +44,7 @@ const BonusSettings: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `http://64.227.152.179:8080/HRM-1/bonus/company/${cmpId}`,
+        `http://localhost:8080/bonus/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ const BonusSettings: React.FC = () => {
       };
 
       const response = await axios.put(
-        `http://64.227.152.179:8080/HRM-1/bonus/update/${editingId}`,
+        `http://localhost:8080/bonus/update/${editingId}`,
         payload,
         {
           headers: {
@@ -168,7 +168,7 @@ const BonusSettings: React.FC = () => {
 
       try {
         const response = await axios.post(
-          "http://64.227.152.179:8080/HRM-1/bonus/add_bonus",
+          "http://localhost:8080/bonus/add_bonus",
           payload,
           {
             headers: {
@@ -210,7 +210,7 @@ const BonusSettings: React.FC = () => {
 
       try {
         const response = await axios.delete(
-          `http://64.227.152.179:8080/HRM-1/bonus/delete/${id}`,
+          `http://localhost:8080/bonus/delete/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

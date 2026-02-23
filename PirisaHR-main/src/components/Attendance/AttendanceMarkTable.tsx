@@ -75,7 +75,7 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/lastattendanceList/${companyId}`,
+          `http://localhost:8080/employee/lastattendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -152,7 +152,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  "http://64.227.152.179:8080/HRM-1/attendance/add_attendance",
+                  "http://localhost:8080/attendance/add_attendance",
                   {
                     method: "POST",
                     headers: {
@@ -221,7 +221,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  `http://64.227.152.179:8080/HRM-1/attendance/update/${attendanceId}`,
+                  `http://localhost:8080/attendance/update/${attendanceId}`,
                   {
                     method: "PUT",
                     headers: {
@@ -275,7 +275,7 @@ const AttendanceMarkTable = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/lastattendanceList/${companyId}`,
+        `http://localhost:8080/employee/lastattendanceList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

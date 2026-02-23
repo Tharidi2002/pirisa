@@ -68,7 +68,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch payslip details
       const payslipRes = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/payroleListEmp/${employeeId}`,
+        `http://localhost:8080/employee/payroleListEmp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,7 +99,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company details
       const companyRes = await fetch(
-        `http://64.227.152.179:8080/HRM-1/company/companyDetails/${companyId}`,
+        `http://localhost:8080/company/companyDetails/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -117,7 +117,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch employee details
       const employeeRes = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/emp/${employeeId}`,
+        `http://localhost:8080/employee/emp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,7 +142,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company logo
       const logoRes = await fetch(
-        `http://64.227.152.179:8080/HRM-1/logo/view/${companyId}`,
+        `http://localhost:8080/logo/view/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

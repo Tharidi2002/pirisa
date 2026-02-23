@@ -209,7 +209,7 @@ const SalaryForm: React.FC = () => {
 
         // Fetch employee details
         const employeeResponse = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/EmpDetailsList/${companyId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -262,7 +262,7 @@ const SalaryForm: React.FC = () => {
         }
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/allowance/company/${companyId}`,
+          `http://localhost:8080/allowance/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -301,7 +301,7 @@ const SalaryForm: React.FC = () => {
         }
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/bonus/company/${companyId}`,
+          `http://localhost:8080/bonus/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -338,7 +338,7 @@ const SalaryForm: React.FC = () => {
         if (!token || !companyId) return;
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/companyOT/${companyId}`,
+          `http://localhost:8080/companyOT/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -371,7 +371,7 @@ const SalaryForm: React.FC = () => {
         if (!token || !companyId || !selectedEmployeeForOvertime) return;
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/attendanceList/${companyId}`,
+          `http://localhost:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -473,7 +473,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/allowance/add_allowance",
+        "http://localhost:8080/allowance/add_allowance",
         {
           method: "POST",
           headers: {
@@ -517,7 +517,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/bonus/add_bonus",
+        "http://localhost:8080/bonus/add_bonus",
         {
           method: "POST",
           headers: {
@@ -558,7 +558,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/regular?amount=${amount}`,
+        `http://localhost:8080/apit/regular?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -595,7 +595,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/nonresident/regular?amount=${amount}`,
+        `http://localhost:8080/apit/nonresident/regular?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -639,7 +639,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
+        `http://localhost:8080/apit/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
         {
           method: "GET",
           headers: {
@@ -687,7 +687,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/nonresident/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
+        `http://localhost:8080/apit/nonresident/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
         {
           method: "GET",
           headers: {
@@ -733,7 +733,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/cumulative?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
+        `http://localhost:8080/apit/cumulative?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
         {
           method: "GET",
           headers: {
@@ -777,7 +777,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/tax-on-tax/monthly?amount=${amount}`,
+        `http://localhost:8080/apit/tax-on-tax/monthly?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -821,7 +821,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/tax-on-tax/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&taxOnTaxMonthly=${taxOnTaxMonthly}&prevLumpTaxOnTax=${prevLumpTaxOnTax}`,
+        `http://localhost:8080/apit/tax-on-tax/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&taxOnTaxMonthly=${taxOnTaxMonthly}&prevLumpTaxOnTax=${prevLumpTaxOnTax}`,
         {
           method: "GET",
           headers: {
@@ -864,7 +864,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/secondary/resident?primary=${primary}&secondary=${secondary}`,
+        `http://localhost:8080/apit/secondary/resident?primary=${primary}&secondary=${secondary}`,
         {
           method: "GET",
           headers: {
@@ -906,7 +906,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/secondary/nonresident?primary=${primary}&secondary=${secondary}`,
+        `http://localhost:8080/apit/secondary/nonresident?primary=${primary}&secondary=${secondary}`,
         {
           method: "GET",
           headers: {
@@ -952,7 +952,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/apit/foreign?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
+        `http://localhost:8080/apit/foreign?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
         {
           method: "GET",
           headers: {
@@ -1033,7 +1033,7 @@ const SalaryForm: React.FC = () => {
       //console.log("Request Body:", requestBody); // Log to verify values
 
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/payrole/add_payrole",
+        "http://localhost:8080/payrole/add_payrole",
         {
           method: "POST",
           headers: {

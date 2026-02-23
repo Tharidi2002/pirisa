@@ -87,7 +87,7 @@ const EmployeeProfile = () => {
       let companyLeaveData = { LeavetList: [] };
       try {
         const companyLeaveResponse = await fetch(
-          `http://64.227.152.179:8080/HRM-1/company_leave/company/${cmpId}`,
+          `http://localhost:8080/company_leave/company/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -112,7 +112,7 @@ const EmployeeProfile = () => {
 
       // Fetch employee details including leave history
       const employeeResponse = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/EmpDetailsListByEmp/${empId}`,
+        `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ const EmployeeProfile = () => {
 
       // Fetch employee photo
       const photoResponse = await fetch(
-        `http://64.227.152.179:8080/HRM-1/document/view/emp/${empId}/photo`,
+        `http://localhost:8080/document/view/emp/${empId}/photo`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -192,7 +192,7 @@ const EmployeeProfile = () => {
     for (const docType of documentTypes) {
       try {
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/document/view/emp/${empId}/${docType}`,
+          `http://localhost:8080/document/view/emp/${empId}/${docType}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -221,7 +221,7 @@ const EmployeeProfile = () => {
         throw new Error("Authentication required");
       }
 
-      const url = `http://64.227.152.179:8080/HRM-1/document/view/emp/${empId}/${documentType}`;
+      const url = `http://localhost:8080/document/view/emp/${empId}/${documentType}`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -56,7 +56,7 @@ const SalaryStatusTable = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/payroleList/${companyId}`,
+        `http://localhost:8080/employee/payroleList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

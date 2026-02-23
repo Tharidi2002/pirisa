@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/pirisa.iml" filepath="$PROJECT_DIR$/.idea/pirisa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Pirisa.iml" filepath="$PROJECT_DIR$/.idea/Pirisa.iml" />
     </modules>
   </component>
 </project>

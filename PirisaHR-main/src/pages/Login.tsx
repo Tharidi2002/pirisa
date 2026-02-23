@@ -61,7 +61,7 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await fetch("http://64.227.152.179:8080/HRM-1/login", {
+      const response = await fetch("http://localhost:8080/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +140,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/password/forgotPassword?identifier=${encodeURIComponent(
+        `http://localhost:8080/password/forgotPassword?identifier=${encodeURIComponent(
           email
         )}`,
         {
@@ -206,13 +206,13 @@ const LoginPage: React.FC = () => {
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-600"
                 >
-                  Email Address <span className="text-red-500">*</span>
+                  Username <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   id="email"
                   name="email"
-                  placeholder="Input your registered email"
+                  placeholder="Input your username"
                   required
                   className="w-full mt-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-green-200"
                   value={email}
@@ -287,6 +287,18 @@ const LoginPage: React.FC = () => {
                 )}
               </button>
             </form>
+          </div>
+        {/* Login Link */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Don't have an account?{" "}
+              <button
+                onClick={() => navigate("/register")}
+                className="text-green-500 hover:text-green-600 font-medium"
+              >
+                Register here
+              </button>
+            </p>
           </div>
         </div>
       </div>

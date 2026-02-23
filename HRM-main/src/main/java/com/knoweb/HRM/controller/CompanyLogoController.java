@@ -28,6 +28,9 @@ public class CompanyLogoController {
     @GetMapping("/view/{comId}")
     public ResponseEntity<byte[]> viewLogo(@PathVariable("comId") Long comId) {
         byte[] logoData = companyLogoService.viewLogo(comId);
+        if (logoData == null || logoData.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG) // adjust to the correct media type if needed
                 .body(logoData);

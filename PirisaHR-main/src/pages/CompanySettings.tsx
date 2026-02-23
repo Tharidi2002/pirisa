@@ -52,7 +52,7 @@ const CompanySettings = () => {
 
       try {
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/company/companyDetails/${cmpId}`,
+          `http://localhost:8080/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ const CompanySettings = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/company/${cmpId}`,
+        `http://localhost:8080/company/${cmpId}`,
         {
           method: "PUT",
           headers: {

@@ -64,7 +64,7 @@ const Department = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://64.227.152.179:8080/HRM-1/department/company/${cmpId}`,
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -106,7 +106,7 @@ const Department = () => {
       };
 
       const response = await axios.post(
-        "http://64.227.152.179:8080/HRM-1/department/add_department",
+        "http://localhost:8080/department/add_department",
         payload,
         {
           headers: {
@@ -141,7 +141,7 @@ const Department = () => {
       };
 
       const response = await axios.post(
-        "http://64.227.152.179:8080/HRM-1/department/update_department",
+        "http://localhost:8080/department/update_department",
         payload,
         {
           headers: {
@@ -166,7 +166,7 @@ const Department = () => {
   const deleteDepartment = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://64.227.152.179:8080/HRM-1/department/delete/${id}`,
+        `http://localhost:8080/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -193,7 +193,7 @@ const Department = () => {
   }) => {
     try {
       const response = await axios.post(
-        "http://64.227.152.179:8080/HRM-1/designation/add_designation",
+        "http://localhost:8080/designation/add_designation",
         designationData,
         {
           headers: {
@@ -218,7 +218,7 @@ const Department = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://64.227.152.179:8080/HRM-1/designation/delete/${id}`,
+        `http://localhost:8080/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

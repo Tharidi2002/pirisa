@@ -111,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const response = await fetch(
-              `http://64.227.152.179:8080/HRM-1/document/view/emp/${empId}/photo`,
+              `http://localhost:8080/document/view/emp/${empId}/photo`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://64.227.152.179:8080/HRM-1/logo/view/${cmpId}`,
+            `http://localhost:8080/logo/view/${cmpId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

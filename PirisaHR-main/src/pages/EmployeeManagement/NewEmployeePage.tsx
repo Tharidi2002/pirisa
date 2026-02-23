@@ -112,7 +112,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/department/company/${cmpId}`,
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -229,7 +229,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/employee/add_employee",
+        "http://localhost:8080/employee/add_employee",
         {
           method: "POST",
           headers: {
@@ -313,7 +313,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/document/upload-all",
+        "http://localhost:8080/document/upload-all",
         {
           method: "POST",
           headers: {
@@ -379,7 +379,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        "http://64.227.152.179:8080/HRM-1/document/upload-all",
+        "http://localhost:8080/document/upload-all",
         {
           method: "POST",
           headers: {
@@ -422,7 +422,7 @@ const EmployeeRegistration: React.FC = () => {
         });
       } else {
         const text = await response.text();
-        toast.error(`Failed to skip document upload: ${response.status}`);
+        toast.error(`Failed to skip document upload: ${response.status} - ${text}`);
       }
     } catch (error) {
       toast.error("Error skipping document upload. Please try again.");

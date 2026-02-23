@@ -92,7 +92,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     for (const docType of documentTypes) {
       try {
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/document/view/emp/${empId}/${docType}`,
+          `http://localhost:8080/document/view/emp/${empId}/${docType}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -120,7 +120,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch employee details
           const employeeResponse = await fetch(
-            `http://64.227.152.179:8080/HRM-1/employee/emp/${id}`,
+            `http://localhost:8080/employee/emp/${id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -143,7 +143,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           // Fetch company leave types (non-blocking)
           try {
             const companyLeaveResponse = await fetch(
-              `http://64.227.152.179:8080/HRM-1/company_leave/company/${cmpnyId}`,
+              `http://localhost:8080/company_leave/company/${cmpnyId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -185,7 +185,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch employee photo
           const photoResponse = await fetch(
-            `http://64.227.152.179:8080/HRM-1/document/view/emp/${id}/photo`,
+            `http://localhost:8080/document/view/emp/${id}/photo`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -264,7 +264,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         return;
       }
 
-      const url = `http://64.227.152.179:8080/HRM-1/document/view/emp/${id}/${documentType}`;
+      const url = `http://localhost:8080/document/view/emp/${id}/${documentType}`;
 
       const response = await fetch(url, {
         headers: {

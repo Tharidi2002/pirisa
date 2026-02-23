@@ -48,7 +48,7 @@ const AllowanceSettings: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `http://64.227.152.179:8080/HRM-1/allowance/company/${cmpId}`,
+        `http://localhost:8080/allowance/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -147,7 +147,7 @@ const AllowanceSettings: React.FC = () => {
 
       try {
         const response = await axios.post(
-          "http://64.227.152.179:8080/HRM-1/allowance/add_allowance",
+          "http://localhost:8080/allowance/add_allowance",
           payload,
           {
             headers: {

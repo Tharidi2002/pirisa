@@ -69,7 +69,7 @@ const AttendanceTable = () => {
         }
 
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/employee/attendanceList/${companyId}`,
+          `http://localhost:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -159,7 +159,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/employee/attendance/${id}`,
+        `http://localhost:8080/employee/attendance/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -209,8 +209,8 @@ const AttendanceTable = () => {
       title: "Started At",
       render: (item) => (
         <div className="space-y-1">
-          {item.attendanceList.map((att) => (
-            <div key={att.id} className="text-xs">
+          {item.attendanceList.map((att, index) => (
+            <div key={`${att.id}-${index}`} className="text-xs">
               {new Date(att.startedAt).toLocaleString()}
             </div>
           ))}
@@ -225,8 +225,8 @@ const AttendanceTable = () => {
       title: "Ended At",
       render: (item) => (
         <div className="space-y-1">
-          {item.attendanceList.map((att) => (
-            <div key={att.id} className="text-xs">
+          {item.attendanceList.map((att, index) => (
+            <div key={`${att.id}-${index}`} className="text-xs">
               {att.endedAt
                 ? new Date(att.endedAt).toLocaleString()
                 : "In Working"}
@@ -323,7 +323,7 @@ const AttendanceTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://64.227.152.179:8080/HRM-1/employee/attendanceList/${companyId}`,
+                  `http://localhost:8080/employee/attendanceList/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,

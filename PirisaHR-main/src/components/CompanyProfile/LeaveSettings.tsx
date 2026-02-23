@@ -51,7 +51,7 @@ const LeaveSettings: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://64.227.152.179:8080/HRM-1/company_leave/company/${cmpId}`,
+          `http://localhost:8080/company_leave/company/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ const LeaveSettings: React.FC = () => {
     setSavingEdit(true);
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/company_leave/update_leave`,
+        `http://localhost:8080/company_leave/update_leave`,
         {
           method: "PUT",
           headers: {
@@ -183,7 +183,7 @@ const LeaveSettings: React.FC = () => {
     setSavingNew(true);
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/company_leave/add_leave`,
+        `http://localhost:8080/company_leave/add_leave`,
         {
           method: "POST",
           headers: {
@@ -233,7 +233,7 @@ const LeaveSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://64.227.152.179:8080/HRM-1/company_leave/delete_leave/${cmpId}`,
+        `http://localhost:8080/company_leave/delete_leave/${cmpId}`,
         {
           method: "DELETE",
           headers: {
