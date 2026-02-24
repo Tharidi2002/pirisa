@@ -1,5 +1,7 @@
 package com.knoweb.HRM.controller;
 
+import com.knoweb.HRM.exception.NotFoundException;
+import com.knoweb.HRM.model.User;
 import com.knoweb.HRM.service.EmailService;
 import com.knoweb.HRM.service.PasswordResetService;
 import org.springframework.http.HttpStatus;
@@ -35,21 +37,22 @@ public class PasswordController {
     @PostMapping(value = "/forgotPassword", produces = "application/json")
     public ResponseEntity<?> forgotPassword(@RequestParam("identifier") String identifier) {
         try {
-            String newPassword = resetService.resetPasswordFor(identifier);
+            User user = resetService.resetPasswordFor(identifier);
+            String newPassword = user.getPassword();
 
             // build and send email
             String subject = "Password Reset Request";
             String content = "<p>Your password has been reset successfully.</p>"
                     + "<p>Your new password is: <strong>" + newPassword + "</strong></p>"
                     + "<p>Please log in and change it as soon as possible.</p>";
-            emailService.sendEmail(resetService.getEmailFor(identifier), subject, content);
+            emailService.sendEmail(user.getEmail(), subject, content);
 
             Map<String,Object> result = new HashMap<>();
             result.put("resultCode", 100);
             result.put("resultDesc", "Password reset successfully. Check your email.");
             return new ResponseEntity<>(result, HttpStatus.OK);
 
-        } catch (PasswordResetService.NotFoundException ex) {
+        } catch (NotFoundException ex) {
             Map<String,Object> error = new HashMap<>();
             error.put("resultCode", 101);
             error.put("resultDesc", ex.getMessage());

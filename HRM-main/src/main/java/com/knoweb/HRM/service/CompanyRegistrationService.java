@@ -20,10 +20,10 @@ public class CompanyRegistrationService {
     @Autowired
     private EmailService emailService;
 
-    public Company registerCompany(Company company) {
+    public String registerCompany(Company company) {
         // Encrypt the password before saving
         company.setCmpPassword(passwordEncoder.encode(company.getCmpPassword()));
-        Company savedCompany = companyRepository.save(company);
+        companyRepository.save(company);
 
         // Send a confirmation email
         String subject = "Welcome to Our Platform!";
@@ -33,7 +33,7 @@ public class CompanyRegistrationService {
         );
         emailService.sendEmail(company.getCmpEmail(), subject, body);
 
-        return savedCompany;
+        return "SUCCESS";
     }
 
     public Company updateCompany(Long id, Company updatedCompany) {
@@ -52,5 +52,13 @@ public class CompanyRegistrationService {
             // Handle the case where the company is not found
             throw new RuntimeException("Company not found with id: " + id);
         }
+    }
+
+    public boolean isUsernameAvailable(String username) {
+        return companyRepository.existsByUsername(username);
+    }
+
+    public boolean isEmailAvailable(String email) {
+        return companyRepository.existsByCmpEmail(email);
     }
 }

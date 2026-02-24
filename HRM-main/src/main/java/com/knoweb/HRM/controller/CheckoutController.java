@@ -1,8 +1,7 @@
 package com.knoweb.HRM.controller;
 
-import com.knoweb.HRM.dto.CompanyDetailsDTO;
 import com.knoweb.HRM.model.Company;
-import com.knoweb.HRM.service.CompanyService;
+import com.knoweb.HRM.repository.CompanyRepository;
 import com.knoweb.HRM.service.PaymentService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
@@ -24,7 +23,7 @@ public class CheckoutController {
     private PaymentService paymentService;
 
     @Autowired
-    private CompanyService companyService;
+    private CompanyRepository companyRepository;
 
     @PostMapping("/create-payment-intent")
     public ResponseEntity<?> createPaymentIntent(@RequestBody Map<String, Object> paymentInfo) {
@@ -33,7 +32,7 @@ public class CheckoutController {
             Long amount = Long.valueOf(paymentInfo.get("amount").toString());
             String currency = (String) paymentInfo.get("currency");
 
-            Company company = companyService.findById(companyId)
+            Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
             String stripeCustomerId = company.getStripeCustomerId();
@@ -42,11 +41,8 @@ public class CheckoutController {
                 Customer stripeCustomer = paymentService.createStripeCustomer(companyId);
                 stripeCustomerId = stripeCustomer.getId();
                 
-                // Create a DTO to update the company
-                CompanyDetailsDTO companyDetailsDTO = new CompanyDetailsDTO();
-                companyDetailsDTO.setStripeCustomerId(stripeCustomerId);
-
-                companyService.updateCompany(companyId, companyDetailsDTO);
+                company.setStripeCustomerId(stripeCustomerId);
+                companyRepository.save(company);
             }
 
             PaymentIntent paymentIntent = paymentService.createPaymentIntent(amount, currency, stripeCustomerId);

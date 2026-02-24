@@ -25,6 +25,9 @@ public class PaymentService {
     @Value("${STRIPE_SECRET_KEY}")
     private String secretKey;
 
+    @Value("${STRIPE_PUBLISHABLE_KEY}")
+    private String publishableKey;
+
     @Autowired
     private CompanyRepository companyRepository;
 
@@ -75,6 +78,6 @@ public class PaymentService {
     }
 
     public String getPublishableKey() {
-        return Stripe.getPublishableKey();
+        return this.publishableKey;
     }
 }

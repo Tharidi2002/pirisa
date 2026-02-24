@@ -1,6 +1,6 @@
 package com.knoweb.HRM.controller;
 
-import com.knoweb.HRM.dto.CompanyRegistrationRequest;
+import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.service.CompanyRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ public class CompanyRegistrationController {
     private CompanyRegistrationService companyRegistrationService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerCompany(@Valid @RequestBody CompanyRegistrationRequest request) {
+    public ResponseEntity<?> registerCompany(@Valid @RequestBody Company request) {
         try {
             String result = companyRegistrationService.registerCompany(request);
             if (result.equals("SUCCESS")) {
@@ -33,17 +33,17 @@ public class CompanyRegistrationController {
     @GetMapping("/check-username/{username}")
     public ResponseEntity<?> checkUsernameAvailability(@PathVariable String username) {
         try {
-            boolean available = companyRegistrationService.isUsernameAvailable(username);
+            boolean available = !companyRegistrationService.isUsernameAvailable(username);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("{\"message\": \"Error checking username: " + e.getMessage() + "\"}");
         }
     }
 
-    @GetMapping("/check-email/{email}")
+    @GetMapping("check-email/{email}")
     public ResponseEntity<?> checkEmailAvailability(@PathVariable String email) {
         try {
-            boolean available = companyRegistrationService.isEmailAvailable(email);
+            boolean available = !companyRegistrationService.isEmailAvailable(email);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("{\"message\": \"Error checking email: " + e.getMessage() + "\"}");

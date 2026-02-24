@@ -1,7 +1,7 @@
 package com.knoweb.HRM.config;
 
-import com.knoweb.HRM.service.JwtAuthenticationEntryPoint;
-import com.knoweb.HRM.service.JwtRequestFilter;
+import com.knoweb.HRM.security.JwtAuthenticationEntryPoint;
+import com.knoweb.HRM.security.JwtRequestFilter;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

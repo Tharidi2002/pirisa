@@ -1,7 +1,9 @@
 package com.knoweb.HRM.service;
 
+import com.knoweb.HRM.exception.NotFoundException;
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;
+import com.knoweb.HRM.model.User;
 import com.knoweb.HRM.repository.CompanyRepository;
 import com.knoweb.HRM.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,57 +24,29 @@ public class PasswordResetService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private EmailService emailService;
-
-    public void initiatePasswordResetForCompany(String email) {
-        Company company = companyRepository.findByCmpEmail(email);
+    public User resetPasswordFor(String identifier) throws NotFoundException {
+        // Try to find a company first
+        Company company = companyRepository.findByUsername(identifier);
         if (company != null) {
-            String token = UUID.randomUUID().toString();
-            // In a real application, you would save this token with an expiry date
-            // and associate it with the company.
-
-            String resetLink = "http://yourfrontend.com/reset-password?token=" + token;
-
-            emailService.sendEmail(
-                    company.getCmpEmail(),
-                    "Password Reset Request",
-                    "To reset your password, click the link below:\n" + resetLink
-            );
-        }
-    }
-
-    public void resetCompanyPassword(String token, String newPassword) {
-        // In a real app, you'd find the user by the token, check expiry, etc.
-        // For this example, let's assume the token is valid and we get the company.
-        Company company = companyRepository.findByCmpEmail("some-email@example.com"); // Placeholder
-        if (company != null) {
+            String newPassword = generateRandomPassword();
             company.setCmpPassword(passwordEncoder.encode(newPassword));
             companyRepository.save(company);
+            return new User(company.getUsername(), newPassword, company.getCmpEmail());
         }
-    }
 
-    public void initiatePasswordResetForEmployee(String email) {
-        Employee employee = employeeRepository.findByEmail(email);
+        // If not a company, try to find an employee
+        Employee employee = employeeRepository.findByUsername(identifier);
         if (employee != null) {
-            String token = UUID.randomUUID().toString();
-
-            String resetLink = "http://yourfrontend.com/reset-password?token=" + token;
-
-            emailService.sendEmail(
-                    employee.getEmail(),
-                    "Password Reset Request",
-                    "To reset your password, click the link below:\n" + resetLink
-            );
-        }
-    }
-
-    public void resetEmployeePassword(String token, String newPassword) {
-        // Similar to company, find employee by token
-        Employee employee = employeeRepository.findByEmail("some-employee@example.com"); // Placeholder
-        if (employee != null) {
+            String newPassword = generateRandomPassword();
             employee.setPassword(passwordEncoder.encode(newPassword));
             employeeRepository.save(employee);
+            return new User(employee.getUsername(), newPassword, employee.getEmail());
         }
+
+        throw new NotFoundException("User with identifier '" + identifier + "' not found.");
+    }
+
+    private String generateRandomPassword() {
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

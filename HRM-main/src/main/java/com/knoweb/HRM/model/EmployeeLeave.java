@@ -43,4 +43,8 @@ public class EmployeeLeave implements Serializable {
     @JoinColumn(name = "emp_id")
     @JsonIgnore
     private Employee employee;
+
+    public void setStatus(String status) {
+        this.leaveStatus = status;
+    }
 }

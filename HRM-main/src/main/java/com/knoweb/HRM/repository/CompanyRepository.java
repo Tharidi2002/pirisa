@@ -15,4 +15,8 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
     Company findByCmpEmail(String cmpEmail);
 
     Company findByStripeCustomerId(String stripeCustomerId);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByCmpEmail(String cmpEmail);
 }
