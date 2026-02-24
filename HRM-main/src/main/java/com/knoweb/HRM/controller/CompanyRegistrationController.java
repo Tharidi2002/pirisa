@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/api/company")
 @CrossOrigin(origins = "http://localhost:5174")
@@ -15,7 +17,7 @@ public class CompanyRegistrationController {
     private CompanyRegistrationService companyRegistrationService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerCompany(@RequestBody CompanyRegistrationRequest request) {
+    public ResponseEntity<?> registerCompany(@Valid @RequestBody CompanyRegistrationRequest request) {
         try {
             String result = companyRegistrationService.registerCompany(request);
             if (result.equals("SUCCESS")) {

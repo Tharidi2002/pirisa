@@ -1,17 +1,16 @@
 package com.knoweb.HRM.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -29,28 +28,38 @@ public class Payrole implements Serializable {
 
     private String allowance;
 
-    private float overtime_pay;
+    @Column(name = "overtime_pay")
+    private float overtimePay;
 
-    private String bonus_pay;
+    @Column(name = "bonus_pay")
+    private String bonusPay;
 
     private float appit;
 
     private float loan;
 
-    private float other_deductions;
+    @Column(name = "other_deductions")
+    private float otherDeductions;
 
-    private float epf_8;
+    @Column(name = "epf_8")
+    private float epf8;
 
-    private float total_earnings;
+    @Column(name = "total_earnings")
+    private float totalEarnings;
 
-    private float total_deductions;
+    @Column(name = "total_deductions")
+    private float totalDeductions;
 
-    private float net_salary;
+    @Column(name = "net_salary")
+    private float netSalary;
 
-    private float basic_salary;
+    @Column(name = "basic_salary")
+    private float basicSalary;
 
-    @Column(name = "emp_id")
-    private long empId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emp_id")
+    @JsonIgnore
+    private Employee employee;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

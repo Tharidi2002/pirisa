@@ -1,20 +1,15 @@
 package com.knoweb.HRM.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.TextStyle;
-import java.util.Locale;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -26,40 +21,29 @@ public class Attendance implements Serializable {
     @Column(name = "atdnc_id")
     private long id;
 
+    @Column(name = "started_at")
     private LocalDateTime startedAt;
 
+    @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
-    @Column(name = "emp_id")
-    private long empId;
-
-    private String working_status;
+    @Column(name = "working_status")
+    private String workingStatus;
 
     @Column(name = "total_time")
     private float totalTime;
 
-    private String attendance_status;
-
+    @Column(name = "attendance_status")
+    private String attendanceStatus;
 
     @Column(name = "day_name")
     private String dayName;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "atdnc_id", referencedColumnName = "atdnc_id", insertable = false, updatable = false)
-    private Additional_attendance additional_attendance;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emp_id")
+    @JsonIgnore
+    private Employee employee;
 
-
-    @PrePersist
-    @PreUpdate
-    public void calculateTotalTime() {
-        if (this.startedAt != null) {
-            this.dayName = this.startedAt.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH).toUpperCase();
-        }
-        if (this.startedAt != null && this.endedAt != null) {
-            Duration duration = Duration.between(this.startedAt, this.endedAt);
-            this.totalTime = duration.toMinutes();
-        } else {
-            this.totalTime = 0;
-        }
-    }
+    @OneToOne(mappedBy = "attendance", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private AdditionalAttendance additionalAttendance;
 }

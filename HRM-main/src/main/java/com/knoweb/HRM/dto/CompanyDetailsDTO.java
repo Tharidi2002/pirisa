@@ -1,34 +1,35 @@
 package com.knoweb.HRM.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 public class CompanyDetailsDTO {
+
     private Long id;
 
-    private String cmp_name;
+    private String cmpName;
 
-    private String cmp_address;
+    private String cmpAddress;
 
-    private String cmp_phone;
+    private String cmpPhone;
 
     private String cmpEmail;
 
     private String username;
 
-    private String cmp_reg_no;
+    private String cmpRegNo;
 
-    private String vat_no;
+    private String vatNo;
 
-    private String tin_no;
+    private String tinNo;
 
     private String role;
 
-    private String package_name;
+    private String packageName;
 
-    private String company_status;
+    private String companyStatus;
 }

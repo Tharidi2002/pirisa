@@ -2,16 +2,14 @@ package com.knoweb.HRM.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -23,15 +21,20 @@ public class Employee implements Serializable {
     @Column(name = "emp_id")
     private long id;
 
-    private String epf_no;
+    @Column(name = "epf_no")
+    private String epfNo;
 
-    private String emp_no;
+    @Column(name = "emp_no")
+    private String empNo;
 
-    private String first_name;
+    @Column(name = "first_name")
+    private String firstName;
 
-    private String last_name;
+    @Column(name = "last_name")
+    private String lastName;
 
-    private float basic_salary;
+    @Column(name = "basic_salary")
+    private float basicSalary;
 
     @Column(unique = true)
     private String email;
@@ -41,59 +44,57 @@ public class Employee implements Serializable {
 
     private String gender;
 
-    private String DOB;
+    @Column(name = "DOB")
+    private String dob;
 
     private String phone;
 
     private String address;
 
-    private String NIC;
+    @Column(name = "NIC")
+    private String nic;
 
-    private String date_of_joining;
+    @Column(name = "date_of_joining")
+    private String dateOfJoining;
 
-    private String status="ACTIVE";
+    private String status = "ACTIVE";
 
-    private String role="EMPLOYEE";
-
-    @Column(name = "cmp_id")
-    private long cmpId;
-
-    @Column(name = "dpt_id")
-    private long dptId;
-
-    @Column(name = "designation_id")
-    private long designationId;
-
-    @Column(nullable = false)
-    @JsonIgnore                       // never serialize the hash back to clients
-    private String password;          // stores the BCrypt (or Argon2) hash
+    private String role = "EMPLOYEE";
 
     @Column(nullable = false)
     @JsonIgnore
-    private boolean mustReset = true; // forces first-login reset
+    private String password;
 
-    @OneToMany(targetEntity = Attendance.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
-    private List<Attendance> attendanceList;
+    @Column(name = "must_reset", nullable = false)
+    @JsonIgnore
+    private boolean mustReset = true;
 
-    @OneToMany(targetEntity = Payrole.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
-    private List<Payrole> payroleList;
+    // --- Relationships ---
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cmp_id")
+    @JsonIgnore
+    private Company company;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dpt_id")
+    @JsonIgnore
     private Department department;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "designation_id", referencedColumnName = "designation_id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "designation_id")
+    @JsonIgnore
     private Designation designation;
 
-    @OneToOne(cascade = CascadeType.ALL , fetch = FetchType.EAGER)
-    @JoinColumn(name = "emp_id", referencedColumnName = "emp_id", insertable = false, updatable = false)
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Attendance> attendanceList;
+
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Payrole> payroleList;
+
+    @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Documents documents;
 
-    @OneToMany(targetEntity = EmployeeLeave.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<EmployeeLeave> employeeLeaves;
-
 }
