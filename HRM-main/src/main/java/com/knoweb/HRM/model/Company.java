@@ -79,8 +79,8 @@ public class Company implements Serializable {
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private CompanyLeave companyLeave;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Allowance allowance;
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Allowance> allowance;
 
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private CompanyOTDetails companyOTDetails;
