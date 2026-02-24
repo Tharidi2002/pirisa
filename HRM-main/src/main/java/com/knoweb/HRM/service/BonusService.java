@@ -21,6 +21,6 @@ public class BonusService {
 
 
     public List<Bonus> getBonusByCompanyId(long companyId) {
-        return bonusRepository.findByCompanyId(companyId);
+        return bonusRepository.findByCmpId(companyId);
     }
 }
