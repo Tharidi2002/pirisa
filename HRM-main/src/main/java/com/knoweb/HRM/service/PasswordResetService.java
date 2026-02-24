@@ -15,14 +15,16 @@ import java.util.UUID;
 @Service
 public class PasswordResetService {
 
-    @Autowired
-    private CompanyRepository companyRepository;
+    private final CompanyRepository companyRepository;
+    private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public PasswordResetService(CompanyRepository companyRepository, EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
+        this.companyRepository = companyRepository;
+        this.employeeRepository = employeeRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public User resetPasswordFor(String identifier) throws NotFoundException {
         // Try to find a company first

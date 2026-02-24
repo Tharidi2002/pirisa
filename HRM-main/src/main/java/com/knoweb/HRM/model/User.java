@@ -36,5 +36,9 @@ public class User implements Serializable {
     @Column(name = "cmp_id")
     private long cmpId;
 
-
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
 }
