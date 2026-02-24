@@ -1,82 +1,56 @@
 package com.knoweb.HRM.service;
 
-import com.knoweb.HRM.dto.CompanyRegistrationRequest;
 import com.knoweb.HRM.model.Company;
-import com.knoweb.HRM.model.User;
 import com.knoweb.HRM.repository.CompanyRepository;
-import com.knoweb.HRM.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
-@Transactional
 public class CompanyRegistrationService {
 
     @Autowired
     private CompanyRepository companyRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public String registerCompany(CompanyRegistrationRequest request) {
-        try {
-            // Check if company name already exists
-            Company existingCompany = companyRepository.findByName(request.getCmpName());
-            if (existingCompany != null) {
-                return "Company name already exists";
-            }
+    @Autowired
+    private EmailService emailService;
 
-            // Check if username already exists
-            User existingUser = userRepository.findByUsername(request.getUsername());
-            if (existingUser != null) {
-                return "Username already exists";
-            }
+    public Company registerCompany(Company company) {
+        // Encrypt the password before saving
+        company.setCmpPassword(passwordEncoder.encode(company.getCmpPassword()));
+        Company savedCompany = companyRepository.save(company);
 
-            // Check if email already exists
-            User existingEmail = userRepository.findByEmail(request.getCmpEmail());
-            if (existingEmail != null) {
-                return "Email already exists";
-            }
+        // Send a confirmation email
+        String subject = "Welcome to Our Platform!";
+        String body = String.format(
+                "Hello %s,\n\nThank you for registering with us. Your account has been created successfully.",
+                company.getCmpName()
+        );
+        emailService.sendEmail(company.getCmpEmail(), subject, body);
 
-            // Create new company
-            Company company = new Company();
-            company.setCmp_name(request.getCmpName());
-            company.setCmpEmail(request.getCmpEmail());
-            company.setCmp_phone(request.getCmpPhone());
-            company.setCmp_address(request.getCmpAddress());
-            company.setCompany_status("ACTIVE");
-            
-            Company savedCompany = companyRepository.save(company);
+        return savedCompany;
+    }
 
-            // Create user account for the company
-            User user = new User();
-            user.setUsername(request.getUsername());
-            user.setEmail(request.getCmpEmail());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setRole("CMPNY");
-            user.setCmpId(savedCompany.getId());
-            
-            userRepository.save(user);
+    public Company updateCompany(Long id, Company updatedCompany) {
+        Optional<Company> existingCompanyOpt = companyRepository.findById(id);
+        if (existingCompanyOpt.isPresent()) {
+            Company existingCompany = existingCompanyOpt.get();
+            existingCompany.setCmpName(updatedCompany.getCmpName());
+            existingCompany.setCmpPhone(updatedCompany.getCmpPhone());
+            existingCompany.setCmpAddress(updatedCompany.getCmpAddress());
+            existingCompany.setCompanyStatus(updatedCompany.getCompanyStatus());
 
-            return "SUCCESS";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Registration failed: " + e.getMessage();
+            // You may want to handle other fields as well
+
+            return companyRepository.save(existingCompany);
+        } else {
+            // Handle the case where the company is not found
+            throw new RuntimeException("Company not found with id: " + id);
         }
-    }
-
-    public boolean isUsernameAvailable(String username) {
-        User user = userRepository.findByUsername(username);
-        return user == null;
-    }
-
-    public boolean isEmailAvailable(String email) {
-        User user = userRepository.findByEmail(email);
-        return user == null;
     }
 }

@@ -1,111 +1,88 @@
 package com.knoweb.HRM.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.knoweb.HRM.model.Employee;
 import com.knoweb.HRM.model.EmployeeLeave;
-import com.knoweb.HRM.repository.EmployeeRepository;
 import com.knoweb.HRM.service.EmailService;
-import com.knoweb.HRM.service.EmployeeLeaveRequestService;
+import com.knoweb.HRM.service.EmployeeLeaveService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/emp_leave")
+@RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class EmployeeLeaveRequestController {
 
-
     @Autowired
-    private EmployeeLeaveRequestService employeeLeaveRequestService;
+    private EmployeeLeaveService employeeLeaveService;
 
     @Autowired
     private EmailService emailService;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-
-    @PostMapping(value = "/add_leave", produces = {"application/json"})
-    public ResponseEntity<?> addLeave(@RequestBody EmployeeLeave employeeLeave) {
-        try {
-            EmployeeLeave createdEmployeeLeave = employeeLeaveRequestService.createEmployeeLeave(employeeLeave);
-            if (createdEmployeeLeave != null) {
-                Map<String, Object> leaveResponse = new HashMap<>();
-                leaveResponse.put("resultCode", 100);
-                leaveResponse.put("resultDesc", "Successfully Saved");
-
-                Map<String, Object> responseBody = new HashMap<>();
-                responseBody.put("Add_EmployeeLeave", createdEmployeeLeave);
-                responseBody.put("response", leaveResponse);
-
-                return new ResponseEntity<>(responseBody, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return handleException(e);
-        }
+    // Create a new leave request
+    @PostMapping("/leave-requests")
+    public EmployeeLeave createLeaveRequest(@RequestBody EmployeeLeave leaveRequest) {
+        return employeeLeaveService.saveLeaveRequest(leaveRequest);
     }
 
-
-    @PutMapping(value = "/{empleave_id}", produces = {"application/json"})
-    public ResponseEntity<?> updateEmployeeLeave(@PathVariable Long empleave_id, @RequestBody EmployeeLeave updateEmployeeLeave) {
-
-        EmployeeLeave employeeLeave = employeeLeaveRequestService.updateEmployeeLeave(empleave_id, updateEmployeeLeave);
-        EmployeeLeave email = employeeLeaveRequestService.getEmployeeLeaveById(empleave_id);
-        if (employeeLeave != null) {
-            Map<String, Object> employeeResponse = new HashMap<>();
-            employeeResponse.put("resultCode", 100);
-            employeeResponse.put("resultDesc", "Successfully Updated");
-
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("Employee Leave", employeeLeave);
-            responseBody.put("response", employeeResponse);
-
-            Employee employee = employeeRepository.findById(email.getEmpId()).orElse(null);
-            if (employee.getEmail() != null) {
-
-
-                String subject = "Leave Request Approval!";
-                String content = "<p>Your Leave Request on "
-                        + email.getLeaveStartDay()
-                        + " to "
-                        + email.getLeaveEndDay()
-                        + " has been <strong>"
-                        + updateEmployeeLeave.getLeaveStatus()
-                        + "</strong></p>"
-                        + "<p>Please contact HRM Division if you need any further details.</p>";;
-
-
-                emailService.sendEmail(employee.getEmail(), subject, content);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "There is no Email to this employee"));
-            }
-            return new ResponseEntity<>(responseBody, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    // Get all leave requests
+    @GetMapping("/leave-requests")
+    public List<EmployeeLeave> getAllLeaveRequests() {
+        return employeeLeaveService.getAllLeaveRequests();
     }
 
+    // Get leave requests by employee ID
+    @GetMapping("/leave-requests/employee/{employeeId}")
+    public List<EmployeeLeave> getLeaveRequestsByEmployee(@PathVariable Long employeeId) {
+        return employeeLeaveService.getLeaveRequestsByEmployeeId(employeeId);
+    }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("resultCode", 101);
-        errorResponse.put("resultDesc", "ERROR");
+    // Update the status of a leave request
+    @PutMapping("/leave-requests/{id}/status")
+    public ResponseEntity<?> updateLeaveStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> statusUpdate
+    ) {
+        String status = statusUpdate.get("status");
+        String leaveReason = statusUpdate.get("leaveReason");
 
-        String jsonResponse;
         try {
-            jsonResponse = new ObjectMapper().writeValueAsString(errorResponse);
-        } catch (Exception ex) {
-            jsonResponse = "{\"resultCode\":101,\"resultDesc\":\"ERROR\"}";
+            EmployeeLeave updatedLeave = employeeLeaveService.updateLeaveStatus(id, status, leaveReason);
+
+            // Send email notification upon status change
+            String emailBody = "";
+            if ("APPROVED".equalsIgnoreCase(status)) {
+                emailBody = "Your leave request has been approved.";
+            } else if ("REJECTED".equalsIgnoreCase(status)) {
+                emailBody = "Your leave request has been rejected. Reason: " + leaveReason;
+            }
+
+            // Make sure the Employee object and its email are not null
+            if (updatedLeave.getEmployee() != null && updatedLeave.getEmployee().getEmail() != null) {
+                emailService.sendEmail(
+                    updatedLeave.getEmployee().getEmail(),
+                    "Leave Request Status Update",
+                    emailBody
+                );
+            } else {
+                // Log this issue or handle it gracefully
+                System.out.println("Could not send email: Employee or email address is missing for leave ID " + updatedLeave.getId());
+            }
+
+            // Create a response map
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Leave status updated successfully.");
+            response.put("leaveRequest", updatedLeave);
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
-        return new ResponseEntity<>(jsonResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

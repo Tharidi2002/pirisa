@@ -1,11 +1,17 @@
 package com.knoweb.HRM.service;
 
+import com.knoweb.HRM.exception.ResourceNotFoundException;
 import com.knoweb.HRM.model.Company;
+import com.knoweb.HRM.repository.CompanyRepository;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
-import com.stripe.model.checkout.Session;
-import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.model.Invoice;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.InvoiceListParams;
+import com.stripe.param.PaymentIntentCreateParams;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,47 +22,59 @@ import java.util.Map;
 @Service
 public class PaymentService {
 
-    @Value("${stripe.api.key}")
-    private String stripeApiKey;
+    @Value("${STRIPE_SECRET_KEY}")
+    private String secretKey;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @PostConstruct
     public void init() {
-        // Initialize Stripe with your secret key
-        Stripe.apiKey = stripeApiKey;
+        Stripe.apiKey = secretKey;
     }
 
-    // Create a Stripe customer using the company's details.
-    public Customer createStripeCustomer(Company company) throws StripeException {
-        Map<String, Object> params = new HashMap<>();
-        params.put("email", company.getCmpEmail());
-        params.put("name", company.getCmp_name());
-        // Optionally add metadata for later reference.
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("companyId", String.valueOf(company.getId()));
-        params.put("metadata", metadata);
+    public Customer createStripeCustomer(Long companyId) throws StripeException {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Company", "id", companyId));
+
+        CustomerCreateParams params = CustomerCreateParams.builder()
+                .setName(company.getCmpName()) // Corrected method call
+                .setEmail(company.getCmpEmail())
+                .build();
+
         return Customer.create(params);
     }
 
-    /**
-     * Create a Stripe Checkout session for a subscription.
-     * Metadata includes companyId and priceId.
-     */
-    public Session createCheckoutSession(String companyId, String priceId, String domain) throws StripeException {
-        SessionCreateParams params = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-                .setSuccessUrl(domain + "/success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(domain + "/cancel")
-                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
-                .addLineItem(
-                        SessionCreateParams.LineItem.builder()
-                                .setPrice(priceId)
-                                .setQuantity(1L)
-                                .build()
+    public PaymentIntent createPaymentIntent(Long amount, String currency, String customerId) throws StripeException {
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                .setAmount(amount)
+                .setCurrency(currency)
+                .setCustomer(customerId)
+                .setAutomaticPaymentMethods(
+                    PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build()
                 )
-                .putMetadata("companyId", companyId)
-                .putMetadata("priceId", priceId)
                 .build();
 
-        return Session.create(params);
+        return PaymentIntent.create(params);
+    }
+
+    public Map<String, Object> getUpcomingInvoice(String customerId) throws StripeException {
+        InvoiceListParams params = InvoiceListParams.builder()
+                .setCustomer(customerId)
+                .setStatus(InvoiceListParams.Status.OPEN)
+                .build();
+
+        Invoice invoice = Invoice.list(params).getData().stream().findFirst().orElse(null);
+        Map<String, Object> upcomingInvoice = new HashMap<>();
+        if (invoice != null) {
+            upcomingInvoice.put("amount_due", invoice.getAmountDue());
+            upcomingInvoice.put("due_date", invoice.getDueDate());
+        }
+
+        return upcomingInvoice;
+    }
+
+    public String getPublishableKey() {
+        return Stripe.getPublishableKey();
     }
 }

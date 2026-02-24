@@ -1,12 +1,14 @@
 package com.knoweb.HRM.controller;
 
-import com.stripe.exception.StripeException;
-import com.stripe.model.checkout.Session;
+import com.knoweb.HRM.dto.CompanyDetailsDTO;
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.service.CompanyService;
 import com.knoweb.HRM.service.PaymentService;
+import com.stripe.exception.StripeException;
+import com.stripe.model.Customer;
+import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/checkout")
+@CrossOrigin(origins = "*")
 public class CheckoutController {
 
     @Autowired
@@ -23,48 +26,38 @@ public class CheckoutController {
     @Autowired
     private CompanyService companyService;
 
-    @Value("${app.domain}")
-    private String domain;  // e.g., http://localhost:8080 or your public domain
+    @PostMapping("/create-payment-intent")
+    public ResponseEntity<?> createPaymentIntent(@RequestBody Map<String, Object> paymentInfo) {
+        try {
+            Long companyId = Long.valueOf(paymentInfo.get("companyId").toString());
+            Long amount = Long.valueOf(paymentInfo.get("amount").toString());
+            String currency = (String) paymentInfo.get("currency");
 
-    /**
-     * Create a Stripe Checkout session.
-     * Expected JSON:
-     * {
-     *   "companyId": "5",
-     *   "priceId": "price_1R9MNyLS4Zd4e05LvI3rP6zU"
-     * }
-     */
-    @PostMapping("/create-session")
-    public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody Map<String, String> payload)
-            throws StripeException {
+            Company company = companyService.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found"));
 
-        String companyId = payload.get("companyId");
-        String priceId = payload.get("priceId");
+            String stripeCustomerId = company.getStripeCustomerId();
 
-        if (companyId == null || priceId == null) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Missing companyId or priceId");
-            return ResponseEntity.badRequest().body(error);
+            if (stripeCustomerId == null) {
+                Customer stripeCustomer = paymentService.createStripeCustomer(companyId);
+                stripeCustomerId = stripeCustomer.getId();
+                
+                // Create a DTO to update the company
+                CompanyDetailsDTO companyDetailsDTO = new CompanyDetailsDTO();
+                companyDetailsDTO.setStripeCustomerId(stripeCustomerId);
+
+                companyService.updateCompany(companyId, companyDetailsDTO);
+            }
+
+            PaymentIntent paymentIntent = paymentService.createPaymentIntent(amount, currency, stripeCustomerId);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("clientSecret", paymentIntent.getClientSecret());
+
+            return ResponseEntity.ok(response);
+
+        } catch (StripeException | NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-
-        Company company = companyService.getCompanyById(Long.parseLong(companyId));
-        if (company == null) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Company not found");
-            return ResponseEntity.badRequest().body(error);
-        }
-
-        // Create Stripe customer if not exists
-        if (company.getStripeCustomerId() == null || company.getStripeCustomerId().isEmpty()) {
-            com.stripe.model.Customer customer = paymentService.createStripeCustomer(company);
-            company.setStripeCustomerId(customer.getId());
-            companyService.updateCompany(company);
-        }
-
-        // Create the Checkout session with metadata
-        Session session = paymentService.createCheckoutSession(companyId, priceId, domain);
-        Map<String, String> responseData = new HashMap<>();
-        responseData.put("id", session.getId());
-        return ResponseEntity.ok(responseData);
     }
 }
