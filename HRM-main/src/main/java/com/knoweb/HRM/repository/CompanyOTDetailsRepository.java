@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface CompanyOTDetailsRepository extends JpaRepository<CompanyOTDetails, Long> {
-    CompanyOTDetails findByCompanyId(long cmpId);
+    Optional<CompanyOTDetails> findByCompanyId(long cmpId);
 
 }
