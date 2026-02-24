@@ -70,6 +70,7 @@ public class SecurityConfig {
                     .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // --- PUBLIC ENDPOINTS ---
                     .antMatchers("/login").permitAll()
+                    .antMatchers("/api/login/**").permitAll()
                     .antMatchers("/api/company/register").permitAll()
                     .antMatchers("/api/company/check-username/**").permitAll()
                     .antMatchers("/api/company/check-email/**").permitAll()

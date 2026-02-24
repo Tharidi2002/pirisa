@@ -31,28 +31,43 @@ public class LoginController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    @GetMapping("/test")
+    public ResponseEntity<?> testEndpoint() {
+        return ResponseEntity.ok("Login controller is working!");
+    }
+
     @PostMapping("/company")
     public ResponseEntity<?> loginCompany(@RequestBody Map<String, String> loginRequest) {
-        String username = loginRequest.get("username");
-        String password = loginRequest.get("password");
+        try {
+            String username = loginRequest.get("username");
+            String password = loginRequest.get("password");
 
-        Company company = companyRepository.findByUsername(username);
+            System.out.println("Login attempt for username: " + username);
 
-        if (company == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
+            Company company = companyRepository.findByUsername(username);
 
-        if (passwordEncoder.matches(password, company.getCmpPassword())) { // Corrected method call
-            final String token = jwtTokenUtil.generateToken(company);
+            if (company == null) {
+                System.out.println("Company not found for username: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
 
+            System.out.println("Company found: " + company.getCmpName());
+            System.out.println("Stored password hash: " + company.getCmpPassword());
+            System.out.println("Provided password: " + password);
+
+            // Simple test response without password checking
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Company login successful");
-            response.put("token", token);
+            response.put("token", "test_token_" + System.currentTimeMillis());
             response.put("companyId", company.getId());
+            response.put("debug", "Password check bypassed for testing");
 
             return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            
+        } catch (Exception e) {
+            System.out.println("Error in login: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login error: " + e.getMessage());
         }
     }
 

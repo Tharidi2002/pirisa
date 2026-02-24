@@ -21,17 +21,32 @@ public class CompanyRegistrationService {
     private EmailService emailService;
 
     public String registerCompany(Company company) {
+        // Check if username already exists
+        if (companyRepository.existsByUsername(company.getUsername())) {
+            return "Username already exists";
+        }
+        
+        // Check if email already exists
+        if (companyRepository.existsByCmpEmail(company.getCmpEmail())) {
+            return "Email already exists";
+        }
+        
         // Encrypt the password before saving
         company.setCmpPassword(passwordEncoder.encode(company.getCmpPassword()));
         companyRepository.save(company);
 
-        // Send a confirmation email
-        String subject = "Welcome to Our Platform!";
-        String body = String.format(
-                "Hello %s,\n\nThank you for registering with us. Your account has been created successfully.",
-                company.getCmpName()
-        );
-        emailService.sendEmail(company.getCmpEmail(), subject, body);
+        // Send a confirmation email (optional - don't fail if email fails)
+        try {
+            String subject = "Welcome to Our Platform!";
+            String body = String.format(
+                    "Hello %s,\n\nThank you for registering with us. Your account has been created successfully.",
+                    company.getCmpName()
+            );
+            emailService.sendEmail(company.getCmpEmail(), subject, body);
+        } catch (Exception e) {
+            // Log email error but don't fail registration
+            System.err.println("Email sending failed: " + e.getMessage());
+        }
 
         return "SUCCESS";
     }
@@ -55,10 +70,10 @@ public class CompanyRegistrationService {
     }
 
     public boolean isUsernameAvailable(String username) {
-        return companyRepository.existsByUsername(username);
+        return !companyRepository.existsByUsername(username);
     }
 
     public boolean isEmailAvailable(String email) {
-        return companyRepository.existsByCmpEmail(email);
+        return !companyRepository.existsByCmpEmail(email);
     }
 }

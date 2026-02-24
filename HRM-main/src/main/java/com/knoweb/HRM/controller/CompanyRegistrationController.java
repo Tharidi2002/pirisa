@@ -1,5 +1,6 @@
 package com.knoweb.HRM.controller;
 
+import com.knoweb.HRM.dto.CompanyRegistrationRequest;
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.service.CompanyRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +18,18 @@ public class CompanyRegistrationController {
     private CompanyRegistrationService companyRegistrationService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerCompany(@Valid @RequestBody Company request) {
+    public ResponseEntity<?> registerCompany(@Valid @RequestBody CompanyRegistrationRequest request) {
         try {
-            String result = companyRegistrationService.registerCompany(request);
+            // Convert DTO to Entity
+            Company company = new Company();
+            company.setCmpName(request.getCmpName());
+            company.setCmpEmail(request.getCmpEmail());
+            company.setCmpPhone(request.getCmpPhone());
+            company.setCmpAddress(request.getCmpAddress());
+            company.setUsername(request.getUsername());
+            company.setCmpPassword(request.getPassword()); // Will be encoded in service
+            
+            String result = companyRegistrationService.registerCompany(company);
             if (result.equals("SUCCESS")) {
                 return ResponseEntity.ok().body("{\"message\": \"Company registered successfully\", \"status\": \"success\"}");
             } else {
@@ -33,17 +43,17 @@ public class CompanyRegistrationController {
     @GetMapping("/check-username/{username}")
     public ResponseEntity<?> checkUsernameAvailability(@PathVariable String username) {
         try {
-            boolean available = !companyRegistrationService.isUsernameAvailable(username);
+            boolean available = companyRegistrationService.isUsernameAvailable(username);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("{\"message\": \"Error checking username: " + e.getMessage() + "\"}");
         }
     }
 
-    @GetMapping("check-email/{email}")
+    @GetMapping("/check-email/{email}")
     public ResponseEntity<?> checkEmailAvailability(@PathVariable String email) {
         try {
-            boolean available = !companyRegistrationService.isEmailAvailable(email);
+            boolean available = companyRegistrationService.isEmailAvailable(email);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("{\"message\": \"Error checking email: " + e.getMessage() + "\"}");
