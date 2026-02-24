@@ -66,6 +66,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Corrected CORS configuration
                 .authorizeHttpRequests(auth -> auth
+                    // Permit all OPTIONS requests
+                    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // --- PUBLIC ENDPOINTS ---
                     .antMatchers("/login").permitAll()
                     .antMatchers("/api/company/register").permitAll()
