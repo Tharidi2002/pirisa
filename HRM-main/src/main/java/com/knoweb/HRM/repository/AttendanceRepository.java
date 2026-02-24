@@ -9,15 +9,15 @@ import java.util.List;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
-    List<Attendance> findByEmpId(long empId);
+    List<Attendance> findByEmployeeId(long empId);
 
 //    @Query("SELECT a FROM Attendance a JOIN a.employee e JOIN e.company c WHERE c.id = :cmpId")
 //    List<Attendance> findByCompanyId(@Param("cmpId") Long cmpId);
 
     @Query("SELECT a FROM Attendance a " +
-            "WHERE a.empId = :empId " +
+            "WHERE a.employee.id = :empId " +
             "  AND MONTH(a.startedAt) = :month")
-    List<Attendance> findByEmpIdAndMonth(
+    List<Attendance> findByEmployeeIdAndMonth(
             @Param("empId") long empId,
             @Param("month") int month);
 

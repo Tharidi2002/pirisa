@@ -20,7 +20,7 @@ public class AttendanceService {
     }
 
     public List<Attendance> getAttendanceByEmployeeId(long empId) {
-        return attendanceRepository.findByEmpId(empId);
+        return attendanceRepository.findByEmployeeId(empId);
     }
 
     public void deleteAttendance(Long atdnc_id) {
@@ -51,7 +51,7 @@ public class AttendanceService {
 
 
     public List<Attendance> getAttendanceByEmployeeIdAndMonth(long empId, int month) {
-        return attendanceRepository.findByEmpIdAndMonth(empId, month);
+        return attendanceRepository.findByEmployeeIdAndMonth(empId, month);
     }
 
 
