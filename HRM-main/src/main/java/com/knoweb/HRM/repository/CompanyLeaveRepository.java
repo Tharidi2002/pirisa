@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface CompanyLeaveRepository extends JpaRepository<CompanyLeave, Long> {
-    List<CompanyLeave> findByCmpId(long cmpId);
+    List<CompanyLeave> findByCompanyId(long companyId);
 }

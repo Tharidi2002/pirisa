@@ -24,6 +24,6 @@ public class PayroleService {
 
 
     public List<Payrole> getPayroleByEmployeeId(long empId) {
-        List<Payrole> payroles = payroleRepository.findEmployeeById(empId);
+        List<Payrole> payroles = payroleRepository.findByEmployeeId(empId);
 return  payroles;
 }}
