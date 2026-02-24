@@ -1,5 +1,6 @@
 package com.knoweb.HRM.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,8 +36,10 @@ public class CompanyOTDetails {
     @Column(name = "total_time")
     private float totalTime;
 
-    @Column(name = "cmp_id" , unique = true)
-    private long cmpId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cmp_id")
+    @JsonIgnore
+    private Company company;
 
     @PrePersist
     @PreUpdate
@@ -46,4 +49,3 @@ public class CompanyOTDetails {
         }
     }
 }
-
