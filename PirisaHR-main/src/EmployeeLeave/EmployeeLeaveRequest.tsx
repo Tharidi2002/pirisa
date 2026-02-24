@@ -53,16 +53,10 @@ function EmployeeLeaveRequest() {
           }
         );
 
-        // if (!response.ok) {
-        //   throw new Error("Failed to fetch leave types");
-        // }
-
         const data = await response.json();
         if (data.resultCode === 100 && data.LeavetList) {
           setLeaveTypes(data.LeavetList);
-        } else {
-          // throw new Error(data.resultDesc || "No leave types found");
-        }
+        } 
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load leave types"
@@ -91,42 +85,15 @@ function EmployeeLeaveRequest() {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Convert to ISO format with time (00:00 for start, 23:59 for end)
     const dateValue =
       name === "leaveStartDay" ? `${value}T00:00:00` : `${value}T23:59:59`;
 
     setFormData((prev) => ({ ...prev, [name]: dateValue }));
   };
 
-  const validateForm = () => {
-    if (!formData.leaveType) {
-      setError("Please select a leave type");
-      return false;
-    }
-    if (!formData.leaveStartDay) {
-      setError("Please select a start date");
-      return false;
-    }
-    if (!formData.leaveEndDay) {
-      setError("Please select an end date");
-      return false;
-    }
-    if (new Date(formData.leaveStartDay) > new Date(formData.leaveEndDay)) {
-      setError("End date must be after start date");
-      return false;
-    }
-    if (!formData.leaveReason || formData.leaveReason.trim().length < 10) {
-      setError("Please provide a reason (minimum 10 characters)");
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!validateForm()) return;
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -154,10 +121,8 @@ function EmployeeLeaveRequest() {
         throw new Error(errorData.message || "Failed to submit leave request");
       }
 
-      // Show success toast
       toast.success("Leave request submitted successfully!");
 
-      // Reset form
       setFormData({
         leaveType: "",
         leaveStartDay: "",
@@ -320,9 +285,6 @@ function EmployeeLeaveRequest() {
                 placeholder="Please provide details about your leave request..."
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Minimum 10 characters required
-              </p>
             </div>
 
             {/* Submit Button */}

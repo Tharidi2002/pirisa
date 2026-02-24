@@ -25,62 +25,17 @@ const RegisterPage: React.FC = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<CompanyRegistrationData>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<CompanyRegistrationData> = {};
-
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = "Company name is required";
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    }
-    if (!formData.address.trim()) {
-      newErrors.address = "Address is required";
-    }
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
-    if (errors[name as keyof CompanyRegistrationData]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -163,15 +118,10 @@ const RegisterPage: React.FC = () => {
                 name="companyName"
                 placeholder="Enter your company name"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.companyName ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 border-gray-300"
                 value={formData.companyName}
                 onChange={handleInputChange}
               />
-              {errors.companyName && (
-                <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>
-              )}
             </div>
 
             {/* Email */}
@@ -188,15 +138,10 @@ const RegisterPage: React.FC = () => {
                 name="email"
                 placeholder="Enter your email address"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 border-gray-300"
                 value={formData.email}
                 onChange={handleInputChange}
               />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
             </div>
 
             {/* Phone */}
@@ -213,15 +158,10 @@ const RegisterPage: React.FC = () => {
                 name="phone"
                 placeholder="Enter your phone number"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 border-gray-300"
                 value={formData.phone}
                 onChange={handleInputChange}
               />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
             </div>
 
             {/* Address */}
@@ -238,15 +178,10 @@ const RegisterPage: React.FC = () => {
                 name="address"
                 placeholder="Enter your company address"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.address ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 border-gray-300"
                 value={formData.address}
                 onChange={handleInputChange}
               />
-              {errors.address && (
-                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-              )}
             </div>
 
             {/* Username */}
@@ -263,15 +198,10 @@ const RegisterPage: React.FC = () => {
                 name="username"
                 placeholder="Choose a username"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.username ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 border-gray-300"
                 value={formData.username}
                 onChange={handleInputChange}
               />
-              {errors.username && (
-                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
-              )}
             </div>
 
             {/* Password */}
@@ -288,9 +218,7 @@ const RegisterPage: React.FC = () => {
                 name="password"
                 placeholder="Create a password"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 border-gray-300"
                 value={formData.password}
                 onChange={handleInputChange}
               />
@@ -302,9 +230,6 @@ const RegisterPage: React.FC = () => {
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
             </div>
 
             {/* Confirm Password */}
@@ -321,9 +246,7 @@ const RegisterPage: React.FC = () => {
                 name="confirmPassword"
                 placeholder="Confirm your password"
                 required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                }`}
+                className="w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 border-gray-300"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
               />
@@ -335,9 +258,6 @@ const RegisterPage: React.FC = () => {
               >
                 {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
               </button>
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-              )}
             </div>
 
             {/* Submit Button */}

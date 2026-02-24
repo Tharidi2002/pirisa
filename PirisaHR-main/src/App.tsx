@@ -10,12 +10,10 @@ import { LanguageProvider } from "./context/LanguageProvider ";
 import EmployeeRegistration from "./pages/EmployeeManagement/NewEmployeePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AttendanceContent from "./pages/Attendance/AttendanceContent";
-import DepartmentManager from "./pages/CMPProfile/DepartmentManager";
 import AttendanceMark from "./pages/Attendance/AttendanceMark";
 import SalaryStatus from "./pages/PayRole/SalaryStatus";
 import SalaryMakePage from "./pages/PayRole/SalaryMakePage";
 import Invoice from "./pages/PayRole/PayslipList";
-import LeaveRequest from "./pages/Leave/expoLeaveRequest;";
 import CompanyProfile from "./pages/CompanyProfile";
 import EmployeeEvaluationForm from "./pages/PerformanceAppraisal/EmployeeEvaluationForm";
 import NewEvaluationForm from "./pages/PerformanceAppraisal/NewEvaluationForm";
@@ -72,21 +70,9 @@ function App() {
                   />
                   <Route path="payslips/:employeeId" element={<Invoice />} />
                 </Route>
-                <Route path="leave">
-                  <Route index element={<Navigate to="requests" replace />} />
-                  <Route path="requests" element={<LeaveRequest />} />
-                  {/* <Route
-                    path="payslips/:employeeId"
-                    element={<SalaryMakePage />}
-                  /> */}
-                </Route>
                 <Route path="reports">
                   <Route index element={<Navigate to="payRoleReport" replace />} />
                   <Route path="payRoleReport" element={<PayroleReportPage />} />
-                  <Route
-                    path="summary-report"
-                    element={<DepartmentManager />}
-                  />
                 </Route>
                 <Route path="performance">
                   <Route
