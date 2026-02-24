@@ -1,4 +1,4 @@
-package com.knoweb.HRM.service;
+package com.knoweb.HRM.security;
 
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;

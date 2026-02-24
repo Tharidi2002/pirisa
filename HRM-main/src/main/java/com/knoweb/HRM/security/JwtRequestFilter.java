@@ -1,6 +1,5 @@
-package com.knoweb.HRM.service;
+package com.knoweb.HRM.security;
 
-import com.knoweb.HRM.utility.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

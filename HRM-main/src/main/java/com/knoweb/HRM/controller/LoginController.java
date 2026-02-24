@@ -43,7 +43,7 @@ public class LoginController {
         }
 
         if (passwordEncoder.matches(password, company.getCmpPassword())) { // Corrected method call
-            final String token = jwtTokenUtil.generateToken(username, "COMPANY");
+            final String token = jwtTokenUtil.generateToken(company);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Company login successful");
@@ -61,7 +61,7 @@ public class LoginController {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
 
-        Employee employee = employeeRepository.findByEmail(username);
+        Employee employee = employeeRepository.findByUsername(username);
 
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
@@ -69,7 +69,7 @@ public class LoginController {
 
         // You should use the injected passwordEncoder, not create a new one.
         if (passwordEncoder.matches(password, employee.getPassword())) {
-            final String token = jwtTokenUtil.generateToken(username, "EMPLOYEE");
+            final String token = jwtTokenUtil.generateToken(employee);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Employee login successful");
