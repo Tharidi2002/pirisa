@@ -34,7 +34,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         if (company != null) {
             return new org.springframework.security.core.userdetails.User(
                     company.getUsername(),
-                    company.getCmp_password(),
+                    company.getCmpPassword(), // Corrected method name
                     Collections.singleton(new SimpleGrantedAuthority(company.getRole()))
             );
         }
