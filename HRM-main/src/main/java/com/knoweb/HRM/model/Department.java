@@ -1,15 +1,16 @@
 package com.knoweb.HRM.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -21,23 +22,17 @@ public class Department implements Serializable {
     @Column(name = "dpt_id")
     private long id;
 
-    @Column(name = "dpt_name")
-    private String dptName;
+    private String dpt_name;
 
-    @Column(name = "dpt_code")
-    private String dptCode;
+    private String dpt_code;
 
-    @Column(name = "dpt_desc")
-    private String dptDesc;
+    private String dpt_desc;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cmp_id")
-    @JsonIgnore
-    private Company company;
+    @Column(name = "cmp_id")
+    private long cmpId;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = Designation.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id")
     private List<Designation> designationList;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Employee> employeeList;
 }

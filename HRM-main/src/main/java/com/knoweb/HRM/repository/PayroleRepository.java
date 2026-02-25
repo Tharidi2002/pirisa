@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PayroleRepository extends JpaRepository<Payrole, Long> {
-    List<Payrole> findByEmployeeId(long empId);
+    List<Payrole> findEmployeeById(long empId);
 }

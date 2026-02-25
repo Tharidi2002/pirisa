@@ -1,4 +1,4 @@
-package com.knoweb.HRM.security;
+package com.knoweb.HRM.utility;
 
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;
@@ -32,14 +32,14 @@ public class JwtTokenUtil {
 
     public String generateToken(Company company) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", company.getRole());
+        claims.put("Role", company.getRole());
         return createToken(claims, company.getUsername());
     }
 
 
     public String generateToken(Employee employee) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", employee.getRole());
+        claims.put("Role", employee.getRole());
         return createToken(claims, employee.getUsername());
 
 
@@ -59,7 +59,7 @@ public class JwtTokenUtil {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        final String role = extractRole(token);
+        final String Role = extractRole(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
@@ -72,7 +72,7 @@ public class JwtTokenUtil {
     }
 
     public String extractRole(String token) {
-        return extractClaim(token, claims -> (String) claims.get("role"));
+        return extractClaim(token, claims -> (String) claims.get("Role"));
     }
 
     public Date extractExpiration(String token) {

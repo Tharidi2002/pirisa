@@ -19,7 +19,7 @@ public class CompanyLeaveService {
         return companyLeaveRepository.save(companyLeave);
     }
 
-    public List<CompanyLeave> getLeaveByCompanyId(long companyId) {
-        return companyLeaveRepository.findByCompanyId(companyId);
+    public List<CompanyLeave> getLeaveByCompanyId(long cmpId) {
+        return companyLeaveRepository.findByCmpId(cmpId);
     }
 }

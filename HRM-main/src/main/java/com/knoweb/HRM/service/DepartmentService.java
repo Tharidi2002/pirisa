@@ -20,8 +20,8 @@ public class DepartmentService {
         return departmentRepository.save(department);
     }
 
-    public List<Department> getDepartmentsByCompanyId(long companyId) {
-        return departmentRepository.findByCompanyId(companyId);
+    public List<Department> getDepartmentsByCompanyId(long cmpId) {
+        return departmentRepository.findByCmpId(cmpId);
     }
 
     public void deleteDepartment(Long dpt_id) {

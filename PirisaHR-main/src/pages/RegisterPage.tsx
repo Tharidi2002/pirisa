@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -15,11 +14,6 @@ interface CompanyRegistrationData {
   confirmPassword: string;
 }
 
-// To hold validation errors from the backend
-interface ValidationErrors {
-  [key: string]: string;
-}
-
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState<CompanyRegistrationData>({
     companyName: "",
@@ -31,51 +25,86 @@ const RegisterPage: React.FC = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<ValidationErrors>({}); // State to hold validation errors
+  const [errors, setErrors] = useState<Partial<CompanyRegistrationData>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
+  const validateForm = (): boolean => {
+    const newErrors: Partial<CompanyRegistrationData> = {};
+
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = "Company name is required";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear the error for a field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name as keyof CompanyRegistrationData]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setErrors({}); // Clear previous errors
-
-    // --- Client-side validation --- //
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match!");
-      setErrors({ confirmPassword: "Passwords do not match!" });
-      setLoading(false);
+    
+    if (!validateForm()) {
       return;
     }
 
+    setLoading(true);
+
     try {
+      const requestData = {
+        cmpName: formData.companyName,
+        cmpEmail: formData.email,
+        cmpPhone: formData.phone,
+        cmpAddress: formData.address,
+        username: formData.username,
+        password: formData.password,
+      };
+      
+      console.log("DEBUG - Sending registration data:", requestData);
+      
       const response = await fetch("http://localhost:8080/api/company/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        // *** FIX: Use camelCase field names to match the backend DTO ***
-        body: JSON.stringify({
-          cmpName: formData.companyName,
-          cmpEmail: formData.email,
-          cmpPhone: formData.phone,
-          cmpAddress: formData.address,
-          username: formData.username,
-          password: formData.password,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
+      console.log("DEBUG - Registration response:", data);
 
       if (response.ok) {
         toast.success("Registration successful! Please login with your credentials.");
@@ -83,15 +112,7 @@ const RegisterPage: React.FC = () => {
           navigate("/login");
         }, 2000);
       } else {
-        // --- Handle validation errors from backend --- //
-        if (response.status === 400) {
-            // data will be in the format { fieldName: "error message", ... }
-            setErrors(data);
-            toast.error("Please fix the errors in the form.");
-        } else {
-            // Handle other errors (e.g., username/email exists)
-            toast.error(data.message || "Registration failed. Please try again.");
-        }
+        toast.error(data.message || "Registration failed. Please try again.");
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -100,11 +121,6 @@ const RegisterPage: React.FC = () => {
       setLoading(false);
     }
   };
-  
-  // Helper to get input class names
-  const getInputClassName = (fieldName: string) => {
-    return `w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${errors[fieldName] ? 'border-red-500' : 'border-gray-300'}`;
-  }
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -126,7 +142,7 @@ const RegisterPage: React.FC = () => {
       </div>
 
       {/* Right Side: Registration Form */}
-      <div className="flex flex-col flex-1 justify-center items-center px-8 md:px-0 py-8 overflow-y-auto">
+      <div className="flex flex-col flex-1 justify-center items-center px-8 md:px-0">
         <div className="w-full max-w-md">
           <div className="flex flex-col justify-center items-center mb-6">
             <img src="/logo.png" alt="PirisaHR Logo" className="h-20" />
@@ -152,11 +168,15 @@ const RegisterPage: React.FC = () => {
                 name="companyName"
                 placeholder="Enter your company name"
                 required
-                className={getInputClassName('companyName')}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
+                  errors.companyName ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.companyName}
                 onChange={handleInputChange}
               />
-              {errors.cmpName && <p className="text-red-500 text-xs mt-1">{errors.cmpName}</p>}
+              {errors.companyName && (
+                <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -173,11 +193,15 @@ const RegisterPage: React.FC = () => {
                 name="email"
                 placeholder="Enter your email address"
                 required
-                className={getInputClassName('email')}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.email}
                 onChange={handleInputChange}
               />
-              {errors.cmpEmail && <p className="text-red-500 text-xs mt-1">{errors.cmpEmail}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Phone */}
@@ -194,11 +218,15 @@ const RegisterPage: React.FC = () => {
                 name="phone"
                 placeholder="Enter your phone number"
                 required
-                className={getInputClassName('phone')}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
+                  errors.phone ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.phone}
                 onChange={handleInputChange}
               />
-               {errors.cmpPhone && <p className="text-red-500 text-xs mt-1">{errors.cmpPhone}</p>}
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
             </div>
 
             {/* Address */}
@@ -215,11 +243,15 @@ const RegisterPage: React.FC = () => {
                 name="address"
                 placeholder="Enter your company address"
                 required
-                className={getInputClassName('address')}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
+                  errors.address ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.address}
                 onChange={handleInputChange}
               />
-              {errors.cmpAddress && <p className="text-red-500 text-xs mt-1">{errors.cmpAddress}</p>}
+              {errors.address && (
+                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+              )}
             </div>
 
             {/* Username */}
@@ -236,11 +268,15 @@ const RegisterPage: React.FC = () => {
                 name="username"
                 placeholder="Choose a username"
                 required
-                className={getInputClassName('username')}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
+                  errors.username ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.username}
                 onChange={handleInputChange}
               />
-              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+              {errors.username && (
+                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -257,19 +293,23 @@ const RegisterPage: React.FC = () => {
                 name="password"
                 placeholder="Create a password"
                 required
-                className={getInputClassName('password') + " pr-10"}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.password}
                 onChange={handleInputChange}
               />
-               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                style={{ top: errors.password ? '1.5rem' : '2.5rem' }}
+                style={{ top: '2.5rem' }}
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
@@ -286,19 +326,23 @@ const RegisterPage: React.FC = () => {
                 name="confirmPassword"
                 placeholder="Confirm your password"
                 required
-                className={getInputClassName('confirmPassword') + " pr-10"}
+                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                }`}
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
               />
-              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                style={{ top: errors.confirmPassword ? '1.5rem' : '2.5rem' }}
+                style={{ top: '2.5rem' }}
               >
                 {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
               </button>
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+              )}
             </div>
 
             {/* Submit Button */}

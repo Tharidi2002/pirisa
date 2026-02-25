@@ -1,8 +1,9 @@
 package com.knoweb.HRM.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
@@ -10,7 +11,8 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -19,17 +21,14 @@ public class Company implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id") // Standard naming convention
+    @Column(name = "cmp_id")
     private long id;
 
-    @Column(name = "cmp_name")
-    private String cmpName;
+    private String cmp_name;
 
-    @Column(name = "cmp_address")
-    private String cmpAddress;
+    private String cmp_address;
 
-    @Column(name = "cmp_phone")
-    private String cmpPhone;
+    private String cmp_phone;
 
     @Column(unique = true, name ="cmp_email")
     private String cmpEmail;
@@ -37,51 +36,50 @@ public class Company implements Serializable {
     @Column(unique = true, name = "username")
     private String username;
 
-    @Column(name = "cmp_password")
-    private String cmpPassword;
+    private String cmp_password;
 
-    @Column(unique = true, name = "cmp_reg_no")
-    private String cmpRegNo;
+    @Column(unique = true)
+    private String cmp_reg_no;
 
-    @Column(unique = true, name = "vat_no")
-    private String vatNo;
+    @Column(unique = true)
+    private String vat_no;
 
-    @Column(unique = true, name = "tin_no")
-    private String tinNo;
+    @Column(unique = true)
+    private String tin_no;
 
-    @Column(name = "role")
     private String role = "CMPNY";
 
-    @Column(name = "package_name")
-    private String packageName;
+    private String package_name;
 
-    @Column(name = "company_status")
-    private String companyStatus = "INACTIVE";
+    private String company_status = "INACTIVE";
 
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;
 
-    @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
-    // Relationships
-    
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = User.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<User> userList;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Employee> employeeList;
+    @OneToMany(targetEntity = Employee.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
+    private List<Employee> eployeeList;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = Department.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<Department> departmentList;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
     private CompanyLeave companyLeave;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Allowance> allowance;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
+    private Allowance allowance;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)
     private CompanyOTDetails companyOTDetails;
 }

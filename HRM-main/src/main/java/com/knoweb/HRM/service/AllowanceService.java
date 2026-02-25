@@ -19,7 +19,7 @@ public class AllowanceService {
     }
 
 
-    public List<Allowance> getAllowanceByCompanyId(long companyId) {
-        return allowanceRepository.findByCompanyId(companyId);
+    public List<Allowance> getAllowanceByCompanyId(long cmpId) {
+        return allowanceRepository.findByCmpId(cmpId);
     }
 }

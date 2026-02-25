@@ -89,8 +89,8 @@ public class UserService {
     }
 
 
-    public List<User> getUsersByCompanyId(long companyId) {
-        return userRepository.findByCompanyId(companyId);
+    public List<User> getUsersByCompanyId(long cmpId) {
+        return userRepository.findByCmpId(cmpId);
     }
 
 

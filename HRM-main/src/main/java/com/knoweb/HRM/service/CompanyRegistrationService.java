@@ -1,79 +1,94 @@
 package com.knoweb.HRM.service;
 
+import com.knoweb.HRM.dto.CompanyRegistrationRequest;
 import com.knoweb.HRM.model.Company;
+import com.knoweb.HRM.model.User;
 import com.knoweb.HRM.repository.CompanyRepository;
+import com.knoweb.HRM.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class CompanyRegistrationService {
 
     @Autowired
     private CompanyRepository companyRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserRepository userRepository;
 
     @Autowired
-    private EmailService emailService;
+    private PasswordEncoder passwordEncoder;
 
-    public String registerCompany(Company company) {
-        // Check if username already exists
-        if (companyRepository.existsByUsername(company.getUsername())) {
-            return "Username already exists";
-        }
-        
-        // Check if email already exists
-        if (companyRepository.existsByCmpEmail(company.getCmpEmail())) {
-            return "Email already exists";
-        }
-        
-        // Encrypt the password before saving
-        company.setCmpPassword(passwordEncoder.encode(company.getCmpPassword()));
-        companyRepository.save(company);
-
-        // Send a confirmation email (optional - don't fail if email fails)
+    public String registerCompany(CompanyRegistrationRequest request) {
         try {
-            String subject = "Welcome to Our Platform!";
-            String body = String.format(
-                    "Hello %s,\n\nThank you for registering with us. Your account has been created successfully.",
-                    company.getCmpName()
-            );
-            emailService.sendEmail(company.getCmpEmail(), subject, body);
+            // Check if company name already exists
+            Company existingCompany = companyRepository.findByName(request.getCmpName());
+            if (existingCompany != null) {
+                return "Company name already exists";
+            }
+
+            // Check if username already exists
+            User existingUser = userRepository.findByUsername(request.getUsername());
+            if (existingUser != null) {
+                return "Username already exists";
+            }
+
+            // Check if email already exists
+            User existingEmail = userRepository.findByEmail(request.getCmpEmail());
+            if (existingEmail != null) {
+                return "Email already exists";
+            }
+
+            // Create new company
+            Company company = new Company();
+            company.setCmp_name(request.getCmpName());
+            company.setCmpEmail(request.getCmpEmail());
+            company.setCmp_phone(request.getCmpPhone());
+            company.setCmp_address(request.getCmpAddress());
+            company.setUsername(request.getUsername());
+            company.setCmp_password(passwordEncoder.encode(request.getPassword()));
+            company.setCompany_status("ACTIVE");
+            
+            System.out.println("DEBUG - Saving company with data:");
+            System.out.println("  cmp_name: " + company.getCmp_name());
+            System.out.println("  cmpEmail: " + company.getCmpEmail());
+            System.out.println("  cmp_phone: " + company.getCmp_phone());
+            System.out.println("  cmp_address: " + company.getCmp_address());
+            System.out.println("  username: " + company.getUsername());
+            System.out.println("  cmp_password: " + (company.getCmp_password() != null ? "[ENCRYPTED]" : "[NULL]"));
+            System.out.println("  company_status: " + company.getCompany_status());
+            
+            Company savedCompany = companyRepository.save(company);
+            System.out.println("DEBUG - Company saved with ID: " + savedCompany.getId());
+
+            // Create user account for the company
+            User user = new User();
+            user.setUsername(request.getUsername());
+            user.setEmail(request.getCmpEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setRole("CMPNY");
+            user.setCmpId(savedCompany.getId());
+            
+            userRepository.save(user);
+
+            return "SUCCESS";
         } catch (Exception e) {
-            // Log email error but don't fail registration
-            System.err.println("Email sending failed: " + e.getMessage());
-        }
-
-        return "SUCCESS";
-    }
-
-    public Company updateCompany(Long id, Company updatedCompany) {
-        Optional<Company> existingCompanyOpt = companyRepository.findById(id);
-        if (existingCompanyOpt.isPresent()) {
-            Company existingCompany = existingCompanyOpt.get();
-            existingCompany.setCmpName(updatedCompany.getCmpName());
-            existingCompany.setCmpPhone(updatedCompany.getCmpPhone());
-            existingCompany.setCmpAddress(updatedCompany.getCmpAddress());
-            existingCompany.setCompanyStatus(updatedCompany.getCompanyStatus());
-
-            // You may want to handle other fields as well
-
-            return companyRepository.save(existingCompany);
-        } else {
-            // Handle the case where the company is not found
-            throw new RuntimeException("Company not found with id: " + id);
+            e.printStackTrace();
+            return "Registration failed: " + e.getMessage();
         }
     }
 
     public boolean isUsernameAvailable(String username) {
-        return !companyRepository.existsByUsername(username);
+        User user = userRepository.findByUsername(username);
+        return user == null;
     }
 
     public boolean isEmailAvailable(String email) {
-        return !companyRepository.existsByCmpEmail(email);
+        User user = userRepository.findByEmail(email);
+        return user == null;
     }
 }

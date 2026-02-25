@@ -20,7 +20,7 @@ public class BonusService {
     }
 
 
-    public List<Bonus> getBonusByCompanyId(long companyId) {
-        return bonusRepository.findByCmpId(companyId);
+    public List<Bonus> getBonusByCompanyId(long cmpId) {
+        return bonusRepository.findByCmpId(cmpId);
     }
 }

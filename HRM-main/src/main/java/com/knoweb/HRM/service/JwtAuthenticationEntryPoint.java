@@ -1,4 +1,4 @@
-package com.knoweb.HRM.security;
+package com.knoweb.HRM.service;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

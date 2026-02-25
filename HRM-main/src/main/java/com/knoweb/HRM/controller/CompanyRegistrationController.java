@@ -1,13 +1,10 @@
 package com.knoweb.HRM.controller;
 
 import com.knoweb.HRM.dto.CompanyRegistrationRequest;
-import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.service.CompanyRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/company")
@@ -18,24 +15,27 @@ public class CompanyRegistrationController {
     private CompanyRegistrationService companyRegistrationService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerCompany(@Valid @RequestBody CompanyRegistrationRequest request) {
+    public ResponseEntity<?> registerCompany(@RequestBody CompanyRegistrationRequest request) {
         try {
-            // Convert DTO to Entity
-            Company company = new Company();
-            company.setCmpName(request.getCmpName());
-            company.setCmpEmail(request.getCmpEmail());
-            company.setCmpPhone(request.getCmpPhone());
-            company.setCmpAddress(request.getCmpAddress());
-            company.setUsername(request.getUsername());
-            company.setCmpPassword(request.getPassword()); // Will be encoded in service
+            System.out.println("DEBUG - Received registration request:");
+            System.out.println("  cmpName: " + request.getCmpName());
+            System.out.println("  cmpEmail: " + request.getCmpEmail());
+            System.out.println("  cmpPhone: " + request.getCmpPhone());
+            System.out.println("  cmpAddress: " + request.getCmpAddress());
+            System.out.println("  username: " + request.getUsername());
+            System.out.println("  password: " + (request.getPassword() != null ? "[PRESENT]" : "[NULL]"));
             
-            String result = companyRegistrationService.registerCompany(company);
+            String result = companyRegistrationService.registerCompany(request);
+            System.out.println("DEBUG - Registration result: " + result);
+            
             if (result.equals("SUCCESS")) {
                 return ResponseEntity.ok().body("{\"message\": \"Company registered successfully\", \"status\": \"success\"}");
             } else {
                 return ResponseEntity.badRequest().body("{\"message\": \"" + result + "\", \"status\": \"error\"}");
             }
         } catch (Exception e) {
+            System.out.println("DEBUG - Registration error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body("{\"message\": \"Registration failed: " + e.getMessage() + "\", \"status\": \"error\"}");
         }
     }

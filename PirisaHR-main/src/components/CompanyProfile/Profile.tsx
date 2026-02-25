@@ -34,6 +34,8 @@ function Profile() {
     const fetchCompanyData = async () => {
       const token = localStorage.getItem("token");
       const cmpId = localStorage.getItem("cmpnyId");
+      
+      console.log("DEBUG - localStorage values:", { token: token ? "exists" : "null", cmpId });
 
       if (!token || !cmpId) {
         console.error("Token or Company ID not found in localStorage");
@@ -57,11 +59,15 @@ function Profile() {
         }
 
         const companyData = await companyResponse.json();
+        console.log("DEBUG - Company API Response:", companyData);
         if (
           companyData.resultCode === 100 &&
           companyData.CompanyDetails?.length > 0
         ) {
+          console.log("DEBUG - Setting company data:", companyData.CompanyDetails[0]);
           setCompanyData(companyData.CompanyDetails[0]);
+        } else {
+          console.log("DEBUG - No company data found or invalid response");
         }
 
         // Fetch logo

@@ -1,6 +1,5 @@
 package com.knoweb.HRM.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,14 +33,8 @@ public class User implements Serializable {
 
     private String role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cmp_id")
-    @JsonIgnore
-    private Company company;
+    @Column(name = "cmp_id")
+    private long cmpId;
 
-    public User(String username, String password, String email) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-    }
+
 }

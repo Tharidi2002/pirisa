@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import backgroundImage from "../assets/images/loginBackground.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,6 +14,8 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false); // Password visibility state
   const navigate = useNavigate();
   const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   // Check for SSO token on component mount
   useEffect(() => {
@@ -75,6 +78,8 @@ const LoginPage: React.FC = () => {
       const data = await response.json();
 
       if (data.response.resultCode === 100) {
+        console.log("DEBUG - Login successful, storing data:", data.details);
+        
         // Store common user data
         localStorage.setItem("token", data.details.token);
         localStorage.setItem("role", data.details.Role);
@@ -83,6 +88,7 @@ const LoginPage: React.FC = () => {
         // Role-specific ID storage
         if (data.details.Role === "CMPNY") {
           // For company users, store CMPNY_Id
+          console.log("DEBUG - Storing CMPNY_Id:", data.details.CMPNY_Id);
           localStorage.setItem("cmpnyId", data.details.CMPNY_Id);
           // console.log("Company login:", {
           //   role: data.details.Role,
@@ -93,6 +99,7 @@ const LoginPage: React.FC = () => {
         } else {
           // For employees, store EMP_id (assuming it's available in the response)
           // If the field is named differently, adjust accordingly
+          console.log("DEBUG - Storing employee data:", data.details);
           localStorage.setItem(
             "empId",
             data.details.EMP_id || data.details.employeeId
@@ -132,16 +139,24 @@ const LoginPage: React.FC = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    if (!resetEmail) {
       toast.error("Please enter your email address to reset your password.");
       return;
     }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    
     setIsForgotLoading(true);
 
     try {
       const response = await fetch(
-        `http://localhost:8080/password/forgotPassword?identifier=${encodeURIComponent(
-          email
+        `http://localhost:8080/password/forgotPassword?email=${encodeURIComponent(
+          resetEmail
         )}`,
         {
           method: "POST",
@@ -149,19 +164,27 @@ const LoginPage: React.FC = () => {
       );
 
       const data = await response.json();
-      if (response.ok) {
-        toast.success("Tempory Password sent to your email!", {
-          position: "top-right",
+      
+      if (data.resultCode === 100) {
+        // Show success message and close modal
+        toast.success(data.message || "A new password has been sent to your email address.", {
+          position: "top-center",
+          autoClose: 8000,
+          closeOnClick: false,
+          pauseOnHover: true,
         });
+        setShowForgotModal(false);
+        setResetEmail("");
       } else {
-        toast.error(data.message || "Failed to send email", {
-          position: "top-right",
+        // Show error message
+        toast.error(data.message || "Email not found. Please check your email and try again.", {
+          position: "top-center",
+          autoClose: 8000,
         });
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("An error occurred. Please try again.", {
-        position: "top-right",
+        position: "top-center",
       });
     } finally {
       setIsForgotLoading(false);
@@ -242,7 +265,13 @@ const LoginPage: React.FC = () => {
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                ></button>
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
 
               {/* Options */}
@@ -259,11 +288,10 @@ const LoginPage: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
-                  disabled={isForgotLoading}
+                  onClick={() => setShowForgotModal(true)}
                   className="text-gray-600 hover:underline"
                 >
-                  {isForgotLoading ? "Sending..." : "Forgot password?"}
+                  Forgot password?
                 </button>
               </div>
 
@@ -302,6 +330,72 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Password Reset Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Reset Password</h2>
+            <p className="text-gray-600 mb-6">
+              Enter your email address and we'll send you a new password.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="reset-email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="reset-email"
+                  name="reset-email"
+                  placeholder="Enter your email address"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+                  required
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotModal(false);
+                    setResetEmail("");
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={isForgotLoading}
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isForgotLoading ? (
+                    <>
+                      <Loading
+                        size="xs"
+                        color="border-white"
+                        className="inline mr-2"
+                      />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Password"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </div>
   );

@@ -3,6 +3,7 @@ package com.knoweb.HRM.service;
 import com.knoweb.HRM.config.SecurityConfig;
 import com.knoweb.HRM.dto.*;
 import com.knoweb.HRM.model.Attendance;
+import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;
 import com.knoweb.HRM.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,12 @@ import java.util.stream.Collectors;
 @Service
 public class EmployeeService {
 
+
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private SecurityConfig bCryptPasswordEncoder;
 
     @Autowired
     private EmailService emailService;
@@ -29,8 +34,16 @@ public class EmployeeService {
     @Autowired
     private SecurityConfig securityConfig;
 
+//    public Employee createEmployee(Employee employee) {
+//        return employeeRepository.save(employee);
+//    }
+
+
+
+
     public Employee createEmployee(Employee emp) {
         emp.setUsername(emp.getEmail());
+        // 1) Generate a secure random temporary password (12 chars alphanumeric)
         String tempPwd = new SecureRandom()
                 .ints(12, 0, 36)
                 .mapToObj(i -> "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -38,11 +51,14 @@ public class EmployeeService {
                 .map(Object::toString)
                 .collect(Collectors.joining());
 
+        // 2) Hash & set on entity
         emp.setPassword(passwordEncoder.encode(tempPwd));
         emp.setMustReset(true);
 
+        // 3) Save to DB
         Employee saved = employeeRepository.save(emp);
 
+        // 4) Email the temporary password
         String subject = "Your HRM Account Details";
         String body = String.format(
                 "Hello %s,\n\n" +
@@ -50,60 +66,66 @@ public class EmployeeService {
                         "    %s\n\n" +
                         "For security, you will be prompted to choose a new password on first login.\n\n" +
                         "— The HRM Team",
-                emp.getFirstName(), tempPwd
+                emp.getFirst_name(), tempPwd
         );
         emailService.sendEmail(emp.getEmail(), subject, body);
 
         return saved;
     }
 
+
+
+
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
     }
 
     public Employee getEmployeeById(long id) {
-        return employeeRepository.findById(id).orElse(null);
+        Optional<Employee> optionalUser = employeeRepository.findById(id);
+        return optionalUser.orElse(null);
     }
 
     public List<Employee> getEmployeesByCompanyId(long cmpId) {
-        return employeeRepository.findByCompanyId(cmpId);
+        return employeeRepository.findByCmpId(cmpId);
     }
 
+
     public void deleteEmployee(Long emp_id) {
-        employeeRepository.deleteById(emp_id);
+        employeeRepository.deleteEmployee(emp_id);
     }
 
     public List<AttendanceEmployeeDTO> getAttendanceByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> new AttendanceEmployeeDTO(
                 employee.getId(),
-                employee.getEpfNo(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getBasicSalary(),
+                employee.getEpf_no(),
+                employee.getFirst_name(),
+                employee.getLast_name(),
+                employee.getBasic_salary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDateOfJoining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getDate_of_joining(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getAttendanceList().stream().map(attendance -> new AttendanceDTO(
                         attendance.getId(),
                         attendance.getStartedAt(),
                         attendance.getEndedAt(),
-                        attendance.getWorkingStatus(),
-                        attendance.getAttendanceStatus(),
+                        attendance.getWorking_status(),
+                        attendance.getAttendance_status(),
                         attendance.getTotalTime(),
                         attendance.getDayName()
+
                 )).collect(Collectors.toList()),
                 new EmpDetailsDepartmentDTO(
-                        (employee.getDepartment() != null) ? employee.getDepartment().getId() : null,
-                        (employee.getDepartment() != null) ? employee.getDepartment().getDptName() : null,
-                        (employee.getDepartment() != null) ? employee.getDepartment().getDptCode() : null,
-                        (employee.getDepartment() != null) ? employee.getDepartment().getDptDesc() : null
+                        (employee.getDepartment() != null) ? employee.getDepartment().getId(): null,
+                        (employee.getDepartment() != null) ? employee.getDepartment().getDpt_name(): null,
+                        (employee.getDepartment() != null) ? employee.getDepartment().getDpt_code(): null,
+                        (employee.getDepartment() != null) ? employee.getDepartment().getDpt_desc(): null
                 ),
                 new EmpDetailsDocumentsDTO(
                         (employee.getDocuments() != null) ? employee.getDocuments().getPhoto() : null
@@ -111,82 +133,89 @@ public class EmployeeService {
         )).collect(Collectors.toList());
     }
 
+
     public List<PayroleEmployeeDTO> getPayroleByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
                 employee.getId(),
-                employee.getEpfNo(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getBasicSalary(),
+                employee.getEpf_no(),
+                employee.getFirst_name(),
+                employee.getLast_name(),
+                employee.getBasic_salary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDateOfJoining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getDate_of_joining(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
                         payrole.getId(),
                         payrole.getYear(),
                         payrole.getMonth(),
                         payrole.getAllowance(),
-                        payrole.getOvertimePay(),
-                        payrole.getBonusPay(),
+                        payrole.getOvertime_pay(),
+                        payrole.getBonus_pay(),
                         payrole.getAppit(),
                         payrole.getLoan(),
-                        payrole.getOtherDeductions(),
-                        payrole.getEpf8(),
-                        payrole.getTotalEarnings(),
-                        payrole.getTotalDeductions(),
-                        payrole.getNetSalary(),
-                        payrole.getBasicSalary()
+                        payrole.getOther_deductions(),
+                        payrole.getEpf_8(),
+                        payrole.getTotal_earnings(),
+                        payrole.getTotal_deductions(),
+                        payrole.getNet_salary(),
+                        payrole.getBasic_salary()
+
                 )).collect(Collectors.toList())
         )).collect(Collectors.toList());
     }
+
+
 
     public List<PayroleEmployeeDTO> getPayroleByEmployeeId(long empId) {
-        Optional<Employee> employeeOpt = employeeRepository.findById(empId);
-        List<Employee> employees = employeeOpt.map(Collections::singletonList).orElse(Collections.emptyList());
+        List<Employee> employees = employeeRepository.findEmployeeById(empId);
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
                 employee.getId(),
-                employee.getEpfNo(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getBasicSalary(),
+                employee.getEpf_no(),
+                employee.getFirst_name(),
+                employee.getLast_name(),
+                employee.getBasic_salary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDateOfJoining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getDate_of_joining(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
                         payrole.getId(),
                         payrole.getYear(),
                         payrole.getMonth(),
                         payrole.getAllowance(),
-                        payrole.getOvertimePay(),
-                        payrole.getBonusPay(),
+                        payrole.getOvertime_pay(),
+                        payrole.getBonus_pay(),
                         payrole.getAppit(),
                         payrole.getLoan(),
-                        payrole.getOtherDeductions(),
-                        payrole.getEpf8(),
-                        payrole.getTotalEarnings(),
-                        payrole.getTotalDeductions(),
-                        payrole.getNetSalary(),
-                        payrole.getBasicSalary()
+                        payrole.getOther_deductions(),
+                        payrole.getEpf_8(),
+                        payrole.getTotal_earnings(),
+                        payrole.getTotal_deductions(),
+                        payrole.getNet_salary(),
+                        payrole.getBasic_salary()
+
                 )).collect(Collectors.toList())
         )).collect(Collectors.toList());
     }
 
+
+
     public List<EmpDetailsDTO> getEmpDetailsByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream().map(employee -> {
+            // Map the leave list if available, else return an empty list
             List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves() != null
                     ? employee.getEmployeeLeaves().stream().map(leave -> new EmpDetailsLeaveDTO(
                     leave.getId(),
@@ -196,32 +225,34 @@ public class EmployeeService {
                     leave.getLeaveStartDay(),
                     leave.getLeaveEndDay(),
                     leave.getLeaveDays()
+
             )).collect(Collectors.toList())
                     : Collections.emptyList();
 
             return new EmpDetailsDTO(
                     employee.getId(),
-                    employee.getEpfNo(),
-                    employee.getFirstName(),
-                    employee.getLastName(),
-                    employee.getBasicSalary(),
+                    employee.getEpf_no(),
+                    employee.getFirst_name(),
+                    employee.getLast_name(),
+                    employee.getBasic_salary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDateOfJoining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getDate_of_joining(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
+
                     new EmpDetailsDepartmentDTO(
                             employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                     ),
                     new EmpDetailsDesignationDTO(
                             employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                            employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                            employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                     ),
                     new EmpDetailsDocumentsDTO(
                             employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -230,12 +261,15 @@ public class EmployeeService {
             );
         }).collect(Collectors.toList());
     }
+
+
+
+
 
     public List<EmpDetailsDTO> getEmpDetailsByEmpId(long empId) {
-        Optional<Employee> employeeOpt = employeeRepository.findById(empId);
-        List<Employee> employees = employeeOpt.map(Collections::singletonList).orElse(Collections.emptyList());
-
+        List<Employee> employees = employeeRepository.findEmployeeById(empId);
         return employees.stream().map(employee -> {
+            // Map the leave list if available, else return an empty list
             List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves() != null
                     ? employee.getEmployeeLeaves().stream().map(leave -> new EmpDetailsLeaveDTO(
                     leave.getId(),
@@ -245,32 +279,34 @@ public class EmployeeService {
                     leave.getLeaveStartDay(),
                     leave.getLeaveEndDay(),
                     leave.getLeaveDays()
+
             )).collect(Collectors.toList())
                     : Collections.emptyList();
 
             return new EmpDetailsDTO(
                     employee.getId(),
-                    employee.getEpfNo(),
-                    employee.getFirstName(),
-                    employee.getLastName(),
-                    employee.getBasicSalary(),
+                    employee.getEpf_no(),
+                    employee.getFirst_name(),
+                    employee.getLast_name(),
+                    employee.getBasic_salary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDateOfJoining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getDate_of_joining(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
+
                     new EmpDetailsDepartmentDTO(
                             employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                            employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                            employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                     ),
                     new EmpDetailsDesignationDTO(
                             employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                            employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                            employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                     ),
                     new EmpDetailsDocumentsDTO(
                             employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -280,12 +316,19 @@ public class EmployeeService {
         }).collect(Collectors.toList());
     }
 
+
+
+
+
+
     public List<EmpDetailsDTO> getPendingEmpDetailsByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
+                // Filter to include only employees with at least one PENDING leave
                 .filter(employee -> employee.getEmployeeLeaves() != null &&
                         employee.getEmployeeLeaves().stream().anyMatch(leave -> "PENDING".equals(leave.getLeaveStatus())))
                 .map(employee -> {
+                    // Map only the PENDING leave records
                     List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves().stream()
                             .filter(leave -> "PENDING".equals(leave.getLeaveStatus()))
                             .map(leave -> new EmpDetailsLeaveDTO(
@@ -301,27 +344,27 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpfNo(),
-                            employee.getFirstName(),
-                            employee.getLastName(),
-                            employee.getBasicSalary(),
+                            employee.getEpf_no(),
+                            employee.getFirst_name(),
+                            employee.getLast_name(),
+                            employee.getBasic_salary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDateOfJoining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getDate_of_joining(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                             ),
                             new EmpDetailsDesignationDTO(
                                     employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                                    employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                                    employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                             ),
                             new EmpDetailsDocumentsDTO(
                                     employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -331,12 +374,15 @@ public class EmployeeService {
                 }).collect(Collectors.toList());
     }
 
+
     public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
+                // Filter to include only employees with at least one APPROVED leave
                 .filter(employee -> employee.getEmployeeLeaves() != null &&
                         employee.getEmployeeLeaves().stream().anyMatch(leave -> "APPROVED".equals(leave.getLeaveStatus())))
                 .map(employee -> {
+                    // Map only the APPROVED leave records
                     List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves().stream()
                             .filter(leave -> "APPROVED".equals(leave.getLeaveStatus()))
                             .map(leave -> new EmpDetailsLeaveDTO(
@@ -352,27 +398,27 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpfNo(),
-                            employee.getFirstName(),
-                            employee.getLastName(),
-                            employee.getBasicSalary(),
+                            employee.getEpf_no(),
+                            employee.getFirst_name(),
+                            employee.getLast_name(),
+                            employee.getBasic_salary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDateOfJoining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getDate_of_joining(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                             ),
                             new EmpDetailsDesignationDTO(
                                     employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                                    employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                                    employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                             ),
                             new EmpDetailsDocumentsDTO(
                                     employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -382,12 +428,16 @@ public class EmployeeService {
                 }).collect(Collectors.toList());
     }
 
+
+
     public List<EmpDetailsDTO> getRejectedEmpDetailsByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
+                // Filter to include only employees with at least one REJECTED leave
                 .filter(employee -> employee.getEmployeeLeaves() != null &&
                         employee.getEmployeeLeaves().stream().anyMatch(leave -> "REJECTED".equals(leave.getLeaveStatus())))
                 .map(employee -> {
+                    // Map only the REJECTED leave records
                     List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves().stream()
                             .filter(leave -> "REJECTED".equals(leave.getLeaveStatus()))
                             .map(leave -> new EmpDetailsLeaveDTO(
@@ -403,27 +453,27 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpfNo(),
-                            employee.getFirstName(),
-                            employee.getLastName(),
-                            employee.getBasicSalary(),
+                            employee.getEpf_no(),
+                            employee.getFirst_name(),
+                            employee.getLast_name(),
+                            employee.getBasic_salary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDateOfJoining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getDate_of_joining(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                             ),
                             new EmpDetailsDesignationDTO(
                                     employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                                    employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                                    employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                             ),
                             new EmpDetailsDocumentsDTO(
                                     employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -433,10 +483,16 @@ public class EmployeeService {
                 }).collect(Collectors.toList());
     }
 
+
+
+
+
+
     public List<AttendanceEmployeeDTO> getLastAttendanceByCompanyId(long cmpId) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> {
+            // Get the latest attendance record
             Attendance latestAttendance = employee.getAttendanceList().stream()
                     .max(Comparator.comparing(Attendance::getStartedAt))
                     .orElse(null);
@@ -447,8 +503,8 @@ public class EmployeeService {
                         latestAttendance.getId(),
                         latestAttendance.getStartedAt(),
                         latestAttendance.getEndedAt(),
-                        latestAttendance.getWorkingStatus(),
-                        latestAttendance.getAttendanceStatus(),
+                        latestAttendance.getWorking_status(),
+                        latestAttendance.getAttendance_status(),
                         latestAttendance.getTotalTime(),
                         latestAttendance.getDayName()
                 ));
@@ -456,9 +512,9 @@ public class EmployeeService {
             EmpDetailsDepartmentDTO departmentDTO = (employee.getDepartment() != null) ?
                     new EmpDetailsDepartmentDTO(
                             employee.getDepartment().getId(),
-                            employee.getDepartment().getDptName(),
-                            employee.getDepartment().getDptCode(),
-                            employee.getDepartment().getDptDesc()
+                            employee.getDepartment().getDpt_name(),
+                            employee.getDepartment().getDpt_code(),
+                            employee.getDepartment().getDpt_desc()
                     ) : null;
 
             EmpDetailsDocumentsDTO documentDTO = (employee.getDocuments() != null) ?
@@ -467,17 +523,17 @@ public class EmployeeService {
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),
-                    employee.getEpfNo(),
-                    employee.getFirstName(),
-                    employee.getLastName(),
-                    employee.getBasicSalary(),
+                    employee.getEpf_no(),
+                    employee.getFirst_name(),
+                    employee.getLast_name(),
+                    employee.getBasic_salary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDateOfJoining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getDate_of_joining(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
                     latestAttendanceList,
                     departmentDTO,
@@ -486,10 +542,14 @@ public class EmployeeService {
         }).collect(Collectors.toList());
     }
 
+
+
+
     public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyIdAndDate(long cmpId, LocalDate date) {
-        List<Employee> employees = employeeRepository.findByCompanyId(cmpId);
+        List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream()
+                // Filter only employees that have at least one APPROVED leave record covering the provided date
                 .filter(employee -> employee.getEmployeeLeaves() != null &&
                         employee.getEmployeeLeaves().stream().anyMatch(leave ->
                                 leave.getLeaveStartDay() != null && leave.getLeaveEndDay() != null &&
@@ -497,6 +557,7 @@ public class EmployeeService {
                                         !date.isAfter(leave.getLeaveEndDay().toLocalDate()) &&
                                         "APPROVED".equalsIgnoreCase(leave.getLeaveStatus())))
                 .map(employee -> {
+                    // Filter only the leave records that are APPROVED and where the date falls between leaveStartDay and leaveEndDay
                     List<EmpDetailsLeaveDTO> leaveList = employee.getEmployeeLeaves().stream()
                             .filter(leave -> leave.getLeaveStartDay() != null && leave.getLeaveEndDay() != null &&
                                     !date.isBefore(leave.getLeaveStartDay().toLocalDate()) &&
@@ -510,32 +571,34 @@ public class EmployeeService {
                                     leave.getLeaveStartDay(),
                                     leave.getLeaveEndDay(),
                                     leave.getLeaveDays()
+
                             ))
                             .collect(Collectors.toList());
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpfNo(),
-                            employee.getFirstName(),
-                            employee.getLastName(),
-                            employee.getBasicSalary(),
+                            employee.getEpf_no(),
+                            employee.getFirst_name(),
+                            employee.getLast_name(),
+                            employee.getBasic_salary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDateOfJoining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getDate_of_joining(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
+
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptName() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptCode() : null,
-                                    employee.getDepartment() != null ? employee.getDepartment().getDptDesc() : null
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_name() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_code() : null,
+                                    employee.getDepartment() != null ? employee.getDepartment().getDpt_desc() : null
                             ),
                             new EmpDetailsDesignationDTO(
                                     employee.getDesignation() != null ? employee.getDesignation().getId() : null,
-                                    employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : null
+                                    employee.getDesignation() != null ? employee.getDesignation().getDesignation() : null
                             ),
                             new EmpDetailsDocumentsDTO(
                                     employee.getDocuments() != null ? employee.getDocuments().getPhoto() : null
@@ -545,37 +608,41 @@ public class EmployeeService {
                 }).collect(Collectors.toList());
     }
 
+
+
     public Employee updateEmployee(Long emp_id, Employee updateEmployee) {
         Employee employee = getEmployeeById(emp_id);
         if (employee != null) {
-            employee.setEpfNo(updateEmployee.getEpfNo());
-            employee.setFirstName(updateEmployee.getFirstName());
-            employee.setLastName(updateEmployee.getLastName());
-            employee.setBasicSalary(updateEmployee.getBasicSalary());
+            employee.setEpf_no(updateEmployee.getEpf_no());
+            employee.setFirst_name(updateEmployee.getFirst_name());
+            employee.setLast_name(updateEmployee.getLast_name());
+            employee.setBasic_salary(updateEmployee.getBasic_salary());
             employee.setEmail(updateEmployee.getEmail());
             employee.setGender(updateEmployee.getGender());
-            employee.setDob(updateEmployee.getDob());
+            employee.setDOB(updateEmployee.getDOB());
             employee.setPhone(updateEmployee.getPhone());
             employee.setAddress(updateEmployee.getAddress());
-            employee.setDateOfJoining(updateEmployee.getDateOfJoining());
-            employee.setNic(updateEmployee.getNic());
+            employee.setDate_of_joining(updateEmployee.getDate_of_joining());
+            employee.setNIC(updateEmployee.getNIC());
             employee.setStatus(updateEmployee.getStatus());
             return employeeRepository.save(employee);
         }
         return null;
     }
 
+
     public List<AttendanceEmployeeDTO> getAttendanceByCompanyIdAndMonth(long cmpId, int month) {
-        return employeeRepository.findByCompanyId(cmpId).stream()
+        return employeeRepository.findByCmpId(cmpId).stream()
                 .map(employee -> {
+                    // Filter only this month's attendances
                     List<AttendanceDTO> filtered = employee.getAttendanceList().stream()
                             .filter(atd -> atd.getStartedAt().getMonthValue() == month)
                             .map(atd -> new AttendanceDTO(
                                     atd.getId(),
                                     atd.getStartedAt(),
                                     atd.getEndedAt(),
-                                    atd.getWorkingStatus(),
-                                    atd.getAttendanceStatus(),
+                                    atd.getWorking_status(),
+                                    atd.getAttendance_status(),
                                     atd.getTotalTime(),
                                     atd.getDayName()
                             ))
@@ -583,33 +650,43 @@ public class EmployeeService {
 
                     return new AttendanceEmployeeDTO(
                             employee.getId(),
-                            employee.getEpfNo(),
-                            employee.getFirstName(),
-                            employee.getLastName(),
-                            employee.getBasicSalary(),
+                            employee.getEpf_no(),
+                            employee.getFirst_name(),
+                            employee.getLast_name(),
+                            employee.getBasic_salary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDateOfJoining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getDate_of_joining(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             filtered,
+                            // dept DTO
                             new EmpDetailsDepartmentDTO(
-                                    Optional.ofNullable(employee.getDepartment()).map(d -> d.getId()).orElse(null),
-                                    Optional.ofNullable(employee.getDepartment()).map(d -> d.getDptName()).orElse(null),
-                                    Optional.ofNullable(employee.getDepartment()).map(d -> d.getDptCode()).orElse(null),
-                                    Optional.ofNullable(employee.getDepartment()).map(d -> d.getDptDesc()).orElse(null)
+                                    Optional.ofNullable(employee.getDepartment())
+                                            .map(d -> d.getId()).orElse(null),
+                                    Optional.ofNullable(employee.getDepartment())
+                                            .map(d -> d.getDpt_name()).orElse(null),
+                                    Optional.ofNullable(employee.getDepartment())
+                                            .map(d -> d.getDpt_code()).orElse(null),
+                                    Optional.ofNullable(employee.getDepartment())
+                                            .map(d -> d.getDpt_desc()).orElse(null)
                             ),
+                            // documents DTO
                             new EmpDetailsDocumentsDTO(
-                                    Optional.ofNullable(employee.getDocuments()).map(d -> d.getPhoto()).orElse(null)
+                                    Optional.ofNullable(employee.getDocuments())
+                                            .map(d -> d.getPhoto()).orElse(null)
                             )
                     );
                 })
+                // drop employees with no attendance in that month
                 .filter(dto -> !dto.getAttendanceList().isEmpty())
                 .collect(Collectors.toList());
     }
+
+
 
     public Employee changeEmployeePassword(Long empId, String oldPassword, String newPassword) {
         Optional<Employee> employeeOptional = employeeRepository.findById(empId);
@@ -617,13 +694,16 @@ public class EmployeeService {
             return null;
         }
         Employee employee = employeeOptional.get();
-        if (!passwordEncoder.matches(oldPassword, employee.getPassword())) {
+        // Verify if the provided old password matches the stored password.
+        if (!securityConfig.passwordEncoder().matches(oldPassword, employee.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect");
         }
-        String hashedPassword = passwordEncoder.encode(newPassword);
+        // Encrypt the new password using BCrypt and update the company.
+        String hashedPassword = securityConfig.passwordEncoder().encode(newPassword);
         employee.setPassword(hashedPassword);
         return employeeRepository.save(employee);
     }
+
 
     public String forgotPassword(String email) {
         Employee employee = employeeRepository.findByEmail(email);
@@ -631,11 +711,15 @@ public class EmployeeService {
             throw new IllegalArgumentException("No Employee found with the provided email");
         }
         String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        String hashedPassword = passwordEncoder.encode(randomPassword);
+        String hashedPassword = securityConfig.passwordEncoder().encode(randomPassword);
         employee.setPassword(hashedPassword);
 
         employeeRepository.save(employee);
 
+
         return randomPassword;
     }
+
+
+
 }

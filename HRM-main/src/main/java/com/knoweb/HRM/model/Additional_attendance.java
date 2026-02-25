@@ -1,34 +1,32 @@
 package com.knoweb.HRM.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "additional_attendance")
-public class AdditionalAttendance implements Serializable {
+public class Additional_attendance implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "additional_atdnc_id")
     private long id;
 
-    @Column(name = "travel_start")
-    private LocalDateTime travelStart;
+    private LocalDateTime travel_start;
 
-    @Column(name = "travel_end")
-    private LocalDateTime travelEnd;
+    private LocalDateTime travel_end;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "atdnc_id")
-    @JsonIgnore
-    private Attendance attendance;
+    private long atdnc_id;
+
+
 }

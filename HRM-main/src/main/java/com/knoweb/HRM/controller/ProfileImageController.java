@@ -2,8 +2,6 @@ package com.knoweb.HRM.controller;
 
 import com.knoweb.HRM.dto.ProfileImageResponse;
 import com.knoweb.HRM.model.Documents;
-import com.knoweb.HRM.model.Employee;
-import com.knoweb.HRM.repository.EmployeeRepository;
 import com.knoweb.HRM.service.DocumentService;
 import com.knoweb.HRM.util.ImageValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +21,9 @@ public class ProfileImageController {
     @Autowired
     private DocumentService documentService;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
+    /**
+     * Upload or update profile image for an employee
+     */
     @PostMapping(
             path = "/upload/{empId}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -34,109 +32,138 @@ public class ProfileImageController {
     public ResponseEntity<?> uploadProfileImage(
             @PathVariable Long empId,
             @RequestParam("profileImage") MultipartFile profileImage) {
-
+        
         try {
+            // Validate file using utility
             String validationError = ImageValidationUtil.validateImageFile(profileImage);
             if (validationError != null) {
                 return ResponseEntity.badRequest().body(ProfileImageResponse.error(validationError));
             }
 
-            // Use the updated service method
-            documentService.uploadAllDocuments(empId, null, null, null, null, null, profileImage, null);
+            // Check if employee exists and has documents
+            Optional<Documents> existingDocs = documentService.getDocumentsByempId(empId);
+            
+            if (existingDocs.isPresent()) {
+                // Update existing documents
+                Documents documents = existingDocs.get();
+                documents.setPhoto(profileImage.getBytes());
+                documentService.updateDocument(documents);
+            } else {
+                // Create new documents entry with just the photo
+                Documents newDocuments = new Documents();
+                newDocuments.setEmpId(empId);
+                newDocuments.setPhoto(profileImage.getBytes());
+                documentService.uploadAllDocuments(empId, null, null, null, null, null, profileImage, null);
+            }
 
             ProfileImageResponse response = ProfileImageResponse.success(
-                "Profile image uploaded successfully!",
-                empId,
-                profileImage.getSize(),
+                "Profile image uploaded successfully!", 
+                empId, 
+                profileImage.getSize(), 
                 profileImage.getContentType()
             );
-
+            
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProfileImageResponse.error("Failed to process image: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ProfileImageResponse.error("Failed to process image: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ProfileImageResponse.error("Error uploading profile image: " + e.getMessage()));
         }
     }
 
+    /**
+     * Get profile image for an employee
+     */
     @GetMapping(
             path = "/view/{empId}",
             produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_GIF_VALUE}
     )
     public ResponseEntity<ByteArrayResource> getProfileImage(@PathVariable Long empId) {
         try {
-            byte[] imageData = documentService.viewDocumentByEmployeeId(empId, "photo");
-
+            byte[] imageData = documentService.viewDocument1(empId, "photo");
+            
             if (imageData == null || imageData.length == 0) {
                 return ResponseEntity.notFound().build();
             }
 
             ByteArrayResource resource = new ByteArrayResource(imageData);
             HttpHeaders headers = new HttpHeaders();
-
+            
+            // Try to determine content type from image data using utility
             String contentType = ImageValidationUtil.getContentTypeFromBytes(imageData);
             headers.setContentType(MediaType.parseMediaType(contentType));
-
+            
             headers.setContentDisposition(ContentDisposition
                     .inline()
                     .filename("profile_" + empId + ImageValidationUtil.getFileExtension(contentType))
                     .build());
-
+            
             headers.setContentLength(imageData.length);
 
             return new ResponseEntity<>(resource, headers, HttpStatus.OK);
 
         } catch (RuntimeException e) {
+            // Document not found
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    /**
+     * Delete profile image for an employee
+     */
     @DeleteMapping(
-            path = "/delete/{empId}"
+            path = "/delete/{empId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<?> deleteProfileImage(@PathVariable Long empId) {
         try {
-            Optional<Documents> existingDocsOpt = documentService.getDocumentsByEmployeeId(empId);
-
-            if (!existingDocsOpt.isPresent() || existingDocsOpt.get().getPhoto() == null) {
+            Optional<Documents> existingDocs = documentService.getDocumentsByempId(empId);
+            
+            if (!existingDocs.isPresent()) {
                 return ResponseEntity.badRequest().body(ProfileImageResponse.error("No profile image found for employee"));
             }
 
-            Documents documents = existingDocsOpt.get();
-            documents.setPhoto(null); // Remove photo
-            documentService.saveOrUpdateDocument(documents); // Save changes
+            Documents documents = existingDocs.get();
+            documents.setPhoto(null);
+            documentService.updateDocument(documents);
 
-            return ResponseEntity.ok(ProfileImageResponse.success("Profile image deleted successfully!", empId));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProfileImageResponse.error("Error deleting profile image: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping(
-            path = "/exists/{empId}"
-    )
-    public ResponseEntity<?> checkProfileImageExists(@PathVariable Long empId) {
-        try {
-            Optional<Documents> documentsOpt = documentService.getDocumentsByEmployeeId(empId);
-
-            boolean hasImage = documentsOpt.isPresent() &&
-                             documentsOpt.get().getPhoto() != null &&
-                             documentsOpt.get().getPhoto().length > 0;
-
-            ProfileImageResponse response = ProfileImageResponse.success("Profile image check completed", empId);
-            response.setHasProfileImage(hasImage);
-
-            if (hasImage) {
-                response.setImageSize((long) documentsOpt.get().getPhoto().length);
-            }
-
+            ProfileImageResponse response = ProfileImageResponse.success("Profile image deleted successfully!", empId);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProfileImageResponse.error("Error checking profile image: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ProfileImageResponse.error("Error deleting profile image: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Check if employee has a profile image
+     */
+    @GetMapping(
+            path = "/exists/{empId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> checkProfileImageExists(@PathVariable Long empId) {
+        try {
+            Optional<Documents> documents = documentService.getDocumentsByempId(empId);
+            
+            boolean hasImage = documents.isPresent() && 
+                             documents.get().getPhoto() != null && 
+                             documents.get().getPhoto().length > 0;
+
+            ProfileImageResponse response = ProfileImageResponse.success("Profile image check completed", empId);
+            response.setHasProfileImage(hasImage);
+            
+            if (hasImage) {
+                response.setImageSize((long) documents.get().getPhoto().length);
+            }
+            
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ProfileImageResponse.error("Error checking profile image: " + e.getMessage()));
         }
     }
 }

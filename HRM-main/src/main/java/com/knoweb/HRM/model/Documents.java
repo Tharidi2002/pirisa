@@ -1,14 +1,15 @@
 package com.knoweb.HRM.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -48,8 +49,7 @@ public class Documents implements Serializable {
     @Column(name = "emp_photo", columnDefinition = "LONGBLOB")
     private byte[] photo;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "emp_id")
-    @JsonIgnore
-    private Employee employee;
+    @Column(name = "emp_id")
+    private long empId;
+
 }

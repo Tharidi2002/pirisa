@@ -1,50 +1,47 @@
 package com.knoweb.HRM.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "employeeleave")
-public class EmployeeLeave implements Serializable {
+public class EmployeeLeave {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "empleave_id")
     private long id;
 
-    @Column(name = "leave_type")
     private String leaveType;
 
-    @Column(name = "leave_start_day")
     private LocalDateTime leaveStartDay;
 
-    @Column(name = "leave_end_day")
     private LocalDateTime leaveEndDay;
 
-    @Column(name = "leave_days")
     private int leaveDays;
 
-    @Column(name = "leave_reason")
     private String leaveReason;
 
-    @Column(name = "leave_status")
     private String leaveStatus = "PENDING";
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "emp_id")
-    @JsonIgnore
-    private Employee employee;
+    @Column(name = "emp_id")
+    private long empId;
 
-    public void setStatus(String status) {
-        this.leaveStatus = status;
+    @PrePersist
+    @PreUpdate
+    public void calculateLeaveDays() {
+        if (leaveStartDay != null && leaveEndDay != null) {
+            this.leaveDays = (int) ChronoUnit.DAYS.between(leaveStartDay, leaveEndDay) + 1;
+        }
     }
 }

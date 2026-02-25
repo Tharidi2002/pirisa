@@ -1,7 +1,5 @@
 package com.knoweb.HRM.controller;
 
-import com.knoweb.HRM.exception.NotFoundException;
-import com.knoweb.HRM.model.User;
 import com.knoweb.HRM.service.EmailService;
 import com.knoweb.HRM.service.PasswordResetService;
 import org.springframework.http.HttpStatus;
@@ -35,33 +33,48 @@ public class PasswordController {
      * @since 9+
      */
     @PostMapping(value = "/forgotPassword", produces = "application/json")
-    public ResponseEntity<?> forgotPassword(@RequestParam("identifier") String identifier) {
+    public ResponseEntity<?> forgotPassword(@RequestParam("email") String email) {
         try {
-            User user = resetService.resetPasswordFor(identifier);
-            String newPassword = user.getPassword();
+            // First validate that the email exists in the system
+            String emailAddress = resetService.getEmailForEmail(email);
+            if (emailAddress == null) {
+                Map<String,Object> error = new HashMap<>();
+                error.put("resultCode", 101);
+                error.put("resultDesc", "Email not found. Please check your email and try again.");
+                error.put("message", "No account found with email: " + email);
+                return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+            }
 
-            // build and send email
+            // Generate new password
+            String newPassword = resetService.resetPasswordForEmail(email);
+
+            // Send email with new password
             String subject = "Password Reset Request";
             String content = "<p>Your password has been reset successfully.</p>"
                     + "<p>Your new password is: <strong>" + newPassword + "</strong></p>"
-                    + "<p>Please log in and change it as soon as possible.</p>";
-            emailService.sendEmail(user.getEmail(), subject, content);
+                    + "<p>Please log in and change it as soon as possible.</p>"
+                    + "<p>If you didn't request this password reset, please contact support immediately.</p>";
+            
+            emailService.sendEmail(emailAddress, subject, content);
 
             Map<String,Object> result = new HashMap<>();
             result.put("resultCode", 100);
-            result.put("resultDesc", "Password reset successfully. Check your email.");
+            result.put("resultDesc", "Password reset successfully");
+            result.put("message", "A new password has been sent to your email address. Please check your inbox.");
             return new ResponseEntity<>(result, HttpStatus.OK);
 
-        } catch (NotFoundException ex) {
+        } catch (PasswordResetService.NotFoundException ex) {
             Map<String,Object> error = new HashMap<>();
             error.put("resultCode", 101);
-            error.put("resultDesc", ex.getMessage());
+            error.put("resultDesc", "Email not found. Please check your email and try again.");
+            error.put("message", "No account found with email: " + email);
             return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
 
         } catch (Exception ex) {
             Map<String,Object> error = new HashMap<>();
             error.put("resultCode", 102);
             error.put("resultDesc", "An error occurred while processing your request.");
+            error.put("message", "Password reset failed. Please try again later.");
             return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

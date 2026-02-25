@@ -1,4 +1,4 @@
-package com.knoweb.HRM.security;
+package com.knoweb.HRM.service;
 
 import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;
@@ -34,7 +34,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         if (company != null) {
             return new org.springframework.security.core.userdetails.User(
                     company.getUsername(),
-                    company.getCmpPassword(), // Corrected method name
+                    company.getCmp_password(),
                     Collections.singleton(new SimpleGrantedAuthority(company.getRole()))
             );
         }
