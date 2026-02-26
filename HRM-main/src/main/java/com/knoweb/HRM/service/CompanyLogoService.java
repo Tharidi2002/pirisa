@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,9 +19,10 @@ public class CompanyLogoService {
     private CompanyLogoRepository companyLogoRepository;
 
     public byte[] viewLogo(Long cmpId) {
-        Optional<CompanyLogoes> logoOptional = companyLogoRepository.findByCmpId(cmpId);
-        if (logoOptional.isPresent()) {
-            return logoOptional.get().getLogo();
+        List<CompanyLogoes> logos = companyLogoRepository.findByCmpIdOrderByIdDesc(cmpId);
+        if (!logos.isEmpty()) {
+            // Return the most recent logo (first in the ordered list)
+            return logos.get(0).getLogo();
         }
         return new byte[0]; // Return empty array instead of 404
     }

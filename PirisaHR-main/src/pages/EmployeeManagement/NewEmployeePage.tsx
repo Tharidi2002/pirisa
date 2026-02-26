@@ -123,8 +123,9 @@ const EmployeeRegistration: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        //console.log("Departments API Response:", data);
+        console.log("Departments API Response:", data);
         if (data.DepartmentList && Array.isArray(data.DepartmentList)) {
+          console.log("Departments found:", data.DepartmentList);
           setDepartments(data.DepartmentList);
         } else {
           console.error("API response is not in expected format:", data);
@@ -209,6 +210,24 @@ const EmployeeRegistration: React.FC = () => {
       .toISOString()
       .split("T")[0];
 
+    // Validation checks
+    if (!employeeDetails.dptId || employeeDetails.dptId === 0) {
+      toast.error("Please select a department");
+      setSubmittingDetails(false);
+      return;
+    }
+    
+    if (!employeeDetails.designationId || employeeDetails.designationId === 0) {
+      toast.error("Please select a designation");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    console.log("Current employee details before submission:", employeeDetails);
+    console.log("Selected dptId:", employeeDetails.dptId);
+    console.log("Selected designationId:", employeeDetails.designationId);
+    console.log("Available departments:", departments);
+    
     const payload = {
       epf_no: employeeDetails.epf_no,
       emp_no: employeeDetails.emp_no,
@@ -226,6 +245,8 @@ const EmployeeRegistration: React.FC = () => {
       dptId: Number(employeeDetails.dptId),
       designationId: Number(employeeDetails.designationId),
     };
+    
+    console.log("Final payload:", payload);
 
     try {
       const response = await fetch(
@@ -292,38 +313,88 @@ const EmployeeRegistration: React.FC = () => {
     }
     setSubmittingDocs(true);
     const formData = new FormData();
-    let hasFiles = false;
 
     // Add empId to FormData
     formData.append("empId", currentEmpId.toString());
 
     // Append files to FormData with exact field names
-    Object.entries(documents).forEach(([key, file]) => {
-      if (file) {
-        formData.append(key, file);
-        hasFiles = true;
-      }
-    });
+    if (documents) {
+      Object.entries(documents).forEach(([key, file]) => {
+        if (file) {
+          formData.append(key, file);
+        }
+      });
+    }
 
-    if (!hasFiles) {
+    // Debug: Log current documents state
+    console.log("Current documents state:", documents);
+    
+    // Check if we have any files to upload (profile picture or other documents)
+    const hasProfilePicture = documents && documents.photo !== null;
+    const hasOtherFiles = documents && Object.entries(documents).some(([key, file]) => file && key !== "photo");
+    
+    console.log("Has profile picture:", hasProfilePicture);
+    console.log("Has other files:", hasOtherFiles);
+    
+    if (!hasProfilePicture && !hasOtherFiles) {
       toast.error("Please select at least one document to upload.");
       setSubmittingDocs(false);
       return;
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:8080/document/upload-all",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+      // Handle profile picture separately using ProfileImageController
+      if (documents && documents.photo) {
+        console.log("Uploading profile picture...");
+        const profileFormData = new FormData();
+        profileFormData.append("profileImage", documents.photo);
+        
+        const profileResponse = await fetch(
+          `http://localhost:8080/api/profile-image/upload/${currentEmpId}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: profileFormData,
+          }
+        );
+        
+        if (!profileResponse.ok) {
+          toast.error("Failed to upload profile picture");
+        } else {
+          console.log("Profile picture uploaded successfully");
         }
-      );
+      }
 
-      if (response.status === 200) {
+      // Handle other documents using document upload API
+      const otherDocsFormData = new FormData();
+      let hasOtherFiles = false;
+
+      if (documents) {
+        Object.entries(documents).forEach(([key, file]) => {
+          if (file && key !== "photo") { // Skip photo as it's handled separately
+            otherDocsFormData.append(key, file);
+            hasOtherFiles = true;
+          }
+        });
+      }
+
+      let documentResponse = null;
+      if (hasOtherFiles) {
+        documentResponse = await fetch(
+          "http://localhost:8080/document/upload-all",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: otherDocsFormData,
+          }
+        );
+      }
+
+      if ((hasOtherFiles && documentResponse?.status === 200) || !hasOtherFiles) {
         toast.success("Documents uploaded successfully!");
         localStorage.removeItem("currentEmpId");
         setStep(1);
@@ -356,7 +427,7 @@ const EmployeeRegistration: React.FC = () => {
           photo: null,
         });
       } else {
-        toast.error(`Failed to upload documents: ${response.status}`);
+        toast.error(`Failed to upload documents: ${documentResponse?.status || 'Unknown error'}`);
       }
     } catch (error) {
       toast.error("Error uploading documents. Please try again.");
@@ -435,6 +506,42 @@ const EmployeeRegistration: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md">
       {step === 1 ? (
         <form onSubmit={handleSubmitDetails} className="space-y-6">
+          {/* Profile Picture Upload Section */}
+          <div className="flex justify-center mb-8">
+            <div className="text-center">
+              <div className="w-32 h-32 mx-auto mb-4 border-2 border-gray-300 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center">
+                {documents.photo ? (
+                  <img
+                    src={URL.createObjectURL(documents.photo)}
+                    alt="Profile Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-gray-400 text-center p-4">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="text-xs">No Photo</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  <TranslatableText text="Profile Picture" />
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "photo")}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                />
+                <p className="text-xs text-gray-500">
+                  <TranslatableText text="Upload profile picture (Optional)" />
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -580,16 +687,35 @@ const EmployeeRegistration: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 <TranslatableText text="Date of Birth" />
               </label>
-              <input
-                type="date"
-                name="DOB"
-                value={employeeDetails.DOB}
-                onChange={handleInputChange}
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  name="DOB"
+                  value={employeeDetails.DOB}
+                  onChange={handleInputChange}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="mt-1 px-3 pr-10 block w-full h-10 sm:h-11 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 text-sm sm:text-base transition-colors duration-200 hover:border-gray-400"
+                  required
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -631,16 +757,35 @@ const EmployeeRegistration: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 <TranslatableText text="Date of Joining" />
               </label>
-              <input
-                type="date"
-                name="date_of_joining"
-                value={employeeDetails.date_of_joining}
-                onChange={handleInputChange}
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  name="date_of_joining"
+                  value={employeeDetails.date_of_joining}
+                  onChange={handleInputChange}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="mt-1 px-3 pr-10 block w-full h-10 sm:h-11 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 text-sm sm:text-base transition-colors duration-200 hover:border-gray-400"
+                  required
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex justify-start space-x-4">

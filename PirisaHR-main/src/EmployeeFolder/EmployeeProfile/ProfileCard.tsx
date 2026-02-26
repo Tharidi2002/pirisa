@@ -36,14 +36,14 @@ export const ProfileCard = ({
     }
 
     const formData = new FormData();
-    formData.append("photo", file);
+    formData.append("profileImage", file);
 
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/document/update/${empId}`,
+        `http://localhost:8080/api/profile-image/upload/${empId}`,
         {
-          method: "PUT",
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -51,14 +51,13 @@ export const ProfileCard = ({
         }
       );
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (data.resultCode === 100) {
         toast.success("Profile picture updated successfully!");
         onPhotoUploaded();
       } else {
-        const errorData = await response.json();
-        toast.error(
-          errorData.message || "Failed to update profile picture."
-        );
+        toast.error(data.resultDesc || "Failed to update profile picture.");
       }
     } catch (error) {
       console.error("Error uploading file:", error);

@@ -519,7 +519,9 @@ public class EmployeeService {
 
             EmpDetailsDocumentsDTO documentDTO = (employee.getDocuments() != null) ?
                     new EmpDetailsDocumentsDTO(
-                            employee.getDocuments().getPhoto()) : null;
+                            employee.getDocuments().getPhoto(),
+                            employee.getDocuments().getPhoto() != null ? 
+                                "http://localhost:8080/api/profile-image/view/" + employee.getId() : null) : null;
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),

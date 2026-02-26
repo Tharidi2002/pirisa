@@ -25,6 +25,9 @@ interface Attendance {
   dob: string;
   status: string;
   basicSalary: number;
+  photo?: {
+    photoUrl?: string;
+  };
   attendanceList: {
     id: number;
     startedAt: string;
@@ -192,6 +195,31 @@ const AttendanceTable = () => {
     : [];
 
   const columns: Column<Attendance>[] = [
+    {
+      key: "photo",
+      title: "Photo",
+      render: (item) => (
+        <div className="flex items-center justify-center">
+          {item.photo?.photoUrl ? (
+            <img
+              src={item.photo.photoUrl}
+              alt={`${item.firstName} ${item.lastName}`}
+              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+              onError={(e) => {
+                // Fallback to default avatar on error
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.firstName}+${item.lastName}&background=6366f1&color=fff&size=40`;
+              }}
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <span className="text-xs font-medium text-gray-600">
+                {item.firstName.charAt(0)}{item.lastName.charAt(0)}
+              </span>
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       key: "name",
       title: "Name",

@@ -122,4 +122,8 @@ public class DocumentService {
     public Documents updateDocument(Documents documents) {
         return documentRepository.save(documents);
     }
+
+    public Documents saveDocument(Documents documents) {
+        return documentRepository.save(documents);
+    }
 }

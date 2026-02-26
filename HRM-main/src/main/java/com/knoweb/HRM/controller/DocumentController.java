@@ -169,14 +169,13 @@ public class DocumentController {
     @PutMapping(value = "/update/{emp_id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Documents> updateDocuments(
             @PathVariable long emp_id,
-            @RequestPart(required = false) MultipartFile birthCertificate,
+            @RequestParam(required = false) MultipartFile birthCertificate,
             @RequestParam(required = false) MultipartFile cv,
             @RequestParam(required = false) MultipartFile idCopy,
             @RequestParam(required = false) MultipartFile policeReport,
             @RequestParam(required = false) MultipartFile bankPassbook,
             @RequestParam(required = false) MultipartFile appointmentLetter,
             @RequestParam(required = false) MultipartFile photo
-
 
     ) throws IOException {
         Optional<Documents> existing = documentService.getDocumentsByempId(emp_id);

@@ -157,7 +157,7 @@ const EmployeeProfile = () => {
 
       // Fetch employee photo
       const photoResponse = await fetch(
-        `http://localhost:8080/document/view/emp/${empId}/photo`,
+        `http://localhost:8080/api/profile-image/view/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -191,15 +191,24 @@ const EmployeeProfile = () => {
 
     for (const docType of documentTypes) {
       try {
-        const response = await fetch(
-          `http://localhost:8080/document/view/emp/${empId}/${docType}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        availability[docType] = response.ok;
+        // Use profile image API for photo, document API for others
+        const url = docType === "photo" 
+          ? `http://localhost:8080/api/profile-image/exists/${empId}`
+          : `http://localhost:8080/document/view/emp/${empId}/${docType}`;
+          
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        // For photo, check the response body for hasProfileImage flag
+        if (docType === "photo") {
+          const data = await response.json();
+          availability[docType] = data.hasProfileImage || false;
+        } else {
+          availability[docType] = response.ok;
+        }
       } catch {
         availability[docType] = false;
       }
@@ -221,7 +230,11 @@ const EmployeeProfile = () => {
         throw new Error("Authentication required");
       }
 
-      const url = `http://localhost:8080/document/view/emp/${empId}/${documentType}`;
+      // Use profile image API for photo, document API for others
+      const url = documentType === "photo" 
+        ? `http://localhost:8080/api/profile-image/view/${empId}`
+        : `http://localhost:8080/document/view/emp/${empId}/${documentType}`;
+        
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,

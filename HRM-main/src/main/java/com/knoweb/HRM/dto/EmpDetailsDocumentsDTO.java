@@ -12,5 +12,12 @@ import java.sql.Blob;
 public class EmpDetailsDocumentsDTO {
     
     private byte[] photo;
+    private String photoUrl;
+
+    // Constructor for backward compatibility
+    public EmpDetailsDocumentsDTO(byte[] photo) {
+        this.photo = photo;
+        this.photoUrl = null;
+    }
 
 }

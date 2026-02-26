@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/profile-image")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:5174"})
 public class ProfileImageController {
 
     @Autowired
@@ -53,7 +53,7 @@ public class ProfileImageController {
                 Documents newDocuments = new Documents();
                 newDocuments.setEmpId(empId);
                 newDocuments.setPhoto(profileImage.getBytes());
-                documentService.uploadAllDocuments(empId, null, null, null, null, null, profileImage, null);
+                documentService.saveDocument(newDocuments);
             }
 
             ProfileImageResponse response = ProfileImageResponse.success(
