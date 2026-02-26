@@ -67,6 +67,74 @@ public class CompanyLeaveController {
         }
     }
 
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<?> getLeaveById(@PathVariable Long id) {
+        try {
+            return companyLeaveService.getLeaveById(id)
+                    .map(leave -> {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("resultCode", 100);
+                        response.put("resultDesc", "Successful");
+                        response.put("leave", leave);
+                        return ResponseEntity.ok(response);
+                    })
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Collections.singletonMap("message", "Leave not found")));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching leave"));
+        }
+    }
+
+    @PutMapping(value = "/update_leave", produces = {"application/json"})
+    public ResponseEntity<?> updateLeave(@RequestBody CompanyLeave companyLeave) {
+        try {
+            if (!companyLeaveService.getLeaveById(companyLeave.getId()).isPresent()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Leave not found");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+
+            CompanyLeave updatedLeave = companyLeaveService.updateLeave(companyLeave);
+            Map<String, Object> leaveResponse = new HashMap<>();
+            leaveResponse.put("resultCode", 100);
+            leaveResponse.put("resultDesc", "Successfully Updated");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("Update_Leave", updatedLeave);
+            responseBody.put("response", leaveResponse);
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @DeleteMapping(value = "/{id}", produces = {"application/json"})
+    public ResponseEntity<?> deleteLeave(@PathVariable Long id) {
+        try {
+            companyLeaveService.deleteLeave(id);
+
+            Map<String, Object> leaveResponse = new HashMap<>();
+            leaveResponse.put("resultCode", 100);
+            leaveResponse.put("resultDesc", "Successfully Deleted");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("id", id);
+            responseBody.put("response", leaveResponse);
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         Map<String, Object> errorResponse = new HashMap<>();

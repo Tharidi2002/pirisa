@@ -23,6 +23,7 @@ public class CompanyLeave implements Serializable {
 
     private String leaveType;
 
+    @Column(name = "amount")
     private int amount;
 
     @Column(name = "cmp_id")
