@@ -47,10 +47,6 @@ public class AllowanceController {
     public ResponseEntity<?> getAllowanceByCompanyId(@PathVariable long cmpId) {
         try {
             List<Allowance> allowances = allowanceService.getAllowanceByCompanyId(cmpId);
-            if (allowances.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Allowance found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -61,6 +57,74 @@ public class AllowanceController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "An error occurred while fetching Allowance"));
+        }
+    }
+
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<?> getAllowanceById(@PathVariable Long id) {
+        try {
+            return allowanceService.getAllowanceById(id)
+                    .map(allowance -> {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("resultCode", 100);
+                        response.put("resultDesc", "Successful");
+                        response.put("allowance", allowance);
+                        return ResponseEntity.ok(response);
+                    })
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Collections.singletonMap("message", "Allowance not found")));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching allowance"));
+        }
+    }
+
+    @PutMapping(value = "/update_allowance", produces = {"application/json"})
+    public ResponseEntity<?> updateAllowance(@RequestBody Allowance allowance) {
+        try {
+            if (!allowanceService.getAllowanceById(allowance.getId()).isPresent()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Allowance not found");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+
+            Allowance updatedAllowance = allowanceService.updateAllowance(allowance);
+            Map<String, Object> allowanceResponse = new HashMap<>();
+            allowanceResponse.put("resultCode", 100);
+            allowanceResponse.put("resultDesc", "Successfully Updated");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("Update_Allowance", updatedAllowance);
+            responseBody.put("response", allowanceResponse);
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @DeleteMapping(value = "/{id}", produces = {"application/json"})
+    public ResponseEntity<?> deleteAllowance(@PathVariable Long id) {
+        try {
+            allowanceService.deleteAllowance(id);
+
+            Map<String, Object> allowanceResponse = new HashMap<>();
+            allowanceResponse.put("resultCode", 100);
+            allowanceResponse.put("resultDesc", "Successfully Deleted");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("id", id);
+            responseBody.put("response", allowanceResponse);
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
-import { FaEdit, FaSave, FaPlus, FaTag } from "react-icons/fa";
+import { FaEdit, FaSave, FaPlus, FaTrash, FaTag } from "react-icons/fa";
 import axios from "axios";
 
 // Define types
@@ -26,6 +26,10 @@ const AllowanceSettings: React.FC = () => {
     name: "",
     epfEligibleStatus: "yes",
   });
+
+  // Helper function to get token
+  const getToken = () => localStorage.getItem("token");
+  const getCmpId = () => localStorage.getItem("cmpnyId");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,7 +60,7 @@ const AllowanceSettings: React.FC = () => {
         }
       );
 
-      //console.log("API Response:", response); // Log the full response
+      console.log("API Response:", response); // Debug log
 
       if (
         response.status === 200 &&
@@ -77,13 +81,15 @@ const AllowanceSettings: React.FC = () => {
             epfEligibleStatus: item.epfEligibleStatus,
           })
         );
+        console.log("Mapped Allowances:", fetchedAllowances); // Debug log
         setAllowances(fetchedAllowances);
       } else {
-        // alert('Failed to fetch allowances. Invalid response.');
+        console.log("Invalid response:", response.data);
+        alert('Failed to fetch allowances. Invalid response.');
       }
     } catch (error) {
       console.error("Error fetching allowances:", error);
-      // alert('An error occurred while fetching allowances.');
+      alert('An error occurred while fetching allowances.');
     }
   };
 
@@ -106,12 +112,50 @@ const AllowanceSettings: React.FC = () => {
   };
 
   // Handle saving edited allowance
-  const handleSaveClick = (): void => {
-    const updatedAllowances = allowances.map((allowance) =>
-      allowance.id === editingId ? { ...allowance, ...editFormData } : allowance
-    );
-    setAllowances(updatedAllowances);
-    setEditingId(null);
+  const handleSaveClick = async (): Promise<void> => {
+    const token = getToken();
+    const cmpId = getCmpId();
+
+    if (!token || !cmpId) {
+      alert("Token or Company ID is missing. Please log in again.");
+      return;
+    }
+
+    try {
+      const payload = {
+        id: editingId,
+        allowanceName: editFormData.name,
+        epfEligibleStatus: editFormData.epfEligibleStatus,
+        cmpId: parseInt(cmpId, 10),
+      };
+
+      console.log("Update Payload:", payload); // Debug log
+
+      const response = await axios.put(
+        "http://localhost:8080/allowance/update_allowance",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Update Response:", response); // Debug log
+
+      if (response.status === 200) {
+        console.log("Update successful, refreshing list...");
+        await fetchAllowances(); // Refresh the list
+        console.log("List refreshed after update");
+        setEditingId(null);
+      } else {
+        console.log("Update Failed:", response);
+        alert("Failed to update allowance.");
+      }
+    } catch (error) {
+      console.error("Error updating allowance:", error);
+      alert("An error occurred while updating the allowance.");
+    }
   };
 
   // Handle adding new allowance
@@ -145,6 +189,8 @@ const AllowanceSettings: React.FC = () => {
         cmpId: parseInt(cmpId, 10),
       };
 
+      console.log("Add Payload:", payload); // Debug log
+
       try {
         const response = await axios.post(
           "http://localhost:8080/allowance/add_allowance",
@@ -156,12 +202,15 @@ const AllowanceSettings: React.FC = () => {
           }
         );
 
+        console.log("Add Response:", response); // Debug log
+
         if (response.status === 200) {
           // Refresh the list of allowances after adding a new one
           fetchAllowances();
           setNewAllowance({ name: "", epfEligibleStatus: "yes" });
           setIsAddingNew(false);
         } else {
+          console.log("Add Failed:", response);
           alert("Failed to save the new allowance.");
         }
       } catch (error) {
@@ -175,6 +224,44 @@ const AllowanceSettings: React.FC = () => {
   const handleCancel = (): void => {
     setEditingId(null);
     setIsAddingNew(false);
+  };
+
+  // Handle deleting allowance
+  const handleDeleteClick = async (id: number): Promise<void> => {
+    if (confirm("Are you sure you want to delete this allowance?")) {
+      const token = getToken();
+
+      if (!token) {
+        alert("Token is missing. Please log in again.");
+        return;
+      }
+
+      try {
+        console.log("Deleting allowance with ID:", id);
+        const response = await axios.delete(
+          `http://localhost:8080/allowance/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("Delete Response:", response);
+
+        if (response.status === 200) {
+          console.log("Delete successful, refreshing list...");
+          await fetchAllowances(); // Refresh the list
+          console.log("List refreshed after delete");
+        } else {
+          console.log("Delete Failed:", response);
+          alert("Failed to delete allowance.");
+        }
+      } catch (error) {
+        console.error("Error deleting allowance:", error);
+        alert("An error occurred while deleting the allowance.");
+      }
+    }
   };
 
   // Pagination logic
@@ -340,12 +427,18 @@ const AllowanceSettings: React.FC = () => {
                       {allowance.epfEligibleStatus === "yes" ? "Yes" : "No"}
                     </p>
                   </div>
-                  <div className="mt-3 text-right">
+                  <div className="mt-3 text-right flex gap-2 justify-end">
                     <button
                       onClick={() => handleEditClick(allowance)}
-                      className="text-sky-500 hover:text-sky-800 flex items-center gap-1 text-sm ml-auto"
+                      className="text-sky-500 hover:text-sky-800 flex items-center gap-1 text-sm"
                     >
                       <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(allowance.id)}
+                      className="text-red-500 hover:text-red-800 flex items-center gap-1 text-sm"
+                    >
+                      <FaTrash /> Delete
                     </button>
                   </div>
                 </>
