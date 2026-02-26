@@ -18,6 +18,13 @@ public class DesignationService {
     }
 
     public void deleteDesignation(Long designation_id) {
-        designationRepository.deleteById(designation_id);
+        try {
+            if (!designationRepository.existsById(designation_id)) {
+                throw new RuntimeException("Designation not found with id: " + designation_id);
+            }
+            designationRepository.deleteById(designation_id);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete designation: " + e.getMessage(), e);
+        }
     }
 }

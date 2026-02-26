@@ -39,6 +39,9 @@ const CompanySettings = () => {
     vat_no: "",
   });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchCompanyData = async () => {
       const token = localStorage.getItem("token");
@@ -79,6 +82,22 @@ const CompanySettings = () => {
             vat_no: companyDetails.vat_no || "",
           });
         }
+
+        // Fetch existing logo
+        const logoResponse = await fetch(
+          `http://localhost:8080/logo/view/${cmpId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (logoResponse.ok) {
+          const blob = await logoResponse.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setLogoPreview(imageUrl);
+        }
       } catch (err) {
         setError("Error fetching company data");
         console.error(err);
@@ -95,6 +114,18 @@ const CompanySettings = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -109,6 +140,7 @@ const CompanySettings = () => {
     }
 
     try {
+      // Update company details
       const response = await fetch(
         `http://localhost:8080/company/${cmpId}`,
         {
@@ -125,7 +157,28 @@ const CompanySettings = () => {
         throw new Error("Failed to update company data");
       }
 
-      //setSuccess("Company details updated successfully");
+      // Upload logo if a new one is selected
+      if (logoFile) {
+        const logoFormData = new FormData();
+        logoFormData.append("comId", cmpId);
+        logoFormData.append("logo", logoFile);
+
+        const logoResponse = await fetch(
+          "http://localhost:8080/logo/upload",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: logoFormData,
+          }
+        );
+
+        if (!logoResponse.ok) {
+          throw new Error("Failed to upload logo");
+        }
+      }
+
       toast.success("Company details updated successfully");
     } catch (err) {
       setError("Error updating company data");
@@ -155,6 +208,49 @@ const CompanySettings = () => {
             >
               Back to Profile
             </button>
+          </div>
+
+          {/* Company Logo Section */}
+          <div className="mb-8 flex flex-col items-center">
+            <div className="relative">
+              <img
+                className="w-32 h-32 rounded-full border-4 border-gray-300 object-cover"
+                src={logoPreview || "https://via.placeholder.com/150"}
+                alt="Company Logo"
+              />
+              <label
+                htmlFor="logo-upload"
+                className="absolute bottom-0 right-0 bg-sky-500 text-white p-2 rounded-full cursor-pointer hover:bg-sky-600 transition"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </label>
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="hidden"
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500">Click camera icon to change logo</p>
           </div>
 
           {error && (

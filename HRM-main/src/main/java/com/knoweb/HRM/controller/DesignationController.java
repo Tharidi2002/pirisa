@@ -55,6 +55,11 @@ public class DesignationController {
             responseBody.put("response", designationResponse);
 
             return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return handleException(e);
         }
