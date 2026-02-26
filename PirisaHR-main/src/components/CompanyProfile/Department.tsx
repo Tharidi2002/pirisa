@@ -41,9 +41,9 @@ const Department = () => {
     designation: "",
     dptId: 1,
   });
-  const [expandedDepartment, setExpandedDepartment] = useState<number | null>(
-    null
-  );
+  // const [expandedDepartment, setExpandedDepartment] = useState<number | null>(
+  //   null
+  // );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -298,8 +298,8 @@ const Department = () => {
     // Client-side validation for duplicates (only for new departments)
     if (!currentDepartment.id) {
       const isDuplicate = departments.some(dept => 
-        dept.dpt_code.toLowerCase() === currentDepartment.dpt_code.toLowerCase() ||
-        dept.dpt_name.toLowerCase() === currentDepartment.dpt_name.toLowerCase()
+        dept.dpt_code?.toLowerCase() === currentDepartment.dpt_code?.toLowerCase() ||
+        dept.dpt_name?.toLowerCase() === currentDepartment.dpt_name?.toLowerCase()
       );
 
       if (isDuplicate) {
@@ -341,9 +341,9 @@ const Department = () => {
     }
   };
 
-  const toggleDepartmentExpand = (id: number) => {
-    setExpandedDepartment(expandedDepartment === id ? null : id);
-  };
+  // const toggleDepartmentExpand = (id: number) => {
+  //   setExpandedDepartment(expandedDepartment === id ? null : id);
+  // };
 
   const handleDeleteDepartment = async (id: number) => {
     if (
@@ -394,7 +394,7 @@ const Department = () => {
       if (response.data.resultCode === 100 && Array.isArray(response.data.DepartmentList)) {
         setFilteredDepartments(response.data.DepartmentList);
       }
-    } catch (err) {
+    } catch {
       // If API fails, do client-side filtering
       const filtered = departments.filter(dept =>
         dept.dpt_name.toLowerCase().includes(query.toLowerCase()) ||

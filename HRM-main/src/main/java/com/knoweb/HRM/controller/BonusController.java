@@ -64,6 +64,53 @@ public class BonusController {
         }
     }
 
+    @PutMapping(value = "/update/{id}", produces = {"application/json"})
+    public ResponseEntity<?> updateBonus(@PathVariable Long id, @RequestBody Bonus bonus) {
+        try {
+            // Set the ID from path variable
+            bonus.setId(id);
+            
+            Bonus updatedBonus = bonusService.updateBonus(bonus);
+            if (updatedBonus != null) {
+                Map<String, Object> bonusResponse = new HashMap<>();
+                bonusResponse.put("resultCode", 100);
+                bonusResponse.put("resultDesc", "Successfully Updated");
+
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("Updated_Bonus", updatedBonus);
+                responseBody.put("response", bonusResponse);
+
+                return new ResponseEntity<>(responseBody, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @DeleteMapping(value = "/delete/{id}", produces = {"application/json"})
+    public ResponseEntity<?> deleteBonus(@PathVariable Long id) {
+        try {
+            boolean deleted = bonusService.deleteBonus(id);
+            if (deleted) {
+                Map<String, Object> bonusResponse = new HashMap<>();
+                bonusResponse.put("resultCode", 100);
+                bonusResponse.put("resultDesc", "Successfully Deleted");
+
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("id", id);
+                responseBody.put("response", bonusResponse);
+
+                return new ResponseEntity<>(responseBody, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         Map<String, Object> errorResponse = new HashMap<>();

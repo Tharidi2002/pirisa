@@ -81,8 +81,13 @@ public class DocumentService {
     }
 
     public byte[] viewDocument1(Long empId, String fieldName) {
-        Documents document = (Documents) documentRepository.findByEmpId(empId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+        Optional<Documents> documentOpt = documentRepository.findByempId(empId);
+        
+        if (!documentOpt.isPresent()) {
+            return null; // Return null instead of throwing exception
+        }
+        
+        Documents document = documentOpt.get();
 
         switch (fieldName) {
             case "cv":
@@ -110,7 +115,7 @@ public class DocumentService {
 
 
     public Optional<Documents> getDocumentsByempId(long emp_id) {
-        //logger.info("Fetching SKU by id {}", skuId);
+        //logger.info("Fetching documents by empId {}", emp_id);
         return documentRepository.findByempId(emp_id);
     }
 

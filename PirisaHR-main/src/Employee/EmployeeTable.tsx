@@ -152,6 +152,7 @@ const EmployeeTable = () => {
 
         if (existsResponse.ok) {
           const existsData = await existsResponse.json();
+          
           if (existsData.hasProfileImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
@@ -170,8 +171,10 @@ const EmployeeTable = () => {
             }
           }
         }
+        
         return { id: employee.id, url: null };
-      } catch {
+      } catch (error) {
+        console.error(`Error fetching photo for employee ${employee.id}:`, error);
         return { id: employee.id, url: null };
       }
     });
@@ -292,6 +295,7 @@ const EmployeeTable = () => {
       title: "Photo",
       render: (item) => {
         const imageUrl = photoUrls[item.id];
+        
         return (
           <div className="flex items-center justify-center w-10 h-10">
             {imageUrl ? (
