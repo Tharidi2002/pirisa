@@ -77,6 +77,21 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    return () => {
+      setPhotoUrl((prev) => {
+        if (prev) {
+          try {
+            URL.revokeObjectURL(prev);
+          } catch {
+            // no-op
+          }
+        }
+        return null;
+      });
+    };
+  }, []);
+
   const checkDocumentAvailability = async (empId: number, token: string) => {
     const documentTypes = [
       "birthCertificate",
@@ -99,7 +114,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
             },
           }
         );
-        availability[docType] = response.ok;
+        availability[docType] = response.ok && response.status !== 204;
       } catch {
         availability[docType] = false;
       }
@@ -184,19 +199,64 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           await checkDocumentAvailability(id, token);
 
           // Fetch employee photo
-          const photoResponse = await fetch(
-            `http://localhost:8080/document/view/emp/${id}/photo`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          try {
+            const existsResp = await fetch(
+              `http://localhost:8080/api/profile-image/exists/${id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
 
-          if (photoResponse.ok) {
-            const photoBlob = await photoResponse.blob();
-            const photoObjectUrl = URL.createObjectURL(photoBlob);
-            setPhotoUrl(photoObjectUrl);
+            if (existsResp.ok) {
+              const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+                await existsResp.json();
+              const hasImage = Boolean(
+                existsData?.hasProfileImage ?? existsData?.exists
+              );
+
+              if (hasImage) {
+                const imgResp = await fetch(
+                  `http://localhost:8080/api/profile-image/view/${id}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+
+                if (imgResp.ok) {
+                  const blob = await imgResp.blob();
+                  if (blob && blob.size > 0) {
+                    const objUrl = URL.createObjectURL(blob);
+                    setPhotoUrl((prev) => {
+                      if (prev) {
+                        try {
+                          URL.revokeObjectURL(prev);
+                        } catch {
+                          // no-op
+                        }
+                      }
+                      return objUrl;
+                    });
+                  }
+                }
+              } else {
+                setPhotoUrl((prev) => {
+                  if (prev) {
+                    try {
+                      URL.revokeObjectURL(prev);
+                    } catch {
+                      // no-op
+                    }
+                  }
+                  return null;
+                });
+              }
+            }
+          } catch {
+            // ignore photo failures; keep fallback avatar
           }
         } catch (err) {
           setError(err instanceof Error ? err.message : "An error occurred");
@@ -271,6 +331,15 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.status === 204) {
+        setError(
+          `${documentType
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, (str) => str.toUpperCase())} is not available for this employee`
+        );
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to fetch document");

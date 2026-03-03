@@ -8,24 +8,38 @@ import EmployeeGenderCard from "../components/dashboard/GenderChart";
 import LeaveRequestTable from "../components/dashboard/LeaveRequestTable";
 
 const DashboardPage = () => (
-  <div className="flex flex-col gap-5">
-    <div className="gap-2.5 flex flex-col md:flex-row">
-      <RealtimeInsightCard />
-      <AttendanceStatsCard />
+  <div className="flex flex-col gap-5 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-4">
+        <RealtimeInsightCard />
+      </div>
+      <div className="lg:col-span-8">
+        <AttendanceStatsCard />
+      </div>
     </div>
-    <div className="gap-2.5 mt-2.5 flex flex-col md:flex-row">
-      <EmployeeGenderCard />
-      <EmployeeGrowthChart />
+
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-4">
+        <EmployeeGenderCard />
+      </div>
+      <div className="lg:col-span-8">
+        <EmployeeGrowthChart />
+      </div>
     </div>
-    <AttendanceChart />
-    <div className="gap-2.5 mt-2.5 flex flex-col md:flex-row">
-      <div className="flex-1 md:flex-[3]">
+
+    <div className="w-full">
+      <AttendanceChart />
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-8">
         <LeaveRequestTable />
       </div>
-      <div className="flex-1 md:flex-[2]">
+      <div className="lg:col-span-4">
         <DepartmentStats />
       </div>
     </div>
+
     <CandidatesListTable />
   </div>
 );

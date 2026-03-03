@@ -259,7 +259,7 @@
 
 // export default CandidatesListTable;
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Table from "../table/Table";
 
 interface Column<t>{
@@ -269,102 +269,90 @@ interface Column<t>{
   className?: string;
 }
 
-interface CandidatesList{
+interface CandidatesList {
   id: string;
   name: string;
   email: string;
-  closeDate: string;
-  applyDate: string;
   department: string;
   position: string;
-  cv: string;
-  interviewDate: string;
+  joined: string;
   [key: string]: string | undefined;
+}
+
+interface EmpDetailsDTO {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfJoining?: string;
+  department?: { dpt_name?: string };
+  designation?: { designation?: string };
 }
 
 const CandidatesListTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
 
-    const data: CandidatesList[] = [
-        {
-          id: "1",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "2",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "3",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "4",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "5",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "6",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
-        },
-        {
-          id: "7",
-          name: "John Doe",
-          email: "johndoe@gmail.com",
-          closeDate: "2024-10-10",
-          applyDate: "2024-10-10",
-          department: "Software Engineering",
-          position: "Software Engineer",
-          cv: "https://example.com/johndoe",
-          interviewDate: "2024-10-15"
+    const [employees, setEmployees] = useState<EmpDetailsDTO[]>([]);
+
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      const cmpnyId = localStorage.getItem("cmpnyId");
+      if (!token || !cmpnyId) {
+        setEmployees([]);
+        return;
+      }
+
+      const controller = new AbortController();
+
+      (async () => {
+        try {
+          const res = await fetch(
+            `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              signal: controller.signal,
+            }
+          );
+
+          if (!res.ok) {
+            setEmployees([]);
+            return;
+          }
+
+          const json = await res.json();
+          if (json?.resultCode === 100 && Array.isArray(json?.EmployeeList)) {
+            setEmployees(json.EmployeeList);
+          } else {
+            setEmployees([]);
+          }
+        } catch {
+          setEmployees([]);
         }
-    ];
+      })();
+
+      return () => controller.abort();
+    }, []);
+
+    const data: CandidatesList[] = useMemo(() => {
+      const formatDateOnly = (value?: string) => {
+        if (!value) return "";
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? value : d.toISOString().slice(0, 10);
+      };
+
+      return employees.map((e) => ({
+        id: String(e.id),
+        name: `${e.firstName || ""} ${e.lastName || ""}`.trim() || "-",
+        email: e.email || "-",
+        department: e.department?.dpt_name || "-",
+        position: e.designation?.designation || "-",
+        joined: formatDateOnly(e.dateOfJoining),
+      }));
+    }, [employees]);
 
   const totalPages = Math.ceil(data.length / rowsPerPage);
 
@@ -401,14 +389,6 @@ const CandidatesListTable = () => {
       render:(item) => <span className="text-gray-600">{item.email}</span>
     },
     {
-      key: "closeDate",
-      title: "Close Date",
-render:(item) => <span className="text-gray-600">{item.closeDate}</span> },
-    {
-      key: "applyDate",
-      title: "Apply Date",
-render:(item) => <span className="text-gray-600">{item.applyDate}</span> },
-    {
       key: "department",
       title: "Department",
 render:(item) => <span className="text-gray-600">{item.department}</span> },
@@ -417,25 +397,10 @@ render:(item) => <span className="text-gray-600">{item.department}</span> },
       title: "Position",
 render:(item) => <span className="text-gray-600">{item.position}</span> },
     {
-      key: "cv",
-      title: "CV",
-      render: (item) => (
-        <div className="flex items-center gap-2">
-          <a 
-            href={item.cv} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          >
-            {item.name.split(' ')[0]}_CV.pdf
-          </a>
-        </div>
-      )
-    },
-    {
-      key: "interviewDate",
-      title: "Interview Date",
-render:(item) => <span className="text-gray-600">{item.interviewDate}</span> }
+      key: "joined",
+      title: "Joined",
+      render: (item) => <span className="text-gray-600">{item.joined}</span>,
+    }
   ]
 
   return(
@@ -443,6 +408,7 @@ render:(item) => <span className="text-gray-600">{item.interviewDate}</span> }
       columns={columns}
       data={data}
       title="Candidates List"
+      rowClickable={false}
       pagination={{
         currentPage,
         totalPages,

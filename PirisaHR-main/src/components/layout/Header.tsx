@@ -50,6 +50,21 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+    return () => {
+      setLogoUrl((prev) => {
+        if (prev) {
+          try {
+            URL.revokeObjectURL(prev);
+          } catch {
+            // no-op
+          }
+        }
+        return null;
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     const storedRole = localStorage.getItem("role");
     setRole(storedRole);
   }, []);
@@ -111,8 +126,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
         // If employee, try to fetch employee photo first
         if (role === "EMPLOYEE" && empId) {
           try {
-            const response = await fetch(
-              `http://localhost:8080/document/view/emp/${empId}/photo`,
+            const existsResp = await fetch(
+              `http://localhost:8080/api/profile-image/exists/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -120,12 +135,40 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
               }
             );
 
-            if (response.ok) {
-              const blob = await response.blob();
-              if (blob.size > 0) {
-                const imageUrl = URL.createObjectURL(blob);
-                setLogoUrl(imageUrl);
-                return;
+            if (existsResp.ok) {
+              const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+                await existsResp.json();
+              const hasImage = Boolean(
+                existsData?.hasProfileImage ?? existsData?.exists
+              );
+
+              if (hasImage) {
+                const response = await fetch(
+                  `http://localhost:8080/api/profile-image/view/${empId}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+
+                if (response.ok) {
+                  const blob = await response.blob();
+                  if (blob && blob.size > 0) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    setLogoUrl((prev) => {
+                      if (prev) {
+                        try {
+                          URL.revokeObjectURL(prev);
+                        } catch {
+                          // no-op
+                        }
+                      }
+                      return imageUrl;
+                    });
+                    return;
+                  }
+                }
               }
             }
           } catch (error) {

@@ -83,13 +83,13 @@ const SalaryStatusTable = () => {
           }
         );
 
-        if (!existsResp.ok) return;
+        if (!existsResp.ok) return { id: employee.id, url: null };
         const existsData: { hasProfileImage?: boolean; exists?: boolean } =
           await existsResp.json();
         const hasImage = Boolean(
           existsData?.hasProfileImage ?? existsData?.exists
         );
-        if (!hasImage) return;
+        if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
           `http://localhost:8080/api/profile-image/view/${employee.id}`,

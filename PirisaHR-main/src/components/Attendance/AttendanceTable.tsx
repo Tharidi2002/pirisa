@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Table from "../table/Table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import DateFilter from "../Filters/DateFilter"; // Import the DateFilter component
 
 interface Column<T> {
@@ -87,13 +87,13 @@ const AttendanceTable = () => {
           }
         );
 
-        if (!existsResp.ok) return;
+        if (!existsResp.ok) return { id: employee.id, url: null };
         const existsData: { hasProfileImage?: boolean; exists?: boolean } =
           await existsResp.json();
         const hasImage = Boolean(
           existsData?.hasProfileImage ?? existsData?.exists
         );
-        if (!hasImage) return;
+        if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
           `http://localhost:8080/api/profile-image/view/${employee.id}`,
@@ -224,10 +224,6 @@ const AttendanceTable = () => {
     }
   };
 
-  const handleEdit = (id: number) => {
-    navigate(`/attendance/${id}`);
-  };
-
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -239,7 +235,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-        `http://localhost:8080/employee/attendance/${id}`,
+        `http://localhost:8080/attendance/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -377,13 +373,6 @@ const AttendanceTable = () => {
       title: "Actions",
       render: (item) => (
         <div className="flex space-x-2">
-          <button
-            onClick={() => handleEdit(item.id)}
-            className="p-2 rounded-lg bg-sky-100 hover:bg-sky-200 transition-colors"
-            aria-label="Edit"
-          >
-            <Pencil size={16} className="text-sky-600" />
-          </button>
           <button
             onClick={() => handleDelete(item.id)}
             className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"

@@ -8,30 +8,113 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
+import { useEffect, useMemo, useState } from "react";
+
 interface EmployeeData {
   month: string;
   male: number;
   female: number;
 }
 
-const data: EmployeeData[] = [
-  { month: 'Jan', male: 1200, female: 1100 },
-  { month: 'Feb', male: 1300, female: 600 },
-  { month: 'Mar', male: 950, female: 1300 },
-  { month: 'Apr', male: 750, female: 950 },
-  { month: 'May', male: 1100, female: 1200 },
-  { month: 'Jun', male: 400, female: 850 },
-  { month: 'Jul', male: 1200, female: 1100 },
-  { month: 'Aug', male: 1300, female: 600 },
-  { month: 'Sep', male: 950, female: 1300 },
-  { month: 'Oct', male: 750, female: 950 },
-  { month: 'Nov', male: 1100, female: 1200 },
-  { month: 'Dec', male: 400, female: 850 }
-];
+interface EmpDetailsDTO {
+  id: number;
+  gender?: string;
+  dateOfJoining?: string;
+}
 
 const EmployeeGrowthChart = () => {
+  const [employees, setEmployees] = useState<EmpDetailsDTO[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const cmpnyId = localStorage.getItem("cmpnyId");
+    if (!token || !cmpnyId) {
+      setEmployees([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (!res.ok) {
+          setEmployees([]);
+          return;
+        }
+
+        const json = await res.json();
+        if (json?.resultCode === 100 && Array.isArray(json?.EmployeeList)) {
+          setEmployees(json.EmployeeList);
+        } else {
+          setEmployees([]);
+        }
+      } catch {
+        setEmployees([]);
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
+
+  const data: EmployeeData[] = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const init = months.map((m) => ({ month: m, male: 0, female: 0 }));
+
+    const monthIndex = (value?: string) => {
+      if (!value) return null;
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.getMonth();
+    };
+
+    const normGender = (g?: string) => (g || "").toUpperCase().trim();
+
+    for (const e of employees) {
+      const idx = monthIndex(e.dateOfJoining);
+      if (idx === null) continue;
+      const gender = normGender(e.gender);
+      if (gender === "MALE") init[idx].male += 1;
+      else if (gender === "FEMALE") init[idx].female += 1;
+    }
+
+    return init;
+  }, [employees]);
+
+  const yMax = useMemo(() => {
+    const maxVal = Math.max(
+      0,
+      ...data.map((d) => Math.max(d.male || 0, d.female || 0))
+    );
+    return Math.max(5, Math.ceil(maxVal * 1.2));
+  }, [data]);
+
   return (
-    <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-sm">
+    <div className="w-full bg-white p-6 rounded-lg shadow-sm">
       <h2 className="text-xl font-semibold mb-6">Employees Growth</h2>
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -48,7 +131,7 @@ const EmployeeGrowthChart = () => {
             <YAxis
               tick={{ fill: '#6B7280' }}
               tickLine={{ stroke: '#6B7280' }}
-              domain={[0, 2000]}
+              domain={[0, yMax]}
             />
             <Legend
               wrapperStyle={{

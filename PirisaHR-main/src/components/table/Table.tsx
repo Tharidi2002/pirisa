@@ -30,6 +30,7 @@ interface TableProps<T extends BaseItem> {
   };
   className?: string;
   searchKeys?: string[];
+  rowClickable?: boolean;
 }
 
 const Table = <T extends BaseItem>({
@@ -39,6 +40,7 @@ const Table = <T extends BaseItem>({
   pagination,
   className = "",
   searchKeys = [],
+  rowClickable = true,
 }: TableProps<T>) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
@@ -171,8 +173,10 @@ const filteredData = useMemo(() => {
               filteredData.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-b-neutral-300 last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => openPopup(item)}
+                  className={`border-b border-b-neutral-300 last:border-b-0 hover:bg-gray-50 ${
+                    rowClickable ? "cursor-pointer" : ""
+                  }`}
+                  onClick={rowClickable ? () => openPopup(item) : undefined}
                 >
                   {columns.map((column) => (
                     <td
@@ -236,7 +240,7 @@ const filteredData = useMemo(() => {
     </div>
 
     {/* Popup Section */}
-    {isPopupOpen && selectedRowId && (
+    {rowClickable && isPopupOpen && selectedRowId && (
       <EmployeeDetailsPopup
         isOpen={isPopupOpen}
         onClose={closePopup}

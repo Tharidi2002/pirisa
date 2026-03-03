@@ -629,7 +629,9 @@ public class EmployeeService {
             employee.setAddress(updateEmployee.getAddress());
             employee.setDate_of_joining(updateEmployee.getDate_of_joining());
             employee.setNIC(updateEmployee.getNIC());
-            employee.setStatus(updateEmployee.getStatus());
+            if (updateEmployee.getStatus() != null && !updateEmployee.getStatus().trim().isEmpty()) {
+                employee.setStatus(updateEmployee.getStatus());
+            }
             employee.setCmpId(updateEmployee.getCmpId());
             employee.setDptId(updateEmployee.getDptId());
             employee.setDesignationId(updateEmployee.getDesignationId());

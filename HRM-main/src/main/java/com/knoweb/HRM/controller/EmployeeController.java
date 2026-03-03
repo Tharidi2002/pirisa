@@ -153,10 +153,6 @@ public class EmployeeController {
     public ResponseEntity<?> getLastAttendanceByCompanyId(@PathVariable long cmpId) {
         try {
             List<AttendanceEmployeeDTO> employees = employeeService.getLastAttendanceByCompanyId(cmpId);
-            if (employees.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Attendance List found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -221,10 +217,6 @@ public class EmployeeController {
     public ResponseEntity<?> getEmpDetailsByCompanyId(@PathVariable long cmp_id) {
         try {
             List<EmpDetailsDTO> employees = employeeService.getEmpDetailsByCompanyId(cmp_id);
-            if (employees.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Employee List found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -269,10 +261,6 @@ public class EmployeeController {
     public ResponseEntity<?> getPendingEmpDetailsByCompanyId(@PathVariable long cmp_id) {
         try {
             List<EmpDetailsDTO> employees = employeeService.getPendingEmpDetailsByCompanyId(cmp_id);
-            if (employees.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Employee List found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -293,10 +281,6 @@ public class EmployeeController {
     public ResponseEntity<?> getApprovedEmpDetailsByCompanyId(@PathVariable long cmp_id) {
         try {
             List<EmpDetailsDTO> employees = employeeService.getApprovedEmpDetailsByCompanyId(cmp_id);
-            if (employees.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Employee List found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -317,10 +301,6 @@ public class EmployeeController {
     public ResponseEntity<?> getRejectedEmpDetailsByCompanyId(@PathVariable long cmp_id) {
         try {
             List<EmpDetailsDTO> employees = employeeService.getRejectedEmpDetailsByCompanyId(cmp_id);
-            if (employees.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Employee List found for this company ID"));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
@@ -396,15 +376,6 @@ public class EmployeeController {
         try {
             List<AttendanceEmployeeDTO> list =
                     employeeService.getAttendanceByCompanyIdAndMonth(cmpId, month);
-
-            if (list.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap(
-                                "message",
-                                "No Attendance List found for company ID "
-                                        + cmpId + " in month " + month
-                        ));
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);

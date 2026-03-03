@@ -47,11 +47,6 @@ public class BonusController {
     public ResponseEntity<?> getBonusByCompanyId(@PathVariable long cmpId) {
         try {
             List<Bonus> bonuses = bonusService.getBonusByCompanyId(cmpId);
-            if (bonuses.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Bonuses found for this company ID"));
-            }
-
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
             response.put("resultDesc", "Successful");

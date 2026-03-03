@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -108,8 +109,8 @@ public class DocumentController {
 
             return new ResponseEntity<>(resource, headers, HttpStatus.OK);
         } catch (RuntimeException e) {
-            // Return 404 for missing documents instead of 500
-            return ResponseEntity.notFound().build();
+            // Missing documents are common (not uploaded). Return 204 to avoid noisy 404s in the UI.
+            return ResponseEntity.noContent().build();
         }
     }
 
@@ -132,6 +133,9 @@ public class DocumentController {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String,Object>> handleException(Exception e) {
+        if (isClientAbort(e)) {
+            return ResponseEntity.noContent().build();
+        }
         Map<String,Object> error = new HashMap<>();
         error.put("resultCode", 101);
         
@@ -151,6 +155,21 @@ public class DocumentController {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(error);
+    }
+
+    private boolean isClientAbort(Throwable t) {
+        Throwable cur = t;
+        while (cur != null) {
+            String name = cur.getClass().getName();
+            if (name.equals("org.apache.catalina.connector.ClientAbortException")) {
+                return true;
+            }
+            if (cur instanceof SocketTimeoutException) {
+                return true;
+            }
+            cur = cur.getCause();
+        }
+        return false;
     }
 
     /** Simple mapping from fieldName to MIME type. */

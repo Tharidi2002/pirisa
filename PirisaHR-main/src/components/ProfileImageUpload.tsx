@@ -20,8 +20,55 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const [compressionInfo, setCompressionInfo] = useState<CompressedImage | null>(null);
 
   useEffect(() => {
+    return () => {
+      if (profileImage) {
+        try {
+          URL.revokeObjectURL(profileImage);
+        } catch {
+          // no-op
+        }
+      }
+    };
+  }, [profileImage]);
+
+  useEffect(() => {
     checkProfileImageExists();
   }, [employeeId, token]);
+
+  const loadProfileImage = async () => {
+    try {
+      const resp = await fetch(
+        `http://localhost:8080/api/profile-image/view/${employeeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!resp.ok) {
+        return;
+      }
+
+      const blob = await resp.blob();
+      if (!blob || blob.size === 0) {
+        return;
+      }
+
+      setProfileImage((prev) => {
+        if (prev) {
+          try {
+            URL.revokeObjectURL(prev);
+          } catch {
+            // no-op
+          }
+        }
+        return URL.createObjectURL(blob);
+      });
+    } catch {
+      // ignore image failures
+    }
+  };
 
   const checkProfileImageExists = async () => {
     try {
@@ -42,7 +89,18 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
 
         if (hasImage) {
           // If image exists, load it
-          setProfileImage(`http://localhost:8080/api/profile-image/view/${employeeId}?t=${Date.now()}`);
+          await loadProfileImage();
+        } else {
+          setProfileImage((prev) => {
+            if (prev) {
+              try {
+                URL.revokeObjectURL(prev);
+              } catch {
+                // no-op
+              }
+            }
+            return null;
+          });
         }
       }
     } catch (error) {
@@ -114,9 +172,9 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           closeButton: true,
           pauseOnHover: true,
         });
-        setProfileImage(`http://localhost:8080/api/profile-image/view/${employeeId}?t=${Date.now()}`);
         setHasProfileImage(true);
         onImageChange?.(true);
+        await loadProfileImage();
       } else {
         toast.error(data.resultDesc || 'Failed to upload profile image', {
           position: 'top-center',
@@ -180,7 +238,16 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           closeButton: true,
           pauseOnHover: true,
         });
-        setProfileImage(null);
+        setProfileImage((prev) => {
+          if (prev) {
+            try {
+              URL.revokeObjectURL(prev);
+            } catch {
+              // no-op
+            }
+          }
+          return null;
+        });
         setHasProfileImage(false);
         onImageChange?.(false);
       } else {

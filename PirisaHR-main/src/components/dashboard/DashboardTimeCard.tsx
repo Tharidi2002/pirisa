@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FaSun, FaMoon } from "react-icons/fa";
 import { TranslatableText } from "../languages/TranslatableText";
 
@@ -56,7 +56,7 @@ const RealtimeInsightCard: React.FC = () => {
   });
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 w-80">
+    <div className="bg-white rounded-lg shadow-lg p-4 w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="text-gray-600">

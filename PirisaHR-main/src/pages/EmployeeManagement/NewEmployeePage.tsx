@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { TranslatableText, TranslatableOption } from "../../components/languages/TranslatableText";
+import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";

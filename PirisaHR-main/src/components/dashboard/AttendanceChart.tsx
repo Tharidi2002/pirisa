@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer
-} from 'recharts';
-import { SlidersHorizontal } from 'lucide-react';
+} from "recharts";
+import { SlidersHorizontal } from "lucide-react";
 
 // interface AttendanceData {
 //   date: string;
@@ -16,42 +16,95 @@ import { SlidersHorizontal } from 'lucide-react';
 //   highlight?: boolean;
 // }
 
-// Sample data for different time ranges
-const timeRangeData = {
-  Daily: [
-    { date: '01 Aug', value: 58 },
-    { date: '02 Aug', value: 70 },
-    { date: '03 Aug', value: 58 },
-    { date: '04 Aug', value: 72 },
-    { date: '07 Aug', value: 91, highlight: true },
-    { date: '08 Aug', value: 52 },
-    { date: '09 Aug', value: 70 },
-    { date: '10 Aug', value: 38 },
-    { date: '11 Aug', value: 48 },
-    { date: '14 Aug', value: 68 },
-    { date: '15 Aug', value: 58 },
-    { date: '16 Aug', value: 62 }
-  ],
-  Weekly: [
-    { date: 'Week 1', value: 65 },
-    { date: 'Week 2', value: 78, highlight: true },
-    { date: 'Week 3', value: 52 },
-    { date: 'Week 4', value: 63 }
-  ],
-  Monthly: [
-    { date: 'Jan', value: 62 },
-    { date: 'Feb', value: 70 },
-    { date: 'Mar', value: 85, highlight: true },
-    { date: 'Apr', value: 75 },
-    { date: 'May', value: 68 },
-    { date: 'Jun', value: 72 }
-  ]
-};
+type TimeRange = "Daily" | "Weekly" | "Monthly";
 
-type TimeRange = 'Daily' | 'Weekly' | 'Monthly';
+interface EmpDetailsDTO {
+  id: number;
+}
+
+interface AttendanceDTO {
+  id: number;
+  startedAt?: string;
+  attendance_status?: string;
+}
+
+interface AttendanceEmployeeDTO {
+  id: number;
+  attendanceList?: AttendanceDTO[];
+}
+
+interface ChartPoint {
+  date: string;
+  value: number;
+  highlight?: boolean;
+}
 
 const AttendanceChart = () => {
-  const [selectedRange, setSelectedRange] = useState<TimeRange>('Daily');
+  const [selectedRange, setSelectedRange] = useState<TimeRange>("Daily");
+
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [attendanceEmployees, setAttendanceEmployees] = useState<AttendanceEmployeeDTO[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const cmpnyId = localStorage.getItem("cmpnyId");
+    if (!token || !cmpnyId) {
+      setTotalEmployees(0);
+      setAttendanceEmployees([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const month = new Date().getMonth() + 1;
+
+    (async () => {
+      try {
+        const [empRes, attRes] = await Promise.all([
+          fetch(`http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          }),
+          fetch(`http://localhost:8080/employee/attendanceList/${cmpnyId}/${month}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          }),
+        ]);
+
+        if (empRes.ok) {
+          const empJson = await empRes.json();
+          if (empJson?.resultCode === 100 && Array.isArray(empJson?.EmployeeList)) {
+            setTotalEmployees((empJson.EmployeeList as EmpDetailsDTO[]).length);
+          } else {
+            setTotalEmployees(0);
+          }
+        } else {
+          setTotalEmployees(0);
+        }
+
+        if (attRes.ok) {
+          const attJson = await attRes.json();
+          if (attJson?.resultCode === 100 && Array.isArray(attJson?.EmployeeList)) {
+            setAttendanceEmployees(attJson.EmployeeList as AttendanceEmployeeDTO[]);
+          } else {
+            setAttendanceEmployees([]);
+          }
+        } else {
+          setAttendanceEmployees([]);
+        }
+      } catch {
+        setTotalEmployees(0);
+        setAttendanceEmployees([]);
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
 
   interface CustomTooltipProps {
     active?: boolean;
@@ -69,18 +122,96 @@ const AttendanceChart = () => {
     return null;
   };
 
-  // Get current data based on selected time range
-  const currentData = timeRangeData[selectedRange];
+  const currentData: ChartPoint[] = useMemo(() => {
+    const denom = totalEmployees || 0;
+    if (!denom) return [];
+
+    const normalize = (v?: string) => (v || "").toUpperCase().trim();
+    const isPresent = (a?: AttendanceDTO) => normalize(a?.attendance_status) === "PRESENT";
+
+    // Aggregate by day-of-month for current month
+    const dayMap = new Map<number, number>();
+    for (const emp of attendanceEmployees) {
+      const list = Array.isArray(emp.attendanceList) ? emp.attendanceList : [];
+      for (const a of list) {
+        if (!a?.startedAt) continue;
+        const d = new Date(a.startedAt);
+        if (Number.isNaN(d.getTime())) continue;
+        const day = d.getDate();
+        if (isPresent(a)) dayMap.set(day, (dayMap.get(day) || 0) + 1);
+      }
+    }
+
+    const daily: ChartPoint[] = Array.from(dayMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([day, presentCount]) => {
+        const value = Math.round((presentCount / denom) * 100);
+        return { date: String(day).padStart(2, "0"), value };
+      });
+
+    if (selectedRange === "Daily") {
+      const maxVal = daily.reduce((m, p) => Math.max(m, p.value), 0);
+      return daily.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+    }
+
+    if (selectedRange === "Weekly") {
+      const weekMap = new Map<number, { presentSum: number; days: number }>();
+      for (const point of daily) {
+        const day = Number(point.date);
+        const week = Math.floor((day - 1) / 7) + 1;
+        const prev = weekMap.get(week) || { presentSum: 0, days: 0 };
+        weekMap.set(week, { presentSum: prev.presentSum + point.value, days: prev.days + 1 });
+      }
+
+      const weekly = Array.from(weekMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([w, agg]) => ({
+          date: `Week ${w}`,
+          value: agg.days ? Math.round(agg.presentSum / agg.days) : 0,
+        }));
+
+      const maxVal = weekly.reduce((m, p) => Math.max(m, p.value), 0);
+      return weekly.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+    }
+
+    // Monthly (current year): approximate using employees' month-wise attendance in current year
+    const year = new Date().getFullYear();
+    const monthMap = new Map<number, { presentDays: number; totalDays: number }>();
+    for (const emp of attendanceEmployees) {
+      const list = Array.isArray(emp.attendanceList) ? emp.attendanceList : [];
+      for (const a of list) {
+        if (!a?.startedAt) continue;
+        const d = new Date(a.startedAt);
+        if (Number.isNaN(d.getTime()) || d.getFullYear() !== year) continue;
+        const m = d.getMonth();
+        const prev = monthMap.get(m) || { presentDays: 0, totalDays: 0 };
+        monthMap.set(m, {
+          presentDays: prev.presentDays + (isPresent(a) ? 1 : 0),
+          totalDays: prev.totalDays + 1,
+        });
+      }
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthly: ChartPoint[] = monthNames.map((name, idx) => {
+      const agg = monthMap.get(idx);
+      const pct = agg && agg.totalDays ? Math.round((agg.presentDays / agg.totalDays) * 100) : 0;
+      return { date: name, value: pct };
+    });
+
+    const maxVal = monthly.reduce((m, p) => Math.max(m, p.value), 0);
+    return monthly.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+  }, [attendanceEmployees, selectedRange, totalEmployees]);
 
   return (
-    <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-sm">
+    <div className="w-full bg-white p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">
           Attendance Comparison Chart
         </h2>
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-4">
-            {['Daily', 'Weekly', 'Monthly'].map((range) => (
+            {["Daily", "Weekly", "Monthly"].map((range) => (
               <label
                 key={range}
                 className="flex items-center space-x-2 cursor-pointer"

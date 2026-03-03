@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { TranslatableText } from "../../components/languages/TranslatableText";
+import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileImageUpload from "../../components/ProfileImageUpload";
@@ -36,6 +36,18 @@ interface Designation {
   designation: string;
   dptId: number;
 }
+
+type UpdateEmployeeApiResponse = {
+  response?: {
+    resultCode?: number;
+    resultDesc?: string;
+  };
+  resultCode?: number;
+  resultDesc?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
 const EmployeeUpdate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,13 +98,17 @@ const EmployeeUpdate: React.FC = () => {
         setError(null);
         await fetchEmployeeDetails();
       };
-      fetchData();
+      void fetchData().catch((err) => {
+        console.error("Error in fetchData:", err);
+      });
     }
   }, [token, id]);
 
   useEffect(() => {
     if (employeeDetails.dptId && token) {
-      fetchDepartments();
+      void fetchDepartments().catch((err) => {
+        console.error("Error in fetchDepartments:", err);
+      });
     }
   }, [employeeDetails.dptId, token]);
 
@@ -274,12 +290,28 @@ const EmployeeUpdate: React.FC = () => {
       return;
     }
 
-    const formattedDOB = new Date(employeeDetails.DOB)
-      .toISOString()
-      .split("T")[0];
-    const formattedJoiningDate = new Date(employeeDetails.date_of_joining)
-      .toISOString()
-      .split("T")[0];
+    const formatDateOrThrow = (value: string, fieldName: string) => {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) {
+        throw new Error(`Invalid ${fieldName}`);
+      }
+      return d.toISOString().split("T")[0];
+    };
+
+    let formattedDOB: string;
+    let formattedJoiningDate: string;
+    try {
+      formattedDOB = formatDateOrThrow(employeeDetails.DOB, "Date of Birth");
+      formattedJoiningDate = formatDateOrThrow(
+        employeeDetails.date_of_joining,
+        "Date of Joining"
+      );
+    } catch (err) {
+      console.error("Date validation failed:", err);
+      toast.error("Please select valid dates for Date of Birth and Date of Joining");
+      setIsUpdating(false);
+      return;
+    }
 
     const payload = {
       epf_no: employeeDetails.epf_no,
@@ -301,23 +333,49 @@ const EmployeeUpdate: React.FC = () => {
 
     //console.log("Payload being sent:", payload); // Log the payload to verify
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort();
+    }, 15000);
+
     try {
-      const response = await fetch(
-        `http://localhost:8080/employee/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`http://localhost:8080/employee/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-      const data = await response.json();
-      //console.log("Update API Response:", data);
+      const contentType = response.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const data: unknown = isJson ? await response.json() : await response.text();
 
-      if (data.response?.resultCode === 100) {
+      if (!response.ok) {
+        console.error("Update request failed:", response.status, data);
+        const errParsed: UpdateEmployeeApiResponse | undefined = isRecord(data)
+          ? (data as UpdateEmployeeApiResponse)
+          : undefined;
+        const errDesc =
+          errParsed?.response?.resultDesc ?? errParsed?.resultDesc ?? undefined;
+        toast.error(
+          typeof data === "string"
+            ? `Failed to update employee details: ${response.status}`
+            : errDesc || `Failed to update employee details: ${response.status}`
+        );
+        return;
+      }
+
+      const parsed: UpdateEmployeeApiResponse | undefined = isRecord(data)
+        ? (data as UpdateEmployeeApiResponse)
+        : undefined;
+
+      const resultCode = parsed?.response?.resultCode ?? parsed?.resultCode;
+      const resultDesc = parsed?.response?.resultDesc ?? parsed?.resultDesc;
+
+      if (resultCode === 100) {
         //console.log("Success! Showing toast and navigating...");
 
         const message = hasProfileImage 
@@ -328,17 +386,22 @@ const EmployeeUpdate: React.FC = () => {
         navigate("/employee/all");
       } else {
         console.error("API error:", {
-          resultCode: data.response?.resultCode,
-          resultDesc: data.response?.resultDesc,
+          resultCode,
+          resultDesc,
         });
         toast.error(
-          data.response?.resultDesc || "Failed to update employee details"
+          resultDesc || "Failed to update employee details"
         );
       }
     } catch (error) {
       console.error("Error updating employee details:", error);
-      toast.error("Error updating employee details. Please try again.");
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.error("Update request timed out. Please try again.");
+      } else {
+        toast.error("Error updating employee details. Please try again.");
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setIsUpdating(false); // Stop loading regardless of success/error
     }
   };
@@ -457,7 +520,7 @@ const EmployeeUpdate: React.FC = () => {
               required
             >
               <option value="">
-                <TranslatableText text="Select Department" />
+                <TranslatableOption text="Select Department" />
               </option>
               {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
@@ -477,7 +540,7 @@ const EmployeeUpdate: React.FC = () => {
               required
             >
               <option value="">
-                <TranslatableText text="Select Designation" />
+                <TranslatableOption text="Select Designation" />
               </option>
               {designations.map((desig) => (
                 <option key={desig.id} value={desig.id}>
@@ -526,16 +589,16 @@ const EmployeeUpdate: React.FC = () => {
               required
             >
               <option value="">
-                <TranslatableText text="Select Gender" />
+                <TranslatableOption text="Select Gender" />
               </option>
               <option value="Male">
-                <TranslatableText text="Male" />
+                <TranslatableOption text="Male" />
               </option>
               <option value="Female">
-                <TranslatableText text="Female" />
+                <TranslatableOption text="Female" />
               </option>
               <option value="Other">
-                <TranslatableText text="Other" />
+                <TranslatableOption text="Other" />
               </option>
             </select>
           </div>

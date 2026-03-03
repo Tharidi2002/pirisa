@@ -224,7 +224,7 @@ const EmployeeProfile = () => {
           const data = await response.json();
           availability[docType] = data.hasProfileImage || false;
         } else {
-          availability[docType] = response.ok;
+          availability[docType] = response.ok && response.status !== 204;
         }
       } catch {
         availability[docType] = false;
@@ -257,6 +257,10 @@ const EmployeeProfile = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.status === 204) {
+        throw new Error("Document not available");
+      }
 
       if (!response.ok) {
         throw new Error("Failed to fetch document");

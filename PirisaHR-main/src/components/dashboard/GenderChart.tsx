@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const EmployeeGenderCard: React.FC = () => {
   const [total, setTotal] = useState(0);
@@ -56,10 +56,15 @@ const EmployeeGenderCard: React.FC = () => {
           setTotal(totalEmployees);
           setMaleCount(maleEmployees);
           setFemaleCount(femaleEmployees);
-          setMalePercentage(Math.round((maleEmployees / totalEmployees) * 100));
-          setFemalePercentage(
-            Math.round((femaleEmployees / totalEmployees) * 100)
-          );
+          if (totalEmployees > 0) {
+            setMalePercentage(Math.round((maleEmployees / totalEmployees) * 100));
+            setFemalePercentage(
+              Math.round((femaleEmployees / totalEmployees) * 100)
+            );
+          } else {
+            setMalePercentage(0);
+            setFemalePercentage(0);
+          }
         } else {
           console.error("Failed to fetch employee data:", data.resultDesc);
         }
@@ -72,9 +77,9 @@ const EmployeeGenderCard: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full">
       {/* Header */}
-      <div className="max-w-xs">
+      <div className="w-full">
         <h2 className="text-xl font-semibold mb-1">Employees</h2>
         <p className="text-sm text-gray-500 mb-4">
           Total number of employees as of {new Date().toLocaleDateString()}

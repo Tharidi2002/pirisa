@@ -1,18 +1,111 @@
-import React from "react";
+import { useEffect, useMemo, useState } from "react";
 import StatisticItem from "../StatisticItem";
 
-const AttendanceStatsCard: React.FC = () => {
-  const stats = [
-    { label: "Present", value: 100, percentage: "80.24%" },
-    { label: "Absent", value: 20, percentage: "80.24%" },
-    { label: "Leave", value: 5, percentage: "80.24%" },
-    { label: "Pending", value: 30, percentage: "80.24%" },
-    { label: "Offday", value: 2, percentage: "80.24%" },
-    { label: "Late", value: 8, percentage: "80.24%" },
-  ];
+interface AttendanceDTO {
+  id: number;
+  startedAt?: string;
+  endedAt?: string;
+  working_status?: string;
+  attendance_status?: string;
+  totalTime?: number;
+  dayName?: string;
+}
+
+interface AttendanceEmployeeDTO {
+  id: number;
+  attendanceList?: AttendanceDTO[];
+}
+
+const AttendanceStatsCard = () => {
+  const [employees, setEmployees] = useState<AttendanceEmployeeDTO[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const cmpnyId = localStorage.getItem("cmpnyId");
+    if (!token || !cmpnyId) {
+      setEmployees([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/employee/lastattendanceList/${cmpnyId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (!res.ok) {
+          setEmployees([]);
+          return;
+        }
+
+        const json = await res.json();
+        if (json?.resultCode === 100 && Array.isArray(json?.EmployeeList)) {
+          setEmployees(json.EmployeeList);
+        } else {
+          setEmployees([]);
+        }
+      } catch {
+        setEmployees([]);
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = employees.length;
+
+    const normalize = (v?: string) => (v || "").toUpperCase().trim();
+    const isLate = (a?: AttendanceDTO) => {
+      const att = normalize(a?.attendance_status);
+      const work = normalize(a?.working_status);
+      return att === "LATE" || work === "LATE";
+    };
+
+    let present = 0;
+    let absent = 0;
+    let leave = 0;
+    let pending = 0;
+    let offday = 0;
+    let late = 0;
+
+    for (const e of employees) {
+      const latest = Array.isArray(e.attendanceList) ? e.attendanceList[0] : undefined;
+      const s = normalize(latest?.attendance_status);
+      if (isLate(latest)) late += 1;
+      if (s === "PRESENT") present += 1;
+      else if (s === "ABSENT") absent += 1;
+      else if (s === "LEAVE") leave += 1;
+      else if (s === "PENDING") pending += 1;
+      else if (s === "OFFDAY" || s === "OFF_DAY" || s === "OFF") offday += 1;
+    }
+
+    const pct = (value: number) => {
+      if (!total) return "0%";
+      return `${((value / total) * 100).toFixed(2)}%`;
+    };
+
+    return [
+      { label: "Present", value: present, percentage: pct(present) },
+      { label: "Absent", value: absent, percentage: pct(absent) },
+      { label: "Leave", value: leave, percentage: pct(leave) },
+      { label: "Pending", value: pending, percentage: pct(pending) },
+      { label: "Offday", value: offday, percentage: pct(offday) },
+      { label: "Late", value: late, percentage: pct(late) },
+    ];
+  }, [employees]);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full">
       {/* Header */}
       <h2 className="text-xl font-semibold text-gray-500 mb-4">Today</h2>
 
