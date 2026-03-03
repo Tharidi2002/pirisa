@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { TranslatableText } from "../languages/TranslatableText";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "../../context/LanguageProvider ";
+import { useTranslation } from "../../context/LanguageProvider";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -72,6 +72,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("cmpnyId");
+    localStorage.removeItem("companyId");
     localStorage.removeItem("empId");
     localStorage.removeItem("username");
     navigate("/login");

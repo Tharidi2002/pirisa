@@ -4,10 +4,6 @@ import { User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-interface Photo {
-  photo: string | null; // Base64-encoded image string
-}
-
 interface Attendance {
   id: number;
   startedAt: string;
@@ -23,7 +19,6 @@ interface Employee {
   department: {
     dpt_name: string;
   };
-  photo: Photo;
   attendanceList: Attendance[];
 }
 
@@ -44,6 +39,7 @@ const AttendanceMarkTable = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [attendanceStatus, setAttendanceStatus] = useState<{
     [key: number]: "On-Site" | "Online";
   }>({});
@@ -95,7 +91,11 @@ const AttendanceMarkTable = () => {
 
         const data: ApiResponse = await response.json();
         if (data.resultCode === 100) {
-          setEmployees(data.EmployeeList || []);
+          const list = data.EmployeeList || [];
+          setEmployees(list);
+          if (list.length > 0) {
+            await fetchEmployeePhotos(list, token);
+          }
         } else {
           throw new Error(data.resultDesc);
         }
@@ -108,6 +108,72 @@ const AttendanceMarkTable = () => {
 
     fetchEmployees();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(photoUrls).forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // no-op
+        }
+      });
+    };
+  }, [photoUrls]);
+
+  const fetchEmployeePhotos = async (employeeList: Employee[], token: string) => {
+    // Cleanup previous URLs
+    Object.values(photoUrls).forEach((url) => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // no-op
+      }
+    });
+
+    const photoUrlMap: Record<number, string> = {};
+
+    await Promise.all(
+      employeeList.map(async (employee) => {
+        try {
+          const existsResp = await fetch(
+            `http://localhost:8080/api/profile-image/exists/${employee.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!existsResp.ok) return;
+          const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+            await existsResp.json();
+          const hasImage = Boolean(
+            existsData?.hasProfileImage ?? existsData?.exists
+          );
+          if (!hasImage) return;
+
+          const imgResp = await fetch(
+            `http://localhost:8080/api/profile-image/view/${employee.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!imgResp.ok) return;
+          const blob = await imgResp.blob();
+          if (!blob || blob.size === 0) return;
+          photoUrlMap[employee.id] = URL.createObjectURL(blob);
+        } catch {
+          // ignore photo failures; keep fallback avatar
+        }
+      })
+    );
+
+    setPhotoUrls(photoUrlMap);
+  };
 
   const handleAttendanceStatusChange = (
     empId: number,
@@ -294,7 +360,11 @@ const AttendanceMarkTable = () => {
 
       const data: ApiResponse = await response.json();
       if (data.resultCode === 100) {
-        setEmployees(data.EmployeeList || []);
+        const list = data.EmployeeList || [];
+        setEmployees(list);
+        if (list.length > 0) {
+          await fetchEmployeePhotos(list, token);
+        }
       } else {
         throw new Error(data.resultDesc);
       }
@@ -320,9 +390,7 @@ const AttendanceMarkTable = () => {
       key: "photo",
       title: "Photo",
       render: (item: Employee) => {
-        const imageUrl = item.photo?.photo
-          ? `data:image/jpeg;base64,${item.photo.photo}`
-          : null;
+        const imageUrl = photoUrls[item.id] || null;
         return (
           <div className="flex items-center justify-center w-10 h-10">
             {imageUrl ? (
@@ -330,11 +398,20 @@ const AttendanceMarkTable = () => {
                 src={imageUrl}
                 alt={`${item.firstName} ${item.lastName}`}
                 className="w-8 h-8 rounded-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  e.currentTarget.nextElementSibling?.classList.remove(
-                    "hidden"
-                  );
+                onError={() => {
+                  setPhotoUrls((prev) => {
+                    const next = { ...prev };
+                    const existing = next[item.id];
+                    if (existing) {
+                      try {
+                        URL.revokeObjectURL(existing);
+                      } catch {
+                        // no-op
+                      }
+                      delete next[item.id];
+                    }
+                    return next;
+                  });
                 }}
               />
             ) : (

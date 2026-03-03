@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "../../context/LanguageProvider ";
+import { useTranslation } from "../../context/LanguageProvider";
 import { translateText } from "../../service/translation";
 
 // Define the type for translations object

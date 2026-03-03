@@ -28,7 +28,6 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       const response = await fetch(
         `http://localhost:8080/api/profile-image/exists/${employeeId}`,
         {
-          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,11 +36,14 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        setHasProfileImage(data.hasProfileImage);
-        if (data.hasProfileImage) {
+        const hasImage = Boolean(data?.hasProfileImage ?? data?.exists);
+        setHasProfileImage(hasImage);
+        onImageChange?.(hasImage);
+
+        if (hasImage) {
+          // If image exists, load it
           setProfileImage(`http://localhost:8080/api/profile-image/view/${employeeId}?t=${Date.now()}`);
         }
-        onImageChange?.(data.hasProfileImage);
       }
     } catch (error) {
       console.error('Error checking profile image:', error);

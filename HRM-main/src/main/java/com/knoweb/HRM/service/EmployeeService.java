@@ -616,10 +616,13 @@ public class EmployeeService {
         Employee employee = getEmployeeById(emp_id);
         if (employee != null) {
             employee.setEpf_no(updateEmployee.getEpf_no());
+            employee.setEmp_no(updateEmployee.getEmp_no());
             employee.setFirst_name(updateEmployee.getFirst_name());
             employee.setLast_name(updateEmployee.getLast_name());
             employee.setBasic_salary(updateEmployee.getBasic_salary());
             employee.setEmail(updateEmployee.getEmail());
+            // Keep username in sync with email (login identifier)
+            employee.setUsername(updateEmployee.getEmail());
             employee.setGender(updateEmployee.getGender());
             employee.setDOB(updateEmployee.getDOB());
             employee.setPhone(updateEmployee.getPhone());
@@ -627,6 +630,9 @@ public class EmployeeService {
             employee.setDate_of_joining(updateEmployee.getDate_of_joining());
             employee.setNIC(updateEmployee.getNIC());
             employee.setStatus(updateEmployee.getStatus());
+            employee.setCmpId(updateEmployee.getCmpId());
+            employee.setDptId(updateEmployee.getDptId());
+            employee.setDesignationId(updateEmployee.getDesignationId());
             return employeeRepository.save(employee);
         }
         return null;

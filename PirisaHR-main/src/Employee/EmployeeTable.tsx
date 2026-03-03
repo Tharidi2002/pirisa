@@ -152,8 +152,12 @@ const EmployeeTable = () => {
 
         if (existsResponse.ok) {
           const existsData = await existsResponse.json();
-          
-          if (existsData.hasProfileImage) {
+
+          const hasImage = Boolean(
+            existsData?.hasProfileImage ?? existsData?.exists
+          );
+
+          if (hasImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
               `http://localhost:8080/api/profile-image/view/${employee.id}`,

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,8 +32,13 @@ public class DocumentService {
             throw new IllegalArgumentException("Employee ID cannot be null");
         }
 
-        Documents document = new Documents();
-        document.setEmpId(empId);
+        Documents document = documentRepository
+                .findTopByEmpIdOrderByIdDesc(empId)
+                .orElseGet(() -> {
+                    Documents d = new Documents();
+                    d.setEmpId(empId);
+                    return d;
+                });
 
         if (cv != null && !cv.isEmpty()) {
             document.setCv(cv.getBytes());
@@ -89,46 +95,46 @@ public class DocumentService {
     }
 
     public byte[] viewDocument1(Long empId, String fieldName) {
-        Optional<Documents> documentOpt = documentRepository.findByempId(empId);
-        
-        if (!documentOpt.isPresent()) {
+        List<Documents> rows = documentRepository.findAllByEmpIdOrderByIdDesc(empId);
+
+        if (rows == null || rows.isEmpty()) {
             throw new RuntimeException("Document not found for employee ID: " + empId);
         }
-        
-        Documents document = documentOpt.get();
-        byte[] documentData = null;
 
-        switch (fieldName) {
-            case "cv":
-                documentData = document.getCv();
-                break;
-            case "birthCertificate":
-                documentData = document.getBirthCertificate();
-                break;
-            case "idCopy":
-                documentData = document.getIdCopy();
-                break;
-            case "policeReport":
-                documentData = document.getPoliceReport();
-                break;
-            case "bankPassbook":
-                documentData = document.getBankPassbook();
-                break;
-            case "appointmentLetter":
-                documentData = document.getAppointmentLetter();
-                break;
-            case "photo":
-                documentData = document.getPhoto();
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid field name: " + fieldName);
+        for (Documents document : rows) {
+            byte[] documentData;
+            switch (fieldName) {
+                case "cv":
+                    documentData = document.getCv();
+                    break;
+                case "birthCertificate":
+                    documentData = document.getBirthCertificate();
+                    break;
+                case "idCopy":
+                    documentData = document.getIdCopy();
+                    break;
+                case "policeReport":
+                    documentData = document.getPoliceReport();
+                    break;
+                case "bankPassbook":
+                    documentData = document.getBankPassbook();
+                    break;
+                case "appointmentLetter":
+                    documentData = document.getAppointmentLetter();
+                    break;
+                case "photo":
+                    documentData = document.getPhoto();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid field name: " + fieldName);
+            }
+
+            if (documentData != null && documentData.length > 0) {
+                return documentData;
+            }
         }
-        
-        if (documentData == null || documentData.length == 0) {
-            throw new RuntimeException("Document '" + fieldName + "' not found for employee ID: " + empId);
-        }
-        
-        return documentData;
+
+        throw new RuntimeException("Document '" + fieldName + "' not found for employee ID: " + empId);
     }
 
     public void deleteDocuments(Long doc_id) {
@@ -138,7 +144,7 @@ public class DocumentService {
 
     public Optional<Documents> getDocumentsByempId(long emp_id) {
         //logger.info("Fetching documents by empId {}", emp_id);
-        return documentRepository.findByempId(emp_id);
+        return documentRepository.findTopByEmpIdOrderByIdDesc(emp_id);
     }
 
     public Documents updateDocument(Documents documents) {

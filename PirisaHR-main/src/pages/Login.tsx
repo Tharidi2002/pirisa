@@ -90,6 +90,7 @@ const LoginPage: React.FC = () => {
           // For company users, store CMPNY_Id
           console.log("DEBUG - Storing CMPNY_Id:", data.details.CMPNY_Id);
           localStorage.setItem("cmpnyId", data.details.CMPNY_Id);
+          localStorage.setItem("companyId", data.details.CMPNY_Id);
           // console.log("Company login:", {
           //   role: data.details.Role,
           //   companyId: data.details.CMPNY_Id,
@@ -105,6 +106,7 @@ const LoginPage: React.FC = () => {
             data.details.EMP_id || data.details.employeeId
           );
           localStorage.setItem("cmpnyId", data.details.CMPNY_Id);
+          localStorage.setItem("companyId", data.details.CMPNY_Id);
 
           // console.log("Employee login:", {
           //   role: data.details.Role,

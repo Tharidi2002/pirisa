@@ -6,36 +6,50 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading/Loading";
 
-interface Photo {
-  photo: string | null; // Base64-encoded image string
+interface PayrollEntry {
+  id: number;
+  net_salary?: number;
+  createdAt?: string;
 }
 
-interface Employee {
+interface PayroleEmployeeApi {
   id: number;
   firstName: string;
   lastName: string;
   epfNo: string;
-  basicSalary: number;
+  payroleList?: PayrollEntry[];
+}
+
+interface EmpDetailsApi {
+  id: number;
+  designation?: {
+    designation?: string;
+  };
+  department?: {
+    dpt_name?: string;
+  };
+}
+
+interface EmployeeRow {
+  id: number;
+  firstName: string;
+  lastName: string;
+  epfNo: string;
+  departmentName: string;
+  roleName: string;
   salary: number;
-  department: {
-    dpt_name: string;
-  };
-  role: {
-    role_name: string;
-    employmentType: string;
-  };
-  photo: Photo;
   isPaid: boolean;
 }
 
-interface ApiResponse {
+interface ApiResponse<T> {
   resultCode: number;
   resultDesc: string;
-  EmployeeList: Employee[];
+  EmployeeList: T[];
 }
 
 const SalaryStatusTable = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +60,74 @@ const SalaryStatusTable = () => {
     fetchEmployees();
   }, []);
 
+  // Cleanup photo URLs on component unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(photoUrls).forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [photoUrls]);
+
+  const fetchEmployeePhotos = async (employeeList: EmployeeRow[], token: string) => {
+    const photoPromises = employeeList.map(async (employee) => {
+      try {
+        const existsResp = await fetch(
+          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!existsResp.ok) return;
+        const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+          await existsResp.json();
+        const hasImage = Boolean(
+          existsData?.hasProfileImage ?? existsData?.exists
+        );
+        if (!hasImage) return;
+
+        const photoResponse = await fetch(
+          `http://localhost:8080/api/profile-image/view/${employee.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!photoResponse.ok) {
+          return { id: employee.id, url: null };
+        }
+
+        const blob = await photoResponse.blob();
+        if (!blob || blob.size === 0) {
+          return { id: employee.id, url: null };
+        }
+
+        const imageUrl = URL.createObjectURL(blob);
+        return { id: employee.id, url: imageUrl };
+      } catch {
+        return { id: employee.id, url: null };
+      }
+    });
+
+    const photoResults = await Promise.all(photoPromises);
+    const photoUrlMap: Record<number, string> = {};
+
+    photoResults.forEach(({ id, url }) => {
+      if (url) {
+        photoUrlMap[id] = url;
+      }
+    });
+
+    setPhotoUrls(photoUrlMap);
+  };
+
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -55,29 +137,68 @@ const SalaryStatusTable = () => {
         throw new Error("No token or company ID found");
       }
 
-      const response = await fetch(
-        `http://localhost:8080/employee/payroleList/${companyId}`,
-        {
+      const [payrollResponse, detailsResponse] = await Promise.all([
+        fetch(`http://localhost:8080/employee/payroleList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
-      );
+        }),
+        fetch(`http://localhost:8080/employee/EmpDetailsList/${companyId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }),
+      ]);
 
-      if (!response.ok) {
-        if (response.status === 404) {
+      if (!payrollResponse.ok || !detailsResponse.ok) {
+        if (payrollResponse.status === 404 || detailsResponse.status === 404) {
           setEmployees([]);
           return;
         }
         throw new Error("Failed to fetch employees");
       }
 
-      const data: ApiResponse = await response.json();
-      if (data.resultCode === 100) {
-        setEmployees(data.EmployeeList);
-      } else {
-        throw new Error(data.resultDesc);
+      const payrollData: ApiResponse<PayroleEmployeeApi> = await payrollResponse.json();
+      const detailsData: ApiResponse<EmpDetailsApi> = await detailsResponse.json();
+
+      if (payrollData.resultCode !== 100 || detailsData.resultCode !== 100) {
+        throw new Error(
+          payrollData.resultDesc || detailsData.resultDesc || "Failed to fetch"
+        );
+      }
+
+      const payrollEmployees = payrollData.EmployeeList || [];
+      const detailsEmployees = detailsData.EmployeeList || [];
+      const detailsMap = new Map<number, EmpDetailsApi>();
+
+      detailsEmployees.forEach((e) => {
+        detailsMap.set(e.id, e);
+      });
+
+      const rows: EmployeeRow[] = payrollEmployees.map((e) => {
+        const details = detailsMap.get(e.id);
+        const payroleList = Array.isArray(e.payroleList) ? e.payroleList : [];
+        const latest = payroleList.length > 0 ? payroleList[0] : undefined;
+        const salary = typeof latest?.net_salary === "number" ? latest.net_salary : 0;
+
+        return {
+          id: e.id,
+          firstName: e.firstName,
+          lastName: e.lastName,
+          epfNo: e.epfNo,
+          departmentName: details?.department?.dpt_name || "N/A",
+          roleName: details?.designation?.designation || "N/A",
+          salary,
+          isPaid: payroleList.length > 0,
+        };
+      });
+
+      setEmployees(rows);
+
+      if (rows.length > 0) {
+        await fetchEmployeePhotos(rows, token);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -142,10 +263,8 @@ const SalaryStatusTable = () => {
     {
       key: "photo",
       title: "Photo",
-      render: (item: Employee) => {
-        const imageUrl = item.photo?.photo
-          ? `data:image/jpeg;base64,${item.photo.photo}`
-          : null;
+      render: (item: EmployeeRow) => {
+        const imageUrl = photoUrls[item.id] || null;
         return (
           <div className="flex items-center justify-center w-10 h-10">
             {imageUrl ? (
@@ -172,11 +291,11 @@ const SalaryStatusTable = () => {
     {
       key: "name",
       title: "Name",
-      render: (item: Employee) => (
+      render: (item: EmployeeRow) => (
         <div>
           <div className="font-medium">{`${item.firstName} ${item.lastName}`}</div>
           <div className="text-xs text-gray-500">
-            {item.role?.employmentType || "Full time"}
+            Full time
           </div>
         </div>
       ),
@@ -184,23 +303,23 @@ const SalaryStatusTable = () => {
     {
       key: "department",
       title: "Department",
-      render: (item: Employee) => (
-        <span className="text-sm">{item.department?.dpt_name || "N/A"}</span>
+      render: (item: EmployeeRow) => (
+        <span className="text-sm">{item.departmentName || "N/A"}</span>
       ),
     },
     {
       key: "epfNo",
       title: "Employee ID",
-      render: (item: Employee) => <span className="text-sm">{item.epfNo}</span>,
+      render: (item: EmployeeRow) => <span className="text-sm">{item.epfNo}</span>,
     },
     {
       key: "role",
       title: "Role",
-      render: (item: Employee) => (
+      render: (item: EmployeeRow) => (
         <div>
-          <div className="text-sm">{item.role?.role_name || "N/A"}</div>
+          <div className="text-sm">{item.roleName || "N/A"}</div>
           <div className="text-xs text-gray-500">
-            {item.role?.employmentType || "Full time"}
+            Full time
           </div>
         </div>
       ),
@@ -208,14 +327,14 @@ const SalaryStatusTable = () => {
     {
       key: "salary",
       title: "Salary (Rs)",
-      render: (item: Employee) => (
+      render: (item: EmployeeRow) => (
         <span className="text-sm">{formatSalary(item.salary || 0)}</span>
       ),
     },
     {
       key: "status",
       title: "Status",
-      render: (item: Employee) => (
+      render: (item: EmployeeRow) => (
         <div
           className={`flex items-center p-1 rounded-xl ${
             item.isPaid ? "bg-green-100" : "bg-red-100"
@@ -239,7 +358,7 @@ const SalaryStatusTable = () => {
     {
       key: "actions",
       title: "Action",
-      render: (item: Employee) => (
+      render: (item: EmployeeRow) => (
         <div className="flex space-x-2">
           <button
             onClick={(e) => handleMakeSalary(item.id, e)}

@@ -156,8 +156,8 @@ const EmployeeProfile = () => {
       await checkDocumentAvailability(empId, token);
 
       // Fetch employee photo
-      const photoResponse = await fetch(
-        `http://localhost:8080/api/profile-image/view/${empId}`,
+      const existsResponse = await fetch(
+        `http://localhost:8080/api/profile-image/exists/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -165,10 +165,27 @@ const EmployeeProfile = () => {
         }
       );
 
-      if (photoResponse.ok) {
-        const blob = await photoResponse.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        setPhotoUrl(imageUrl);
+      if (existsResponse.ok) {
+        const existsData = await existsResponse.json();
+        const hasImage = Boolean(
+          existsData?.hasProfileImage ?? existsData?.exists
+        );
+        if (hasImage) {
+          const imgResponse = await fetch(
+            `http://localhost:8080/api/profile-image/view/${empId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (imgResponse.ok) {
+            const blob = await imgResponse.blob();
+            const imageUrl = URL.createObjectURL(blob);
+            setPhotoUrl(imageUrl);
+          }
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

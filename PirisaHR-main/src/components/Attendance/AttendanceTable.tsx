@@ -47,6 +47,7 @@ const AttendanceTable = () => {
   const [filteredAttendance, setFilteredAttendance] = useState<Attendance[]>(
     []
   );
+  const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,77 @@ const AttendanceTable = () => {
   });
   const rowsPerPage = 10;
   const navigate = useNavigate();
+
+  // Cleanup photo URLs on component unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(photoUrls).forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [photoUrls]);
+
+  const fetchEmployeePhotos = async (
+    employeeList: Attendance[],
+    token: string
+  ) => {
+    const photoPromises = employeeList.map(async (employee) => {
+      try {
+        const existsResp = await fetch(
+          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!existsResp.ok) return;
+        const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+          await existsResp.json();
+        const hasImage = Boolean(
+          existsData?.hasProfileImage ?? existsData?.exists
+        );
+        if (!hasImage) return;
+
+        const photoResponse = await fetch(
+          `http://localhost:8080/api/profile-image/view/${employee.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!photoResponse.ok) {
+          return { id: employee.id, url: null };
+        }
+
+        const blob = await photoResponse.blob();
+        if (!blob || blob.size === 0) {
+          return { id: employee.id, url: null };
+        }
+
+        const imageUrl = URL.createObjectURL(blob);
+        return { id: employee.id, url: imageUrl };
+      } catch (_error) {
+        return { id: employee.id, url: null };
+      }
+    });
+
+    const photoResults = await Promise.all(photoPromises);
+    const photoUrlMap: Record<number, string> = {};
+
+    photoResults.forEach(({ id, url }) => {
+      if (url) {
+        photoUrlMap[id] = url;
+      }
+    });
+
+    setPhotoUrls(photoUrlMap);
+  };
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -97,8 +169,13 @@ const AttendanceTable = () => {
 
         const data: ApiResponse = await response.json();
         if (data.resultCode === 100) {
-          setAttendance(data.EmployeeList || []);
-          setFilteredAttendance(data.EmployeeList || []); // Initialize filtered data
+          const employeeList = data.EmployeeList || [];
+          setAttendance(employeeList);
+          setFilteredAttendance(employeeList); // Initialize filtered data
+
+          if (employeeList.length > 0) {
+            await fetchEmployeePhotos(employeeList, token);
+          }
         } else {
           setAttendance([]);
           setFilteredAttendance([]);
@@ -200,20 +277,20 @@ const AttendanceTable = () => {
       title: "Photo",
       render: (item) => (
         <div className="flex items-center justify-center">
-          {item.photo?.photoUrl ? (
+          {photoUrls[item.id] ? (
             <img
-              src={item.photo.photoUrl}
+              src={photoUrls[item.id]}
               alt={`${item.firstName} ${item.lastName}`}
               className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
               onError={(e) => {
-                // Fallback to default avatar on error
                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.firstName}+${item.lastName}&background=6366f1&color=fff&size=40`;
               }}
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
               <span className="text-xs font-medium text-gray-600">
-                {item.firstName.charAt(0)}{item.lastName.charAt(0)}
+                {item.firstName.charAt(0)}
+                {item.lastName.charAt(0)}
               </span>
             </div>
           )}
