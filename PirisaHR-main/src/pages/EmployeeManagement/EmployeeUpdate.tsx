@@ -5,6 +5,8 @@ import { TranslatableOption, TranslatableText } from "../../components/languages
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileImageUpload from "../../components/ProfileImageUpload";
+import { isEmail, isNonEmpty, isNonNegativeNumber, isPhone } from "../../utils/validation";
+
 interface EmployeeDetails {
   epf_no: string;
   emp_no: string;
@@ -275,10 +277,75 @@ const EmployeeUpdate: React.FC = () => {
     e.preventDefault();
     setIsUpdating(true); // Start loading
     setError(null); // Clear any previous errors
-    toast.info("Submitting form...");
     if (!token || !id) {
       console.error("No token or employee ID available");
       setError("Authentication token or employee ID missing.");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.emp_no)) {
+      toast.error("EMP Number is required");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.epf_no)) {
+      toast.error("EPF Number is required");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.first_name)) {
+      toast.error("First Name is required");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.last_name)) {
+      toast.error("Last Name is required");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!employeeDetails.dptId || employeeDetails.dptId === 0) {
+      toast.error("Please select a department");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!employeeDetails.designationId || employeeDetails.designationId === 0) {
+      toast.error("Please select a designation");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonNegativeNumber(employeeDetails.basic_salary)) {
+      toast.error("Basic Salary must be a valid number");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.email) || !isEmail(employeeDetails.email)) {
+      toast.error("Please enter a valid email address");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.phone) || !isPhone(employeeDetails.phone)) {
+      toast.error("Please enter a valid phone number");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.address)) {
+      toast.error("Address is required");
+      setIsUpdating(false);
+      return;
+    }
+
+    if (!isNonEmpty(employeeDetails.NIC)) {
+      toast.error("NIC is required");
       setIsUpdating(false);
       return;
     }
@@ -314,17 +381,17 @@ const EmployeeUpdate: React.FC = () => {
     }
 
     const payload = {
-      epf_no: employeeDetails.epf_no,
-      emp_no: employeeDetails.emp_no,
-      first_name: employeeDetails.first_name,
-      last_name: employeeDetails.last_name,
+      epf_no: employeeDetails.epf_no.trim(),
+      emp_no: employeeDetails.emp_no.trim(),
+      first_name: employeeDetails.first_name.trim(),
+      last_name: employeeDetails.last_name.trim(),
       basic_salary: Number(employeeDetails.basic_salary),
-      email: employeeDetails.email,
+      email: employeeDetails.email.trim(),
       gender: employeeDetails.gender,
       DOB: formattedDOB,
-      phone: employeeDetails.phone,
-      address: employeeDetails.address,
-      NIC: employeeDetails.NIC,
+      phone: employeeDetails.phone.trim(),
+      address: employeeDetails.address.trim(),
+      NIC: employeeDetails.NIC.trim(),
       date_of_joining: formattedJoiningDate,
       cmpId: Number(cmpId),
       dptId: Number(employeeDetails.dptId),

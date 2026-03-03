@@ -4,6 +4,7 @@ import { User } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Select from "react-select";
+import { isNonEmpty, isNonNegativeNumber, isPositiveAmount, toNumberSafe } from "../../utils/validation";
 
 interface Employee {
   id: number;
@@ -408,6 +409,16 @@ const SalaryForm: React.FC = () => {
   }, [isOvertimeModalOpen, selectedEmployeeForOvertime]);
 
   const handleAddAllowance = () => {
+    if (!selectedAllowanceId) {
+      toast.error("Please select an allowance");
+      return;
+    }
+
+    if (!isNonEmpty(allowanceAmount) || !isPositiveAmount(allowanceAmount)) {
+      toast.error("Please enter a valid allowance amount");
+      return;
+    }
+
     if (selectedAllowanceId && allowanceAmount) {
       const selectedAllowance = allowances.find(
         (a) => a.id === selectedAllowanceId
@@ -418,7 +429,7 @@ const SalaryForm: React.FC = () => {
           {
             id: selectedAllowance.id,
             allowanceName: selectedAllowance.allowanceName,
-            amount: allowanceAmount,
+            amount: String(toNumberSafe(allowanceAmount) ?? allowanceAmount),
           },
         ]);
         setSelectedAllowanceId(null);
@@ -428,6 +439,16 @@ const SalaryForm: React.FC = () => {
   };
 
   const handleAddBonus = () => {
+    if (!selectedBonusId) {
+      toast.error("Please select a bonus");
+      return;
+    }
+
+    if (!isNonEmpty(bonusAmount) || !isPositiveAmount(bonusAmount)) {
+      toast.error("Please enter a valid bonus amount");
+      return;
+    }
+
     if (selectedBonusId && bonusAmount) {
       const selectedBonus = bonuses.find((b) => b.id === selectedBonusId);
       if (selectedBonus) {
@@ -436,7 +457,7 @@ const SalaryForm: React.FC = () => {
           {
             id: selectedBonus.id,
             bonusName: selectedBonus.bonusName,
-            amount: bonusAmount,
+            amount: String(toNumberSafe(bonusAmount) ?? bonusAmount),
           },
         ]);
         setSelectedBonusId(null);
@@ -989,11 +1010,43 @@ const SalaryForm: React.FC = () => {
   const handleSubmit = async () => {
     try {
       // Basic validation
-      if (!month || !year) {
+      if (!isNonEmpty(month) || !isNonEmpty(year)) {
         throw new Error("Please select month and year");
       }
+
       if (!employeeId) {
         throw new Error("Employee ID is missing");
+      }
+
+      if (!isNonNegativeNumber(basic_salary)) {
+        throw new Error("Basic Salary must be a valid number");
+      }
+
+      if (!isNonNegativeNumber(overTime)) {
+        throw new Error("Over Time must be a valid number");
+      }
+
+      if (!isNonNegativeNumber(appit)) {
+        throw new Error("APPIT must be a valid number");
+      }
+
+      if (!isNonNegativeNumber(loan)) {
+        throw new Error("Loan must be a valid number");
+      }
+
+      if (!isNonNegativeNumber(other_deductions)) {
+        throw new Error("Other Deductions must be a valid number");
+      }
+
+      // Validate selected allowance/bonus amounts
+      const invalidAllowance = selectedAllowances.some((a) => !isPositiveAmount(a.amount));
+      if (invalidAllowance) {
+        throw new Error("One or more allowance amounts are invalid");
+      }
+
+      const invalidBonus = selectedBonuses.some((b) => !isPositiveAmount(b.amount));
+      if (invalidBonus) {
+        throw new Error("One or more bonus amounts are invalid");
       }
 
       setIsSubmitting(true);
