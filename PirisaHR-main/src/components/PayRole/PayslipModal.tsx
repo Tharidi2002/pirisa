@@ -200,10 +200,10 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           {/* Header with Logo */}
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
                 {logo && (
                   <img
@@ -221,7 +221,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                   <p className="text-gray-600">{company.cmp_email}</p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   PAYSLIP
                 </h2>
@@ -232,14 +232,14 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
           </div>
 
           {/* Employee Info */}
-          <div className="flex justify-between mb-8 border-t pt-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mb-8 border-t pt-4">
             <div>
               <h3 className="font-bold text-lg">
                 {employee.first_name} {employee.last_name}
               </h3>
               <p className="text-gray-600">{employee.address}</p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <p className="text-gray-600">Employee ID: {employee.epf_no}</p>
               <p className="text-gray-600">
                 Designation: {employee.designation}
@@ -257,7 +257,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
           {/* Earnings */}
           <div className="mb-8">
             <h3 className="font-bold text-lg mb-4 border-b pb-2">Earnings</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-between">
                 <span>Basic Salary</span>
                 <span>Rs. {payslip.basic_salary.toLocaleString()}</span>
@@ -327,7 +327,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
           {/* Deductions */}
           <div className="mb-8">
             <h3 className="font-bold text-lg mb-4 border-b pb-2">Deductions</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-between">
                 <span>EPF (8%)</span>
                 <span>Rs. {payslip.epf_8.toLocaleString()}</span>
@@ -352,7 +352,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
           </div>
 
           {/* Summary */}
-          <div className="flex justify-between border-t-2 pt-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-4 border-t-2 pt-4">
             <div>
               <button
                 onClick={handlePrint}
@@ -361,7 +361,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                 Print
               </button>
             </div>
-            <div className="text-right space-y-2">
+            <div className="text-left sm:text-right space-y-2">
               <div className="flex justify-between">
                 <span className="font-bold mr-4">Total Earning</span>
                 <span>Rs. {payslip.total_earnings.toLocaleString()}</span>

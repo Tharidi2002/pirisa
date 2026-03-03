@@ -91,10 +91,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, userRole }) => {
 
   return (
     <div
-      className={`bg-gray-50 min-h-screen px-1.5 w-72 z-50 fixed left-0 top-0 
-            transition-transform duration-300 ${
-              isVisible ? "translate-x-0" : "-translate-x-full"
-            } max-h-screen overflow-y-auto`}
+      className={`bg-gray-50 h-dvh px-1.5 w-72 fixed left-0 top-0 
+            transition-transform duration-300 z-50 overflow-y-auto
+            ${isVisible ? "translate-x-0" : "-translate-x-full"}
+            lg:translate-x-0`}
     >
       <div className="flex items-center justify-center py-6">
         <img src="/logo.png" alt="PirisaHR" className="w-28 h-10" />

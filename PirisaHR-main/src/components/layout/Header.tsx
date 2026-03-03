@@ -12,7 +12,6 @@ import { useTranslation } from "../../context/LanguageProvider";
 
 interface HeaderProps {
   toggleSidebar: () => void;
-  isSidebarVisible: boolean;
 }
 
 interface LanguageOption {
@@ -39,7 +38,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
   },
 ];
 
-const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
+const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -209,7 +208,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
       }
     };
 
-    fetchLogo();
+    void fetchLogo();
   }, [role]);
 
   useEffect(() => {
@@ -220,28 +219,25 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
   }, []);
 
   return (
-    <div
-      className={`bg-white shadow px-6 py-4 flex justify-between items-center fixed top-0 ${
-        isSidebarVisible ? "left-72" : "left-0"
-      } right-0 transition-all duration-300 z-50`}
-    >
-      {/* Sidebar Toggle and Search */}
-      <div className="flex items-center w-1/3">
+    <div className="bg-white shadow px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center w-full">
+      {/* Left: Sidebar Toggle and Search */}
+      <div className="flex items-center min-w-0 flex-1">
         <button
           onClick={toggleSidebar}
-          className="text-gray-600 mr-4 focus:outline-none cursor-pointer"
+          className="text-gray-600 mr-3 sm:mr-4 focus:outline-none cursor-pointer"
         >
           <FaBars className="text-xl" />
         </button>
+
         <input
           type="text"
           placeholder={language === "en" ? "Search" : "Search"}
-          className="bg-gray-100 w-full px-4 py-2 rounded border focus:outline-none focus:ring focus:border-blue-300"
+          className="bg-gray-100 hidden sm:block w-full max-w-md px-4 py-2 rounded border focus:outline-none focus:ring focus:border-blue-300"
         />
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-3 sm:space-x-6 flex-shrink-0">
         {/* Language Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -291,8 +287,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
           )}
         </div>
 
-        <FaEnvelope className="text-xl text-gray-600 cursor-pointer" />
-        <FaBell className="text-xl text-gray-600 cursor-pointer" />
+        <FaEnvelope className="text-xl text-gray-600 cursor-pointer hidden sm:block" />
+        <FaBell className="text-xl text-gray-600 cursor-pointer hidden sm:block" />
 
         {/* User Profile */}
         <div className="relative" ref={profileDropdownRef}>
@@ -303,15 +299,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
             <img
               src={logoUrl || "https://via.placeholder.com/150"}
               alt="User"
-              className="w-10 h-10 rounded-full cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full cursor-pointer"
             />
             <div className="flex flex-col cursor-pointer">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">
                 <TranslatableText
                   text={localStorage.getItem("username") || "Guest"}
                 />
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 hidden sm:block">
                 {localStorage.getItem("role") || "Role"}
               </span>
             </div>

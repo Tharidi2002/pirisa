@@ -1156,7 +1156,7 @@ const SalaryForm: React.FC = () => {
   }
 
   return (
-    <div className="bg-white p-4 md:p-8 rounded-lg shadow-md w-full max-w-6xl mx-auto">
+    <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md w-full max-w-6xl mx-auto">
       {/* Header with Employee Info */}
       <div className="flex flex-col md:flex-row items-center border-b border-gray-200 pb-6 mb-6 bg-white rounded-lg shadow-sm p-4">
         {/* Employee Photo */}
@@ -1295,7 +1295,7 @@ const SalaryForm: React.FC = () => {
             {/* Allowance Selection */}
             <div>
               <label className="block mb-1 text-sm">Allowance</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Select
                   options={[
                     ...allowances.map((allowance) => ({
@@ -1326,7 +1326,7 @@ const SalaryForm: React.FC = () => {
                       setSelectedAllowanceId(selectedOption?.value || null);
                     }
                   }}
-                  className="w-1/2"
+                  className="w-full sm:w-1/2"
                   placeholder="Select Allowance"
                   styles={{
                     menu: (provided) => ({
@@ -1349,7 +1349,7 @@ const SalaryForm: React.FC = () => {
                 />
                 <input
                   type="text"
-                  className="w-1/2 p-2 bg-gray-100 rounded"
+                  className="w-full sm:w-1/2 p-2 bg-gray-100 rounded"
                   placeholder="Amount"
                   value={allowanceAmount}
                   onChange={(e) => setAllowanceAmount(e.target.value)}
@@ -1385,7 +1385,7 @@ const SalaryForm: React.FC = () => {
             {/* Bonus Selection */}
             <div>
               <label className="block mb-1 text-sm">Bonus</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Select
                   options={[
                     ...bonuses.map((bonus) => ({
@@ -1415,7 +1415,7 @@ const SalaryForm: React.FC = () => {
                       setSelectedBonusId(selectedOption?.value || null);
                     }
                   }}
-                  className="w-1/2"
+                  className="w-full sm:w-1/2"
                   placeholder="Select Bonus"
                   styles={{
                     menu: (provided) => ({
@@ -1438,7 +1438,7 @@ const SalaryForm: React.FC = () => {
                 />
                 <input
                   type="text"
-                  className="w-1/2 p-2 bg-gray-100 rounded"
+                  className="w-full sm:w-1/2 p-2 bg-gray-100 rounded"
                   placeholder="Amount"
                   value={bonusAmount}
                   onChange={(e) => setBonusAmount(e.target.value)}
@@ -1611,7 +1611,7 @@ const SalaryForm: React.FC = () => {
                     />
                     <input
                       type="text"
-                      className="w-1/3 p-2 bg-gray-100 rounded"
+                      className="w-full sm:w-1/3 p-2 bg-gray-100 rounded"
                       placeholder="Amount"
                       value={
                         apitResult !== null
@@ -1694,8 +1694,8 @@ const SalaryForm: React.FC = () => {
 
       {/* Add New Allowance Modal */}
       {isAddAllowanceModalOpen && (
-        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex justify-center items-center p-4 z-50">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-4">Add New Allowance</h2>
             <div className="space-y-4">
               <div>
@@ -1742,8 +1742,8 @@ const SalaryForm: React.FC = () => {
 
       {/* Add New Bonus Modal */}
       {isAddBonusModalOpen && (
-        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex justify-center items-center p-4 z-50">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-4">Add New Bonus</h2>
             <div className="space-y-4">
               <div>
@@ -1778,7 +1778,7 @@ const SalaryForm: React.FC = () => {
       {/* Overtime Modal */}
       {isOvertimeModalOpen && (
         <div className="fixed inset-0 bg-opacity-50 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-gray-500 mb-4">
               Create Overtime Amount for{" "}
               {selectedEmployeeForOvertime?.firstName}{" "}

@@ -433,7 +433,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-50 to-gray-50 px-8 py-6 border-b border-gray-200">
+        <div className="bg-gradient-to-r from-slate-50 to-gray-50 px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
@@ -466,9 +466,9 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="p-8 space-y-8">
+          <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
             {/* Profile Header */}
-            <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-4 sm:p-8">
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 <div className="flex-shrink-0">
                   <div className="relative group">

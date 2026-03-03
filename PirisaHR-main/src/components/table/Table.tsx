@@ -134,7 +134,7 @@ const filteredData = useMemo(() => {
   }
 
   return (
-    <div className={`w-full bg-white p-4 rounded-lg ${className}`}>
+    <div className={`w-full bg-white p-3 sm:p-4 rounded-lg ${className}`}>
     {/* Title Section */}
     {title && (
       <div className="mb-4">
@@ -146,15 +146,15 @@ const filteredData = useMemo(() => {
     </div>
     <div className={`w-full bg-white rounded-lg shadow-sm ${className}`}>
       {/* Table Section */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="w-full overflow-x-auto">
+        <table className="min-w-max w-full">
           <thead>
             <tr className="text-left bg-gray-100 border-gray-200">
               {columns.length > 0 ? (
                 columns.map((column) => (
                   <th
                     key={column.key}
-                    className={`px-6 py-3 text-sm font-medium text-gray-500 ${
+                    className={`px-3 sm:px-6 py-3 text-sm font-medium text-gray-500 ${
                       column.className || ""
                     }`}
                   >
@@ -162,7 +162,7 @@ const filteredData = useMemo(() => {
                   </th>
                 ))
               ) : (
-                <th className="px-6 py-3 text-xs font-medium text-gray-500">
+                <th className="px-3 sm:px-6 py-3 text-xs font-medium text-gray-500">
                   No columns available
                 </th>
               )}
@@ -181,7 +181,7 @@ const filteredData = useMemo(() => {
                   {columns.map((column) => (
                     <td
                       key={`${item.id}-${column.key}`}
-                      className={`px-6 py-4 ${column.className || ""}`}
+                      className={`px-3 sm:px-6 py-4 ${column.className || ""}`}
                     >
                       {column.render ? column.render(item) : item[column.key]}
                     </td>
@@ -190,7 +190,7 @@ const filteredData = useMemo(() => {
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={columns.length} className="px-3 sm:px-6 py-4 text-center text-gray-500">
                   {searchTerm ? "No matching records found" : "No data available"}
                 </td>
               </tr>
@@ -201,7 +201,7 @@ const filteredData = useMemo(() => {
 
       {/* Pagination Section */}
       {pagination && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-3 sm:px-6 py-4 border-t border-gray-200">
           <button
             onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
             disabled={pagination.currentPage === 1}
@@ -210,7 +210,7 @@ const filteredData = useMemo(() => {
             <ChevronLeft size={16} />
             Previous
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
               (page) => (
                 <button
