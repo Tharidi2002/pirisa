@@ -94,18 +94,23 @@ public class DocumentController {
             @PathVariable Long empId,
             @PathVariable String fieldName) {
 
-        byte[] data = documentService.viewDocument1(empId, fieldName);
-        String contentType = getContentType(fieldName);
+        try {
+            byte[] data = documentService.viewDocument1(empId, fieldName);
+            String contentType = getContentType(fieldName);
 
-        ByteArrayResource resource = new ByteArrayResource(data);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(contentType));
-        headers.setContentDisposition(ContentDisposition
-                .inline()
-                .filename(fieldName + extractExtension(contentType))
-                .build());
+            ByteArrayResource resource = new ByteArrayResource(data);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(contentType));
+            headers.setContentDisposition(ContentDisposition
+                    .inline()
+                    .filename(fieldName + extractExtension(contentType))
+                    .build());
 
-        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            // Return 404 for missing documents instead of 500
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
@@ -129,7 +134,19 @@ public class DocumentController {
     public ResponseEntity<Map<String,Object>> handleException(Exception e) {
         Map<String,Object> error = new HashMap<>();
         error.put("resultCode", 101);
-        error.put("resultDesc",  "ERROR: " + e.getMessage());
+        
+        // Provide more specific error messages
+        String errorMessage = e.getMessage();
+        if (errorMessage != null && errorMessage.contains("Failed to save documents to database")) {
+            error.put("resultDesc", "Database error: " + errorMessage);
+        } else if (errorMessage != null && errorMessage.contains("Employee ID cannot be null")) {
+            error.put("resultDesc", "Employee ID is required");
+        } else if (errorMessage != null && errorMessage.contains("Document not found")) {
+            error.put("resultDesc", "Document not found");
+        } else {
+            error.put("resultDesc", "Server error: " + (errorMessage != null ? errorMessage : "Unknown error occurred"));
+        }
+        
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)

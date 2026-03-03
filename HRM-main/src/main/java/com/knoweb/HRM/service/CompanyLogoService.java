@@ -24,7 +24,7 @@ public class CompanyLogoService {
             // Return the most recent logo (first in the ordered list)
             return logos.get(0).getLogo();
         }
-        return new byte[0]; // Return empty array instead of 404
+        return null; // Return null so controller can return 404
     }
 
     public CompanyLogoes uploadLogo(Long cmpId, MultipartFile logo) throws IOException {

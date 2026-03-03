@@ -150,6 +150,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarVisible }) => {
               setLogoUrl(imageUrl);
               return;
             }
+          } else if (logoResponse.status === 404) {
+            console.log("No company logo found, using default");
+          } else {
+            console.warn(`Logo fetch failed with status: ${logoResponse.status}`);
           }
         }
 

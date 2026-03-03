@@ -393,7 +393,7 @@ const LeaveSettings: React.FC = () => {
                           </div>
                           <div className="mb-4">
                             <label className="text-gray-600 text-sm font-medium flex items-center gap-2 mb-2">
-                              <FaCalendarAlt className="text-sky-500" /> Amount
+                              <FaCalendarAlt className="text-sky-500" /> Days
                             </label>
                             <input
                                 type="number"
@@ -448,7 +448,7 @@ const LeaveSettings: React.FC = () => {
                           </div>
                           <div className="mb-4">
                             <p className="text-gray-600 text-sm font-medium flex items-center gap-2 mb-1">
-                              <FaCalendarAlt className="text-sky-500" /> Amount
+                              <FaCalendarAlt className="text-sky-500" /> Days
                             </p>
                             <p className="text-gray-900 font-semibold text-lg">
                               {leaveType.amount} {leaveType.amount === 1 ? 'day' : 'days'}
@@ -492,7 +492,7 @@ const LeaveSettings: React.FC = () => {
                     </div>
                     <div className="mb-4">
                       <label className="text-gray-600 text-sm font-medium flex items-center gap-2 mb-2">
-                        <FaCalendarAlt className="text-sky-500" /> Amount
+                        <FaCalendarAlt className="text-sky-500" /> Days
                       </label>
                       <input
                           type="number"

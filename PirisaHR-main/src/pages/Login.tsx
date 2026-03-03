@@ -229,18 +229,21 @@ const LoginPage: React.FC = () => {
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-600"
                 >
-                  Username <span className="text-red-500">*</span>
+                  Username or Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   id="email"
                   name="email"
-                  placeholder="Input your username"
+                  placeholder="Enter your username or email"
                   required
                   className="w-full mt-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-green-200"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  You can login with either your username or email address
+                </p>
               </div>
 
               {/* Password Field with Toggle */}

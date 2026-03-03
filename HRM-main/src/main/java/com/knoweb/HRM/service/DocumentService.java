@@ -26,6 +26,10 @@ public class DocumentService {
             MultipartFile bankPassbook,
             MultipartFile photo,
             MultipartFile appointmentLetter) throws IOException {
+        
+        if (empId == null) {
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
 
         Documents document = new Documents();
         document.setEmpId(empId);
@@ -52,7 +56,11 @@ public class DocumentService {
             document.setPhoto(photo.getBytes());
         }
 
-        return documentRepository.save(document);
+        try {
+            return documentRepository.save(document);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save documents to database: " + e.getMessage(), e);
+        }
     }
 
     // View a specific document by field name
@@ -84,29 +92,43 @@ public class DocumentService {
         Optional<Documents> documentOpt = documentRepository.findByempId(empId);
         
         if (!documentOpt.isPresent()) {
-            return null; // Return null instead of throwing exception
+            throw new RuntimeException("Document not found for employee ID: " + empId);
         }
         
         Documents document = documentOpt.get();
+        byte[] documentData = null;
 
         switch (fieldName) {
             case "cv":
-                return document.getCv();
+                documentData = document.getCv();
+                break;
             case "birthCertificate":
-                return document.getBirthCertificate();
+                documentData = document.getBirthCertificate();
+                break;
             case "idCopy":
-                return document.getIdCopy();
+                documentData = document.getIdCopy();
+                break;
             case "policeReport":
-                return document.getPoliceReport();
+                documentData = document.getPoliceReport();
+                break;
             case "bankPassbook":
-                return document.getBankPassbook();
+                documentData = document.getBankPassbook();
+                break;
             case "appointmentLetter":
-                return document.getAppointmentLetter();
+                documentData = document.getAppointmentLetter();
+                break;
             case "photo":
-                return document.getPhoto();
+                documentData = document.getPhoto();
+                break;
             default:
                 throw new IllegalArgumentException("Invalid field name: " + fieldName);
         }
+        
+        if (documentData == null || documentData.length == 0) {
+            throw new RuntimeException("Document '" + fieldName + "' not found for employee ID: " + empId);
+        }
+        
+        return documentData;
     }
 
     public void deleteDocuments(Long doc_id) {

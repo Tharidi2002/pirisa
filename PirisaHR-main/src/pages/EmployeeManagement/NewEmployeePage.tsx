@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { TranslatableText } from "../../components/languages/TranslatableText";
+import { TranslatableText, TranslatableOption } from "../../components/languages/TranslatableText";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
@@ -371,6 +371,9 @@ const EmployeeRegistration: React.FC = () => {
       const otherDocsFormData = new FormData();
       let hasOtherFiles = false;
 
+      // Add empId to FormData
+      otherDocsFormData.append("empId", currentEmpId.toString());
+
       if (documents) {
         Object.entries(documents).forEach(([key, file]) => {
           if (file && key !== "photo") { // Skip photo as it's handled separately
@@ -392,6 +395,11 @@ const EmployeeRegistration: React.FC = () => {
             body: otherDocsFormData,
           }
         );
+
+        if (!documentResponse.ok) {
+          const errorData = await documentResponse.json();
+          throw new Error(errorData.resultDesc || `Failed to upload documents: ${documentResponse.status}`);
+        }
       }
 
       if ((hasOtherFiles && documentResponse?.status === 200) || !hasOtherFiles) {
@@ -607,7 +615,7 @@ const EmployeeRegistration: React.FC = () => {
                 className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">
-                  <TranslatableText text="Select Department" />
+                  <TranslatableOption text="Select Department" />
                 </option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
@@ -627,7 +635,7 @@ const EmployeeRegistration: React.FC = () => {
                 className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">
-                  <TranslatableText text="Select Designation" />
+                  <TranslatableOption text="Select Designation" />
                 </option>
                 {designations.map((desig) => (
                   <option key={desig.id} value={desig.id}>
@@ -673,16 +681,16 @@ const EmployeeRegistration: React.FC = () => {
                 className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">
-                  <TranslatableText text="Select Gender" />
+                  <TranslatableOption text="Select Gender" />
                 </option>
                 <option value="Male">
-                  <TranslatableText text="Male" />
+                  <TranslatableOption text="Male" />
                 </option>
                 <option value="Female">
-                  <TranslatableText text="Female" />
+                  <TranslatableOption text="Female" />
                 </option>
                 <option value="Other">
-                  <TranslatableText text="Other" />
+                  <TranslatableOption text="Other" />
                 </option>
               </select>
             </div>

@@ -27,7 +27,17 @@ const EmployeeGenderCard: React.FC = () => {
         );
 
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          if (response.status === 404) {
+            console.log("No employees found for this company");
+            // Set default values when no employees exist
+            setTotal(0);
+            setMaleCount(0);
+            setFemaleCount(0);
+            setMalePercentage(0);
+            setFemalePercentage(0);
+            return;
+          }
+          throw new Error(`Network response was not ok: ${response.status}`);
         }
 
         const data = await response.json();

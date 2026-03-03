@@ -9,6 +9,10 @@ interface TranslatableTextProps {
   text: string;
 }
 
+interface TranslatableOptionProps {
+  text: string;
+}
+
 interface TranslationContextType {
   language: string;
   translations: Translations;
@@ -56,4 +60,46 @@ export const TranslatableText = ({ text }: TranslatableTextProps) => {
   return (
     <span>{language === "en" ? text : translations[cacheKey] || text}</span>
   );
+};
+
+// New component for use in option elements - returns plain text
+export const TranslatableOption = ({ text }: TranslatableOptionProps) => {
+  const { language, translations, setTranslations } =
+    useTranslation() as TranslationContextType;
+  const [loading, setLoading] = useState(false);
+  const cacheKey = `${text}_${language}`;
+
+  useEffect(() => {
+    const translateAndCache = async () => {
+      if (language === "en") {
+        return text;
+      }
+
+      // Check if translation exists in cache
+      if (translations[cacheKey]) {
+        return translations[cacheKey];
+      }
+
+      setLoading(true);
+      try {
+        const translated = await translateText(text, language);
+        setTranslations((prev: Translations) => ({
+          ...prev,
+          [cacheKey]: translated,
+        }));
+      } catch (error) {
+        console.error("Translation failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    translateAndCache();
+  }, [text, language, cacheKey, translations, setTranslations]);
+
+  if (loading) {
+    return "Loading...";
+  }
+
+  return language === "en" ? text : translations[cacheKey] || text;
 };

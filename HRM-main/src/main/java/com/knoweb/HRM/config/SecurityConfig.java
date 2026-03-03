@@ -71,7 +71,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/login","/company/add_company","/company/forgetPassword","/api/**" ,"/success" ,"/cancel","/api/webhook/stripe","/password/forgotPassword").permitAll()
                 .antMatchers( "/user/all").hasAnyAuthority( "USER")
                 .antMatchers( "/employee/all").hasAnyAuthority( "HRM")
-                .antMatchers( "/employee/emp/**","/employee/payroleListEmp/**","/employee/EmpDetailsListByEmp/**","/emp_leave/add_leave","/document/view/**","/company_leave/company/**","/employee/changePassword/**","/document/update/**").hasAnyAuthority( "EMPLOYEE","CMPNY")
+                .antMatchers( "/employee/emp/**","/employee/payroleListEmp/**","/employee/EmpDetailsListByEmp/**","/emp_leave/add_leave","/document/view/**","/company_leave/company/**","/employee/changePassword/**","/document/update/**","/employee/EmpDetailsList/**","/logo/view/**","/document/upload-all").hasAnyAuthority( "EMPLOYEE","CMPNY")
                 .antMatchers( "/**").hasAnyAuthority("CMPNY")
                 .anyRequest().authenticated()
                 .and()

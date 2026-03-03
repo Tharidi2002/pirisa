@@ -46,12 +46,25 @@ public class LoginController {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
 
+        // Try finding by username first
         Company company = companyRepository.findByUsername(username);
         User user = userRepository.findByUsername(username);
         Employee employee = employeeRepository.findByUsername(username);
+        
+        // If not found by username, try finding by email for all user types
+        if (company == null) {
+            company = companyRepository.findByCmpEmail(username);
+        }
+        if (user == null) {
+            user = userRepository.findByEmail(username);
+        }
+        if (employee == null) {
+            employee = employeeRepository.findByEmail(username);
+        }
 
         if (company != null && passwordEncoder.matches(password, company.getCmp_password())) {
             String token = jwtTokenUtil.generateToken(company);
+            System.out.println("Company login successful - Username/Email: " + username);
 
             Map<String, Object> loginresponse = new HashMap<>();
             loginresponse.put("resultCode", 100);
@@ -73,6 +86,7 @@ public class LoginController {
 
         } else if (user != null && passwordEncoder.matches(password, user.getPassword())) {
             String token = jwtTokenUtil.generateToken(user);
+            System.out.println("User login successful - Username/Email: " + username);
 
             Map<String, Object> loginresponse = new HashMap<>();
             loginresponse.put("resultCode", 100);
@@ -94,7 +108,7 @@ public class LoginController {
 
         }else if (employee != null && passwordEncoder.matches(password, employee.getPassword())) {
             String token = jwtTokenUtil.generateToken(employee);
-            System.out.println("This should be printed");
+            System.out.println("Employee login successful - Username/Email: " + username);
 
             Map<String, Object> loginresponse = new HashMap<>();
             loginresponse.put("resultCode", 100);
@@ -122,7 +136,7 @@ public class LoginController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("response", loginresponse);
-            response.put("details", "Invalid Password");
+            response.put("details", "Invalid username/email or password");
 
             return ResponseEntity.ok(response);
         }
