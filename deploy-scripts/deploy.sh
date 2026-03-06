@@ -23,14 +23,26 @@ sudo systemctl stop pirisa-backend || true
 
 # Deploy Backend
 echo "📦 Deploying backend..."
-sudo cp $TEMP_DIR/HRM-main/target/*.jar $BACKEND_DIR/app.jar
-sudo chown -R www-data:www-data $BACKEND_DIR
+if [ -f "$TEMP_DIR/backend/app.jar" ]; then
+    sudo cp $TEMP_DIR/backend/app.jar $BACKEND_DIR/app.jar
+    sudo chown -R www-data:www-data $BACKEND_DIR
+    echo "✅ Backend JAR deployed"
+else
+    echo "❌ Backend JAR not found!"
+    exit 1
+fi
 
 # Deploy Frontend
 echo "🎨 Deploying frontend..."
-sudo rm -rf $FRONTEND_DIR/*
-sudo cp -r $TEMP_DIR/PirisaHR-main/dist/* $FRONTEND_DIR/
-sudo chown -R www-data:www-data $FRONTEND_DIR
+if [ -d "$TEMP_DIR/frontend" ] && [ "$(ls -A $TEMP_DIR/frontend)" ]; then
+    sudo rm -rf $FRONTEND_DIR/*
+    sudo cp -r $TEMP_DIR/frontend/* $FRONTEND_DIR/
+    sudo chown -R www-data:www-data $FRONTEND_DIR
+    echo "✅ Frontend deployed"
+else
+    echo "❌ Frontend files not found!"
+    exit 1
+fi
 
 # Start backend service
 echo "▶️  Starting backend service..."
