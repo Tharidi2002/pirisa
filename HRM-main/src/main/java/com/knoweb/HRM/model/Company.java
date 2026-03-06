@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -56,6 +57,9 @@ public class Company implements Serializable {
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;
+
+    @Column(name = "last_leave_calculation_date")
+    private LocalDate lastLeaveCalculationDate;
 
     private String stripeCustomerId;
 

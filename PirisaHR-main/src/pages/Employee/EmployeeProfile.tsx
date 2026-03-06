@@ -37,28 +37,15 @@ interface EmployeeDetails {
   };
 }
 
-interface CompanyLeave {
-  id: number;
-  leaveType: string;
-  amount: number;
-  cmpId: number;
-}
-
-interface EmployeeLeave {
-  id: number;
-  leaveType: string;
-  leaveReason: string;
-  leaveStatus: string;
-  leaveStartDay: string;
-  leaveEndDay: string;
-  leaveDays: number;
-}
-
 interface LeaveBalance {
   leaveType: string;
   available: number;
   taken: number;
+  remaining: number;
+  calculatedOn?: string | null;
 }
+
+type LeaveBalanceAsOfMode = "CURRENT_DATE" | "LAST_CALCULATION_DATE";
 
 const EmployeeProfile = () => {
   const [employee, setEmployee] = useState<EmployeeDetails | null>(null);
@@ -66,6 +53,7 @@ const EmployeeProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
+  const [asOfMode, setAsOfMode] = useState<LeaveBalanceAsOfMode>("CURRENT_DATE");
   const [documentAvailability, setDocumentAvailability] = useState<
     Record<string, boolean>
   >({});
@@ -84,32 +72,6 @@ const EmployeeProfile = () => {
     }
 
     try {
-      let companyLeaveData = { LeavetList: [] };
-      try {
-        const companyLeaveResponse = await fetch(
-          `http://localhost:8080/company_leave/company/${cmpId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (companyLeaveResponse.ok) {
-          const fetchedData = await companyLeaveResponse.json();
-          if (fetchedData.resultCode === 100 && fetchedData.LeavetList) {
-            companyLeaveData = fetchedData;
-          }
-        }
-        // If not ok or resultCode is not 100, we'll just use the empty LeavetList
-      } catch (leaveError) {
-        console.error(
-          "Could not fetch company leave data, proceeding without it:",
-          leaveError
-        );
-        // Proceed with empty companyLeaveData.LeavetList
-      }
-
       // Fetch employee details including leave history
       const employeeResponse = await fetch(
         `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
@@ -145,12 +107,37 @@ const EmployeeProfile = () => {
         designation: employeeDetails.designation,
       });
 
-      // Calculate leave balances
-      const balances = calculateLeaveBalances(
-        companyLeaveData.LeavetList,
-        employeeDetails.leaveList || []
-      );
-      setLeaveBalances(balances);
+      // Fetch leave balances from backend (supports Balance As-of Date modes)
+      try {
+        const leaveBalanceResponse = await fetch(
+          `http://localhost:8080/leave_balance/employee/${empId}?asOfMode=${asOfMode}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (leaveBalanceResponse.ok) {
+          const data = await leaveBalanceResponse.json();
+          if (data?.resultCode === 100 && Array.isArray(data?.planBalances)) {
+            const balances: LeaveBalance[] = data.planBalances.map((b: any) => ({
+              leaveType: b.leaveType,
+              available: b.available,
+              taken: b.taken,
+              remaining: b.remaining,
+              calculatedOn: b.calculatedOn ?? null,
+            }));
+            setLeaveBalances(balances);
+          } else {
+            setLeaveBalances([]);
+          }
+        } else {
+          setLeaveBalances([]);
+        }
+      } catch {
+        setLeaveBalances([]);
+      }
 
       // Check document availability
       await checkDocumentAvailability(empId, token);
@@ -192,7 +179,7 @@ const EmployeeProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [asOfMode]);
 
   const checkDocumentAvailability = async (empId: string, token: string) => {
     const documentTypes = [
@@ -372,6 +359,19 @@ const EmployeeProfile = () => {
 
       {/* Leave Balance Section */}
       <Section title="Leave Balance">
+        <div className="flex items-center justify-end mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 font-medium">Balance As-of Date</span>
+            <select
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+              value={asOfMode}
+              onChange={(e) => setAsOfMode(e.target.value as LeaveBalanceAsOfMode)}
+            >
+              <option value="CURRENT_DATE">Current date</option>
+              <option value="LAST_CALCULATION_DATE">Last calculation date</option>
+            </select>
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {leaveBalances.length > 0 ? (
             leaveBalances.map((balance, index) => (
@@ -380,6 +380,7 @@ const EmployeeProfile = () => {
                 title={balance.leaveType}
                 available={balance.available}
                 taken={balance.taken}
+                calculatedOn={balance.calculatedOn}
               />
             ))
           ) : (
@@ -434,26 +435,5 @@ const Section = ({
     {children}
   </div>
 );
-
-const calculateLeaveBalances = (
-  companyLeaves: CompanyLeave[],
-  employeeLeaves: EmployeeLeave[]
-): LeaveBalance[] => {
-  return companyLeaves.map((companyLeave) => {
-    const takenLeaves = employeeLeaves
-      .filter(
-        (leave) =>
-          leave.leaveType === companyLeave.leaveType &&
-          leave.leaveStatus === "APPROVED"
-      )
-      .reduce((sum, leave) => sum + leave.leaveDays, 0);
-
-    return {
-      leaveType: companyLeave.leaveType,
-      available: companyLeave.amount,
-      taken: takenLeaves,
-    };
-  });
-};
 
 export default EmployeeProfile;

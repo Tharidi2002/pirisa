@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, AlertCircle } from "lucide-react";
 
 interface AttendanceRecord {
   id: number;
   startedAt: string;
-  endedAt: string;
+  endedAt: string | null;
   empId: number;
   working_status: string;
   totalTime: number;
   attendance_status: string | null;
   dayName: string;
-  additional_attendance: string | null;
+  additional_attendance: unknown;
 }
 
 interface Leave {
@@ -52,7 +52,7 @@ interface ApiResponse {
 
 interface EmployeeDetailsResponse {
   EmployeeLeaveList: Array<{
-    leaveList: Leave[];
+    leaveList?: Leave[];
   }>;
   resultCode: number;
   resultDesc: string;
@@ -65,68 +65,145 @@ const AttendanceCalendarDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const empId = localStorage.getItem("empId");
+
+      if (!empId || !token) {
+        throw new Error("Employee ID or token not found");
+      }
+
+      // Fetch employee data
+      const employeeResponse = await fetch(
+        `http://localhost:8080/employee/emp/${empId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Fetch leave data
+      const leaveResponse = await fetch(
+        `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!employeeResponse.ok || !leaveResponse.ok) {
+        throw new Error("Failed to fetch data");
+      }
+
+      const employeeData: ApiResponse = await employeeResponse.json();
+      const leaveData: EmployeeDetailsResponse = await leaveResponse.json();
+
+      if (employeeData.resultCode === 100 && leaveData.resultCode === 100) {
+        setEmployee(employeeData.Employee_list);
+        const first = leaveData.EmployeeLeaveList?.[0] as unknown;
+        const leaveList =
+          typeof first === "object" && first !== null && "leaveList" in first
+            ? ((first as { leaveList?: Leave[] }).leaveList ?? [])
+            : [];
+        setLeaves(Array.isArray(leaveList) ? leaveList : []);
+        setError(null);
+      } else {
+        throw new Error("Failed to fetch data");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const empId = localStorage.getItem("empId");
+    fetchData();
 
-        if (!empId || !token) {
-          throw new Error("Employee ID or token not found");
-        }
+    const intervalId = window.setInterval(() => {
+      fetchData();
+    }, 30000);
 
-        // Fetch employee data
-        const employeeResponse = await fetch(
-          `http://localhost:8080/employee/emp/${empId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+    const handleFocus = () => {
+      fetchData();
+    };
 
-        // Fetch leave data
-        const leaveResponse = await fetch(
-          `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!employeeResponse.ok || !leaveResponse.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const employeeData: ApiResponse = await employeeResponse.json();
-        const leaveData: EmployeeDetailsResponse = await leaveResponse.json();
-
-        if (employeeData.resultCode === 100 && leaveData.resultCode === 100) {
-          setEmployee(employeeData.Employee_list);
-          setLeaves(leaveData.EmployeeLeaveList[0]?.leaveList || []);
-        } else {
-          throw new Error("Failed to fetch data");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchData();
       }
     };
 
-    fetchData();
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchData]);
+
+  useEffect(() => {
+    const tickId = window.setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(tickId);
+    };
   }, []);
 
   const formatTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+    const safeMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : 0;
+    const hours = Math.floor(safeMinutes / 60);
+    const mins = safeMinutes % 60;
     return `${hours}h ${mins}m`;
   };
+
+  const parseDateSafe = (value: unknown): Date | null => {
+    if (typeof value !== "string" || value.trim().length === 0) return null;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const diffMinutes = (start: Date, end: Date): number => {
+    const ms = end.getTime() - start.getTime();
+    if (!Number.isFinite(ms) || ms <= 0) return 0;
+    return Math.floor(ms / 60000);
+  };
+
+  const formatRelativeTime = (date: Date, ref: Date): string => {
+    const mins = diffMinutes(date, ref);
+    if (mins <= 0) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const isAttendanceEnded = useCallback(
+    (att: AttendanceRecord): boolean => {
+      const end = parseDateSafe(att.endedAt);
+      if (end) return true;
+
+      const status = (att.attendance_status ?? "").toString().trim().toLowerCase();
+      if (status && status !== "active" && status !== "in progress") return true;
+
+      const minutes = Number.isFinite(att.totalTime) ? att.totalTime : 0;
+      return minutes > 0;
+    },
+    []
+  );
 
   const formatDateTime = (dateString: string): string => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -135,6 +212,21 @@ const AttendanceCalendarDashboard: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const toLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const extractDatePart = (dateTimeString: string): string => {
+    // Handles both ISO strings and other date-time formats by falling back to Date parsing
+    if (typeof dateTimeString === "string" && dateTimeString.includes("T")) {
+      return dateTimeString.split("T")[0];
+    }
+    return toLocalDateString(new Date(dateTimeString));
   };
 
   const getDaysInMonth = (date: Date): Date[] => {
@@ -163,13 +255,11 @@ const AttendanceCalendarDashboard: React.FC = () => {
   };
 
   const getLeaveForDate = (date: Date): Leave | null => {
-    const dateString = date.toISOString().split("T")[0];
+    const dateString = toLocalDateString(date);
     return (
       leaves.find((leave) => {
-        const startDate = new Date(leave.leaveStartDay)
-          .toISOString()
-          .split("T")[0];
-        const endDate = new Date(leave.leaveEndDay).toISOString().split("T")[0];
+        const startDate = extractDatePart(leave.leaveStartDay);
+        const endDate = extractDatePart(leave.leaveEndDay);
         return (
           dateString >= startDate &&
           dateString <= endDate &&
@@ -233,6 +323,72 @@ const AttendanceCalendarDashboard: React.FC = () => {
     });
   };
 
+  const daysInMonth = useMemo(() => getDaysInMonth(currentDate), [currentDate]);
+  const monthName = useMemo(
+    () =>
+      currentDate.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      }),
+    [currentDate]
+  );
+
+  const monthAttendance = useMemo(() => {
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    return (employee?.attendanceList ?? []).filter((att) => {
+      const d = parseDateSafe(att.startedAt);
+      if (!d) return false;
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+  }, [currentDate, employee]);
+
+  const approvedLeavesThisMonth = useMemo(() => {
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    const monthStart = new Date(y, m, 1);
+    const monthEnd = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    return leaves.filter((leave) => {
+      if (leave.leaveStatus !== "APPROVED") return false;
+      const s = parseDateSafe(leave.leaveStartDay);
+      const e = parseDateSafe(leave.leaveEndDay);
+      if (!s || !e) return false;
+      return s <= monthEnd && e >= monthStart;
+    });
+  }, [currentDate, leaves]);
+
+  const recentAttendance = useMemo(() => {
+    const list = [...(employee?.attendanceList ?? [])];
+    list.sort((a, b) => {
+      const da = parseDateSafe(a.startedAt)?.getTime() ?? 0;
+      const db = parseDateSafe(b.startedAt)?.getTime() ?? 0;
+      return db - da;
+    });
+    return list.slice(0, 3);
+  }, [employee]);
+
+  const getLiveTotalMinutes = useCallback(
+    (att: AttendanceRecord): number => {
+      const fromApi =
+        Number.isFinite(att.totalTime) && att.totalTime > 0 ? att.totalTime : 0;
+
+      if (isAttendanceEnded(att)) {
+        return fromApi;
+      }
+
+      const start = parseDateSafe(att.startedAt);
+      if (!start) return fromApi;
+      const end = parseDateSafe(att.endedAt);
+      if (end) {
+        const computed = diffMinutes(start, end);
+        return computed > 0 ? computed : fromApi;
+      }
+      const live = diffMinutes(start, now);
+      return live > 0 ? live : fromApi;
+    },
+    [isAttendanceEnded, now]
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -262,12 +418,6 @@ const AttendanceCalendarDashboard: React.FC = () => {
   }
 
   if (!employee) return null;
-
-  const daysInMonth = getDaysInMonth(currentDate);
-  const monthName = currentDate.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -345,7 +495,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
                         <div className="text-xs font-medium">{label}</div>
                         {attendance && !leave && (
                           <div className="text-xs opacity-75">
-                            {formatTime(attendance.totalTime)}
+                            {formatTime(getLiveTotalMinutes(attendance))}
                           </div>
                         )}
                       </div>
@@ -367,17 +517,14 @@ const AttendanceCalendarDashboard: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Days Present</span>
                   <span className="font-medium">
-                    {employee.attendanceList.length}
+                    {monthAttendance.length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Hours</span>
                   <span className="font-medium">
                     {formatTime(
-                      employee.attendanceList.reduce(
-                        (sum, att) => sum + att.totalTime,
-                        0
-                      )
+                      monthAttendance.reduce((sum, att) => sum + getLiveTotalMinutes(att), 0)
                     )}
                   </span>
                 </div>
@@ -385,7 +532,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
                   <span className="text-gray-600">On-Site Days</span>
                   <span className="font-medium">
                     {
-                      employee.attendanceList.filter(
+                      monthAttendance.filter(
                         (att) => att.working_status === "On-Site"
                       ).length
                     }
@@ -395,7 +542,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
                   <span className="text-gray-600">Online Days</span>
                   <span className="font-medium">
                     {
-                      employee.attendanceList.filter(
+                      monthAttendance.filter(
                         (att) => att.working_status === "Online"
                       ).length
                     }
@@ -404,10 +551,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Approved Leaves</span>
                   <span className="font-medium">
-                    {
-                      leaves.filter((leave) => leave.leaveStatus === "APPROVED")
-                        .length
-                    }
+                    {approvedLeavesThisMonth.length}
                   </span>
                 </div>
               </div>
@@ -465,14 +609,21 @@ const AttendanceCalendarDashboard: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">
-                            {formatTime(dayAttendance.totalTime)}
+                            {formatTime(getLiveTotalMinutes(dayAttendance))}
                           </span>
                         </div>
                         <div className="text-sm text-gray-600">
                           <p>
                             Start: {formatDateTime(dayAttendance.startedAt)}
                           </p>
-                          <p>End: {formatDateTime(dayAttendance.endedAt)}</p>
+                          <p>
+                            End:{" "}
+                            {dayAttendance.endedAt
+                              ? formatDateTime(dayAttendance.endedAt)
+                              : isAttendanceEnded(dayAttendance)
+                              ? "Completed"
+                              : "In progress"}
+                          </p>
                         </div>
                       </div>
                     );
@@ -493,16 +644,18 @@ const AttendanceCalendarDashboard: React.FC = () => {
                 Recent Activity
               </h3>
               <div className="space-y-3">
-                {employee.attendanceList.slice(0, 3).map((attendance) => (
+                {recentAttendance.map((attendance) => (
                   <div
                     key={attendance.id}
                     className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
                   >
                     <div
                       className={`w-3 h-3 rounded-full ${
-                        attendance.working_status === "On-Site"
+                        isAttendanceEnded(attendance)
+                          ? "bg-orange-500"
+                          : attendance.working_status === "On-Site"
                           ? "bg-green-500"
-                          : attendance.working_status === "Remote"
+                          : attendance.working_status === "Online"
                           ? "bg-blue-500"
                           : "bg-purple-500"
                       }`}
@@ -512,8 +665,12 @@ const AttendanceCalendarDashboard: React.FC = () => {
                         {attendance.dayName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {formatDateTime(attendance.startedAt)} •{" "}
-                        {formatTime(attendance.totalTime)}
+                        {(() => {
+                          const start = parseDateSafe(attendance.startedAt);
+                          const relative = start ? formatRelativeTime(start, now) : "";
+                          const total = formatTime(getLiveTotalMinutes(attendance));
+                          return `${formatDateTime(attendance.startedAt)} • ${total}${relative ? ` • ${relative}` : ""}`;
+                        })()}
                       </p>
                     </div>
                     <span className="text-xs font-medium text-gray-600">

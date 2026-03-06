@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Table from "../components/table/Table";
 import { Pencil, Trash2, User } from "lucide-react";
@@ -50,78 +50,100 @@ interface DeleteResponse {
 const EmployeeTable = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
-  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const rowsPerPage = 10;
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const companyId = localStorage.getItem("cmpnyId");
+  const [departmentPages, setDepartmentPages] = useState<Record<string, number>>({});
+  const [collapsedDepartments, setCollapsedDepartments] = useState<Record<string, boolean>>({});
 
-        if (!token || !companyId) {
+  const fetchEmployees = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const companyId = localStorage.getItem("cmpnyId");
+
+      if (!token || !companyId) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
           navigate("/login");
           return;
         }
-
-        //console.log("Fetching employees for Company ID:", companyId); // Log companyId
-
-        const response = await fetch(
-          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            navigate("/login");
-            return;
-          }
-          if (response.status === 403) {
-            throw new Error(
-              "Permission error: You do not have access to view employees."
-            );
-          }
-          if (response.status === 404) {
-            // Treat 404 as "no employees" rather than an error
-            setEmployees([]);
-            return;
-          }
-          throw new Error("Failed to fetch employees. Please try again later.");
+        if (response.status === 403) {
+          throw new Error(
+            "Permission error: You do not have access to view employees."
+          );
         }
-
-        const data: ApiResponse = await response.json();
-        if (data.resultCode === 100) {
-          const employeeList = data.EmployeeList || [];
-          setEmployees(employeeList);
-
-          // Fetch photos for all employees
-          if (employeeList.length > 0) {
-            await fetchEmployeePhotos(employeeList, token);
-          }
-        } else {
-          throw new Error(data.resultDesc || "Failed to fetch employees");
+        if (response.status === 404) {
+          setEmployees([]);
+          return;
         }
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "An error occurred while fetching employees"
-        );
-      } finally {
-        setLoading(false);
+        throw new Error("Failed to fetch employees. Please try again later.");
+      }
+
+      const data: ApiResponse = await response.json();
+      if (data.resultCode === 100) {
+        const employeeList = data.EmployeeList || [];
+        setEmployees(employeeList);
+
+        if (employeeList.length > 0) {
+          await fetchEmployeePhotos(employeeList, token);
+        }
+      } else {
+        throw new Error(data.resultDesc || "Failed to fetch employees");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching employees"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchEmployees();
+
+    const intervalId = window.setInterval(() => {
+      fetchEmployees();
+    }, 30000);
+
+    const handleFocus = () => {
+      fetchEmployees();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchEmployees();
       }
     };
 
-    fetchEmployees();
-  }, [navigate]);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchEmployees]);
 
   // Cleanup photo URLs on component unmount to prevent memory leaks
   useEffect(() => {
@@ -276,22 +298,20 @@ const EmployeeTable = () => {
     );
   };
 
-  const totalPages = Math.ceil(employees.length / rowsPerPage);
-  const paginatedData = employees.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+  const departmentGroups = useMemo(() => {
+    const groups = new Map<string, Employee[]>();
 
-  const getStatusColor = (status: Employee["status"]) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-500 text-white";
-      case "INACTIVE":
-        return "bg-red-500 text-white";
-      default:
-        return "";
-    }
-  };
+    (employees ?? []).forEach((emp) => {
+      const deptName = emp?.department?.dpt_name?.trim() || "Unassigned";
+      const list = groups.get(deptName) ?? [];
+      list.push(emp);
+      groups.set(deptName, list);
+    });
+
+    return Array.from(groups.entries())
+      .map(([departmentName, list]) => ({ departmentName, list }))
+      .sort((a, b) => a.departmentName.localeCompare(b.departmentName));
+  }, [employees]);
 
   const columns: Column<Employee>[] = [
     {
@@ -354,29 +374,9 @@ const EmployeeTable = () => {
       ),
     },
     {
-      key: "department",
-      title: "Department",
-      render: (item) => (
-        <span className="text-xs">{item.department.dpt_name}</span>
-      ),
-    },
-    {
       key: "dateOfJoining",
       title: "Joined Date",
       render: (item) => <span className="text-xs">{item.dateOfJoining}</span>,
-    },
-    {
-      key: "status",
-      title: "Status",
-      render: (item) => (
-        <span
-          className={`px-2 text-xs py-0.5 rounded-full ${getStatusColor(
-            item.status
-          )}`}
-        >
-          {item.status}
-        </span>
-      ),
     },
     {
       key: "actions",
@@ -518,27 +518,81 @@ const EmployeeTable = () => {
     );
   }
 
+  const toggleDepartment = (dept: string) => {
+    setCollapsedDepartments((prev) => ({
+      ...prev,
+      [dept]: !prev[dept],
+    }));
+  };
+
+  const getDepartmentPage = (dept: string): number => {
+    return departmentPages[dept] ?? 1;
+  };
+
+  const setDepartmentPage = (dept: string, page: number) => {
+    setDepartmentPages((prev) => ({
+      ...prev,
+      [dept]: page,
+    }));
+  };
+
   return (
-    <div>
-      <Table
-        columns={columns}
-        data={paginatedData}
-        title="Employee List"
-        searchKeys={[
-          "firstName",
-          "lastName",
-          "email",
-          "epfNo",
-          "designation.designation",
-          "department.dpt_name",
-          "status",
-        ]}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: setCurrentPage,
-        }}
-      />
+    <div className="flex flex-col gap-4">
+      {departmentGroups.map(({ departmentName, list }) => {
+        const collapsed = Boolean(collapsedDepartments[departmentName]);
+        const currentPage = getDepartmentPage(departmentName);
+        const totalPages = Math.max(1, Math.ceil(list.length / rowsPerPage));
+        const safePage = Math.min(currentPage, totalPages);
+        const paginated = list.slice(
+          (safePage - 1) * rowsPerPage,
+          safePage * rowsPerPage
+        );
+
+        return (
+          <div key={departmentName} className="bg-white rounded-lg shadow-sm">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 hover:bg-gray-50"
+              onClick={() => toggleDepartment(departmentName)}
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-semibold text-gray-700">
+                  Employee List • {departmentName}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {list.length} employee(s)
+                </span>
+              </div>
+              <span className="text-xs font-medium text-gray-500">
+                {collapsed ? "Show" : "Hide"}
+              </span>
+            </button>
+
+            {!collapsed && (
+              <div className="p-2 sm:p-3">
+                <Table
+                  columns={columns}
+                  data={paginated}
+                  searchKeys={[
+                    "firstName",
+                    "lastName",
+                    "email",
+                    "epfNo",
+                    "designation.designation",
+                    "dateOfJoining",
+                  ]}
+                  pagination={{
+                    currentPage: safePage,
+                    totalPages,
+                    onPageChange: (p) => setDepartmentPage(departmentName, p),
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+
       <ToastContainer />
     </div>
   );

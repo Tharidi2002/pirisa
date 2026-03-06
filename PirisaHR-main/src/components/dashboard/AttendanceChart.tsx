@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -45,66 +45,98 @@ const AttendanceChart = () => {
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [attendanceEmployees, setAttendanceEmployees] = useState<AttendanceEmployeeDTO[]>([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const cmpnyId = localStorage.getItem("cmpnyId");
-    if (!token || !cmpnyId) {
-      setTotalEmployees(0);
-      setAttendanceEmployees([]);
-      return;
-    }
+  const month = useMemo(() => new Date().getMonth() + 1, []);
 
-    const controller = new AbortController();
-    const month = new Date().getMonth() + 1;
+  const fetchChartData = useCallback(
+    async (signal: AbortSignal) => {
+      const token = localStorage.getItem("token");
+      const cmpnyId = localStorage.getItem("cmpnyId");
+      if (!token || !cmpnyId) {
+        setTotalEmployees(0);
+        setAttendanceEmployees([]);
+        return;
+      }
 
-    (async () => {
-      try {
-        const [empRes, attRes] = await Promise.all([
-          fetch(`http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            signal: controller.signal,
-          }),
-          fetch(`http://localhost:8080/employee/attendanceList/${cmpnyId}/${month}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            signal: controller.signal,
-          }),
-        ]);
+      const [empRes, attRes] = await Promise.all([
+        fetch(`http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          signal,
+        }),
+        fetch(`http://localhost:8080/employee/attendanceList/${cmpnyId}/${month}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          signal,
+        }),
+      ]);
 
-        if (empRes.ok) {
-          const empJson = await empRes.json();
-          if (empJson?.resultCode === 100 && Array.isArray(empJson?.EmployeeList)) {
-            setTotalEmployees((empJson.EmployeeList as EmpDetailsDTO[]).length);
-          } else {
-            setTotalEmployees(0);
-          }
+      if (empRes.ok) {
+        const empJson = await empRes.json();
+        if (empJson?.resultCode === 100 && Array.isArray(empJson?.EmployeeList)) {
+          setTotalEmployees((empJson.EmployeeList as EmpDetailsDTO[]).length);
         } else {
           setTotalEmployees(0);
         }
+      } else {
+        setTotalEmployees(0);
+      }
 
-        if (attRes.ok) {
-          const attJson = await attRes.json();
-          if (attJson?.resultCode === 100 && Array.isArray(attJson?.EmployeeList)) {
-            setAttendanceEmployees(attJson.EmployeeList as AttendanceEmployeeDTO[]);
-          } else {
-            setAttendanceEmployees([]);
-          }
+      if (attRes.ok) {
+        const attJson = await attRes.json();
+        if (attJson?.resultCode === 100 && Array.isArray(attJson?.EmployeeList)) {
+          setAttendanceEmployees(attJson.EmployeeList as AttendanceEmployeeDTO[]);
         } else {
           setAttendanceEmployees([]);
         }
+      } else {
+        setAttendanceEmployees([]);
+      }
+    },
+    [month]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        await fetchChartData(controller.signal);
       } catch {
         setTotalEmployees(0);
         setAttendanceEmployees([]);
       }
-    })();
+    };
 
-    return () => controller.abort();
-  }, []);
+    run();
+
+    const intervalId = window.setInterval(() => {
+      run();
+    }, 15000);
+
+    const handleFocus = () => {
+      run();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        run();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      controller.abort();
+    };
+  }, [fetchChartData]);
 
   interface CustomTooltipProps {
     active?: boolean;
@@ -127,7 +159,15 @@ const AttendanceChart = () => {
     if (!denom) return [];
 
     const normalize = (v?: string) => (v || "").toUpperCase().trim();
-    const isPresent = (a?: AttendanceDTO) => normalize(a?.attendance_status) === "PRESENT";
+    const isPresent = (a?: AttendanceDTO) => {
+      const s = normalize(a?.attendance_status);
+      if (!s) return true;
+      if (s === "ABSENT") return false;
+      if (s === "LEAVE") return false;
+      if (s === "PENDING") return false;
+      if (s === "OFFDAY" || s === "OFF_DAY" || s === "OFF") return false;
+      return true;
+    };
 
     // Aggregate by day-of-month for current month
     const dayMap = new Map<number, number>();
