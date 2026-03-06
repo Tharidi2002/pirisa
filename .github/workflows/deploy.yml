@@ -33,26 +33,59 @@ jobs:
     - name: Build Backend
       working-directory: ${{ env.BACKEND_DIR }}
       run: |
+        echo "📦 Building backend..."
         chmod +x mvnw
-        ./mvnw clean package -DskipTests
-        ls -la target/
+        ./mvnw clean package -DskipTests -e -X
+        echo "📂 Checking target directory..."
+        ls -la target/ || echo "Target directory not found"
+        echo "🔍 Finding JAR files..."
+        find . -name "*.jar" -type f
         
     - name: Build Frontend
       working-directory: ${{ env.FRONTEND_DIR }}
       run: |
+        echo "🎨 Building frontend..."
         npm ci
         npm run build
-        ls -la dist/
+        echo "📂 Checking dist directory..."
+        ls -la dist/ || echo "Dist directory not found"
 
     - name: Prepare deployment files
       run: |
+        echo "📦 Preparing deployment package..."
         mkdir -p deploy-package/backend
         mkdir -p deploy-package/frontend
         mkdir -p deploy-package/scripts
-        cp ${{ env.BACKEND_DIR }}/target/*.jar deploy-package/backend/app.jar || echo "No JAR found"
-        cp -r ${{ env.FRONTEND_DIR }}/dist/* deploy-package/frontend/ || echo "No frontend build"
+        
+        echo "🔍 Looking for JAR files..."
+        find ${{ env.BACKEND_DIR }} -name "*.jar" -type f
+        
+        # Copy JAR file - find and copy the first JAR that's not empty
+        JAR_FILE=$(find ${{ env.BACKEND_DIR }}/target -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -type f | head -1)
+        if [ -n "$JAR_FILE" ]; then
+          echo "✅ Found JAR: $JAR_FILE"
+          cp "$JAR_FILE" deploy-package/backend/app.jar
+        else
+          echo "❌ No JAR file found!"
+          echo "Contents of backend directory:"
+          ls -laR ${{ env.BACKEND_DIR }}/target/
+          exit 1
+        fi
+        
+        # Copy frontend
+        if [ -d "${{ env.FRONTEND_DIR }}/dist" ]; then
+          echo "✅ Copying frontend..."
+          cp -r ${{ env.FRONTEND_DIR }}/dist/* deploy-package/frontend/
+        else
+          echo "❌ Frontend dist not found!"
+          exit 1
+        fi
+        
+        # Copy scripts
         cp deploy-scripts/* deploy-package/scripts/
-        ls -la deploy-package/
+        
+        echo "📋 Deployment package contents:"
+        ls -laR deploy-package/
 
     - name: Deploy to DigitalOcean
       uses: appleboy/scp-action@master
