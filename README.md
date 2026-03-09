@@ -36,9 +36,9 @@ Pirisa HRM is a full-stack web application designed to streamline HR processes f
    ```
 
 4. **Access the Application**
-   - Frontend: http://localhost:5174
-   - Backend API: http://localhost:8080/api
-
+   - Frontend: http://129.212.239.12
+   - Backend API: http://129.212.239.12/api
+  
 ## 📋 System Architecture
 
 ### Frontend (PirisaHR-main)
