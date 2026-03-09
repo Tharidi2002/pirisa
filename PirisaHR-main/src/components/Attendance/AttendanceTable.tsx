@@ -69,10 +69,10 @@ interface EmpDetailsApiResponse {
 const AttendanceTable = () => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [filteredAttendance, setFilteredAttendance] = useState<Attendance[]>(
-    []
+      []
   );
   const [leaveByEmpId, setLeaveByEmpId] = useState<Record<number, EmpDetailsLeaveDTO[]>>(
-    {}
+      {}
   );
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,8 +81,8 @@ const AttendanceTable = () => {
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
-      2,
-      "0"
+        2,
+        "0"
     )}-${String(today.getDate()).padStart(2, "0")}`;
   });
   const rowsPerPage = 10;
@@ -156,35 +156,35 @@ const AttendanceTable = () => {
   }, [photoUrls]);
 
   const fetchEmployeePhotos = async (
-    employeeList: Attendance[],
-    token: string
+      employeeList: Attendance[],
+      token: string
   ) => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+            `http://localhost:8080/api/profile-image/exists/${employee.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
         );
 
         if (!existsResp.ok) return { id: employee.id, url: null };
         const existsData: { hasProfileImage?: boolean; exists?: boolean } =
-          await existsResp.json();
+            await existsResp.json();
         const hasImage = Boolean(
-          existsData?.hasProfileImage ?? existsData?.exists
+            existsData?.hasProfileImage ?? existsData?.exists
         );
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-          `http://localhost:8080/api/profile-image/view/${employee.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+            `http://localhost:8080/api/profile-image/view/${employee.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
         );
 
         if (!photoResponse.ok) {
@@ -227,23 +227,23 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-        `http://localhost:8080/employee/attendanceList/${companyId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+          `http://localhost:8080/employee/attendanceList/${companyId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
       );
 
       const leaveResponse = await fetch(
-        `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
       );
 
       if (!response.ok) {
@@ -296,7 +296,7 @@ const AttendanceTable = () => {
       setFilteredAttendance([]);
       setLeaveByEmpId({});
       setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
+          error instanceof Error ? error.message : "An unknown error occurred"
       );
     } finally {
       setLoading(false);
@@ -335,8 +335,8 @@ const AttendanceTable = () => {
       const filtered = attendance.map((emp) => ({
         ...emp,
         attendanceList: emp.attendanceList.filter(
-          (att) =>
-            toDateKeyLocal(new Date(att.startedAt)) === selectedDate
+            (att) =>
+                toDateKeyLocal(new Date(att.startedAt)) === selectedDate
         ),
       }));
       setFilteredAttendance(filtered);
@@ -350,7 +350,7 @@ const AttendanceTable = () => {
       const filtered = attendance.map((emp) => ({
         ...emp,
         attendanceList: emp.attendanceList.filter(
-          (att) => toDateKeyLocal(new Date(att.startedAt)) === date
+            (att) => toDateKeyLocal(new Date(att.startedAt)) === date
         ),
       }));
       setFilteredAttendance(filtered);
@@ -374,48 +374,48 @@ const AttendanceTable = () => {
   }, [attendance]);
 
   const workedDaysByEmpId = useCallback(
-    (emp: Attendance, year: number) => {
-      const set = new Set<string>();
-      const list = Array.isArray(emp.attendanceList) ? emp.attendanceList : [];
-      for (const att of list) {
-        const d = parseDateSafe(att.startedAt);
-        if (!d) continue;
-        if (d.getFullYear() !== year) continue;
-        set.add(toDateKeyLocal(d));
-      }
-      return set;
-    },
-    []
+      (emp: Attendance, year: number) => {
+        const set = new Set<string>();
+        const list = Array.isArray(emp.attendanceList) ? emp.attendanceList : [];
+        for (const att of list) {
+          const d = parseDateSafe(att.startedAt);
+          if (!d) continue;
+          if (d.getFullYear() !== year) continue;
+          set.add(toDateKeyLocal(d));
+        }
+        return set;
+      },
+      []
   );
 
   const leaveDaysByEmpId = useCallback(
-    (empId: number, year: number) => {
-      const set = new Set<string>();
-      const leaves = Array.isArray(leaveByEmpId[empId]) ? leaveByEmpId[empId] : [];
-      for (const leave of leaves) {
-        const status = (leave?.leaveStatus ?? "").toString().toUpperCase().trim();
-        if (status !== "APPROVED") continue;
-        const start = parseDateOnlyLocal(leave.leaveStartDay);
-        const end = parseDateOnlyLocal(leave.leaveEndDay);
-        if (!start || !end) continue;
-        const s = new Date(start);
-        const e = new Date(end);
-        if (s > e) continue;
+      (empId: number, year: number) => {
+        const set = new Set<string>();
+        const leaves = Array.isArray(leaveByEmpId[empId]) ? leaveByEmpId[empId] : [];
+        for (const leave of leaves) {
+          const status = (leave?.leaveStatus ?? "").toString().toUpperCase().trim();
+          if (status !== "APPROVED") continue;
+          const start = parseDateOnlyLocal(leave.leaveStartDay);
+          const end = parseDateOnlyLocal(leave.leaveEndDay);
+          if (!start || !end) continue;
+          const s = new Date(start);
+          const e = new Date(end);
+          if (s > e) continue;
 
-        const min = new Date(year, 0, 1);
-        const max = new Date(year, 11, 31);
-        const rangeStart = s < min ? min : s;
-        const rangeEnd = e > max ? max : e;
+          const min = new Date(year, 0, 1);
+          const max = new Date(year, 11, 31);
+          const rangeStart = s < min ? min : s;
+          const rangeEnd = e > max ? max : e;
 
-        const iter = new Date(rangeStart);
-        while (iter <= rangeEnd) {
-          set.add(toDateKeyLocal(iter));
-          iter.setDate(iter.getDate() + 1);
+          const iter = new Date(rangeStart);
+          while (iter <= rangeEnd) {
+            set.add(toDateKeyLocal(iter));
+            iter.setDate(iter.getDate() + 1);
+          }
         }
-      }
-      return set;
-    },
-    [leaveByEmpId]
+        return set;
+      },
+      [leaveByEmpId]
   );
 
   const summaryRows = useCallback(() => {
@@ -464,14 +464,14 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-        `http://localhost:8080/attendance/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+          `http://localhost:8080/attendance/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
       );
 
       if (!response.ok) {
@@ -479,7 +479,7 @@ const AttendanceTable = () => {
       }
 
       setAttendance((prevAttendance) =>
-        prevAttendance.filter((att) => att.id !== id)
+          prevAttendance.filter((att) => att.id !== id)
       );
       setFilteredAttendance((prev) => prev.filter((att) => att.id !== id));
     } catch (err) {
@@ -490,43 +490,43 @@ const AttendanceTable = () => {
   const totalPages = Math.ceil((filteredAttendance?.length || 0) / rowsPerPage);
 
   const paginatedData = Array.isArray(filteredAttendance)
-    ? filteredAttendance.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
+      ? filteredAttendance.slice(
+          (currentPage - 1) * rowsPerPage,
+          currentPage * rowsPerPage
       )
-    : [];
+      : [];
 
   const columns: Column<Attendance>[] = [
     {
       key: "photo",
       title: "Photo",
       render: (item) => (
-        <div className="flex items-center justify-center">
-          {photoUrls[item.id] ? (
-            <img
-              src={photoUrls[item.id]}
-              alt={`${item.firstName} ${item.lastName}`}
-              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-              onError={(e) => {
-                e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.firstName}+${item.lastName}&background=6366f1&color=fff&size=40`;
-              }}
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+          <div className="flex items-center justify-center">
+            {photoUrls[item.id] ? (
+                <img
+                    src={photoUrls[item.id]}
+                    alt={`${item.firstName} ${item.lastName}`}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.firstName}+${item.lastName}&background=6366f1&color=fff&size=40`;
+                    }}
+                />
+            ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
               <span className="text-xs font-medium text-gray-600">
                 {item.firstName.charAt(0)}
                 {item.lastName.charAt(0)}
               </span>
-            </div>
-          )}
-        </div>
+                </div>
+            )}
+          </div>
       ),
     },
     {
       key: "name",
       title: "Name",
       render: (item) => (
-        <span className="text-xs">{`${item.firstName} ${item.lastName}`}</span>
+          <span className="text-xs">{`${item.firstName} ${item.lastName}`}</span>
       ),
     },
     {
@@ -538,230 +538,230 @@ const AttendanceTable = () => {
       key: "startedAt",
       title: "Started At",
       render: (item) => (
-        <div className="space-y-1">
-          {item.attendanceList.map((att, index) => (
-            <div key={`${att.id}-${index}`} className="text-xs">
-              {new Date(att.startedAt).toLocaleString()}
-            </div>
-          ))}
-          {item.attendanceList.length === 0 && (
-            <span className="text-xs text-gray-500">No records</span>
-          )}
-        </div>
+          <div className="space-y-1">
+            {item.attendanceList.map((att, index) => (
+                <div key={`${att.id}-${index}`} className="text-xs">
+                  {new Date(att.startedAt).toLocaleString()}
+                </div>
+            ))}
+            {item.attendanceList.length === 0 && (
+                <span className="text-xs text-gray-500">No records</span>
+            )}
+          </div>
       ),
     },
     {
       key: "endedAt",
       title: "Ended At",
       render: (item) => (
-        <div className="space-y-1">
-          {item.attendanceList.map((att, index) => (
-            <div key={`${att.id}-${index}`} className="text-xs">
-              {att.endedAt
-                ? new Date(att.endedAt).toLocaleString()
-                : isAttendanceEnded(att)
-                ? "Completed"
-                : "In progress"}
-            </div>
-          ))}
-          {item.attendanceList.length === 0 && (
-            <span className="text-xs text-gray-500">No records</span>
-          )}
-        </div>
+          <div className="space-y-1">
+            {item.attendanceList.map((att, index) => (
+                <div key={`${att.id}-${index}`} className="text-xs">
+                  {att.endedAt
+                      ? new Date(att.endedAt).toLocaleString()
+                      : isAttendanceEnded(att)
+                          ? "Completed"
+                          : "In progress"}
+                </div>
+            ))}
+            {item.attendanceList.length === 0 && (
+                <span className="text-xs text-gray-500">No records</span>
+            )}
+          </div>
       ),
     },
     {
       key: "workingStatus",
       title: "Working Status",
       render: (item) => (
-        <div className="space-y-1">
-          {item.attendanceList.map((att) => (
-            <div key={att.id} className="text-xs">
-              {att.working_status}
-            </div>
-          ))}
-          {item.attendanceList.length === 0 && (
-            <span className="text-xs text-gray-500">No records</span>
-          )}
-        </div>
+          <div className="space-y-1">
+            {item.attendanceList.map((att) => (
+                <div key={att.id} className="text-xs">
+                  {att.working_status}
+                </div>
+            ))}
+            {item.attendanceList.length === 0 && (
+                <span className="text-xs text-gray-500">No records</span>
+            )}
+          </div>
       ),
     },
     {
       key: "status",
       title: "Status",
       render: (item) => (
-        (() => {
-          const badge = getDayStatusBadge(item);
-          return (
-            <span
-              className={`px-2 text-xs py-0.5 rounded-full ${badge.className} text-white`}
-            >
+          (() => {
+            const badge = getDayStatusBadge(item);
+            return (
+                <span
+                    className={`px-2 text-xs py-0.5 rounded-full ${badge.className} text-white`}
+                >
               {badge.label}
             </span>
-          );
-        })()
+            );
+          })()
       ),
     },
     {
       key: "actions",
       title: "Actions",
       render: (item) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleDelete(item.id)}
-            className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"
-            aria-label="Delete"
-          >
-            <Trash2 size={16} className="text-red-600" />
-          </button>
-        </div>
+          <div className="flex space-x-2">
+            <button
+                onClick={() => handleDelete(item.id)}
+                className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"
+                aria-label="Delete"
+            >
+              <Trash2 size={16} className="text-red-600" />
+            </button>
+          </div>
       ),
     },
   ];
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-      </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+        </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error!</strong>
-        <span className="block sm:inline"> {error}</span>
-        <button
-          className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-          onClick={() => {
-            setError("");
-            setLoading(true);
-            const fetchAttendance = async () => {
-              try {
-                const token = localStorage.getItem("token");
-                const companyId = localStorage.getItem("cmpnyId");
+        <div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+            role="alert"
+        >
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline"> {error}</span>
+          <button
+              className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              onClick={() => {
+                setError("");
+                setLoading(true);
+                const fetchAttendance = async () => {
+                  try {
+                    const token = localStorage.getItem("token");
+                    const companyId = localStorage.getItem("cmpnyId");
 
-                if (!token || !companyId) {
-                  navigate("/login");
-                  return;
-                }
+                    if (!token || !companyId) {
+                      navigate("/login");
+                      return;
+                    }
 
-                const response = await fetch(
-                  `http://localhost:8080/employee/attendanceList/${companyId}`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
+                    const response = await fetch(
+                        `http://localhost:8080/employee/attendanceList/${companyId}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                          },
+                        }
+                    );
 
-                if (!response.ok) {
-                  if (response.status === 401) {
-                    navigate("/login");
-                    return;
-                  }
-                  if (response.status === 404) {
+                    if (!response.ok) {
+                      if (response.status === 401) {
+                        navigate("/login");
+                        return;
+                      }
+                      if (response.status === 404) {
+                        setAttendance([]);
+                        setFilteredAttendance([]);
+                        return;
+                      }
+                      throw new Error("Failed to fetch attendance");
+                    }
+
+                    const data: ApiResponse = await response.json();
+                    if (data.resultCode === 100) {
+                      setAttendance(data.EmployeeList || []);
+                      setFilteredAttendance(data.EmployeeList || []);
+                    } else {
+                      setAttendance([]);
+                      setFilteredAttendance([]);
+                      throw new Error(data.resultDesc);
+                    }
+                  } catch (error) {
                     setAttendance([]);
                     setFilteredAttendance([]);
-                    return;
+                    setError(
+                        error instanceof Error
+                            ? error.message
+                            : "An unknown error occurred"
+                    );
+                  } finally {
+                    setLoading(false);
                   }
-                  throw new Error("Failed to fetch attendance");
-                }
-
-                const data: ApiResponse = await response.json();
-                if (data.resultCode === 100) {
-                  setAttendance(data.EmployeeList || []);
-                  setFilteredAttendance(data.EmployeeList || []);
-                } else {
-                  setAttendance([]);
-                  setFilteredAttendance([]);
-                  throw new Error(data.resultDesc);
-                }
-              } catch (error) {
-                setAttendance([]);
-                setFilteredAttendance([]);
-                setError(
-                  error instanceof Error
-                    ? error.message
-                    : "An unknown error occurred"
-                );
-              } finally {
-                setLoading(false);
-              }
-            };
-            fetchAttendance();
-          }}
-        >
-          Try Again
-        </button>
-      </div>
+                };
+                fetchAttendance();
+              }}
+          >
+            Try Again
+          </button>
+        </div>
     );
   }
 
   // Check if filteredAttendance is empty or all employees have no attendance records for the selected date
   const hasAttendanceRecords = filteredAttendance.some(
-    (emp) => emp.attendanceList.length > 0
+      (emp) => emp.attendanceList.length > 0
   );
 
   if (!hasAttendanceRecords) {
     return (
-      <div className="p-6">
-        <DateFilter onDateChange={handleDateChange} />
-        <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg shadow-md">
-          <p className="text-lg font-semibold text-gray-700">
-            No attendance records found
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            {selectedDate
-              ? `No attendance records for ${new Date(
-                  selectedDate
-                ).toLocaleDateString()}.`
-              : "Please select a date to view attendance records."}
-          </p>
-          <button
-            className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
-            onClick={() => navigate("/attendance/mark")} // Adjust the route as needed
-          >
-            Add Attendance
-          </button>
+        <div className="p-6">
+          <DateFilter onDateChange={handleDateChange} />
+          <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg shadow-md">
+            <p className="text-lg font-semibold text-gray-700">
+              No attendance records found
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              {selectedDate
+                  ? `No attendance records for ${new Date(
+                      selectedDate
+                  ).toLocaleDateString()}.`
+                  : "Please select a date to view attendance records."}
+            </p>
+            <button
+                className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
+                onClick={() => navigate("/attendance/mark")} // Adjust the route as needed
+            >
+              Add Attendance
+            </button>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <DateFilter onDateChange={handleDateChange} />
+      <div className="p-6">
+        <DateFilter onDateChange={handleDateChange} />
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div className="text-lg font-semibold text-gray-800">
-            Employee Year Summary
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div className="text-lg font-semibold text-gray-800">
+              Employee Year Summary
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-600">Year:</div>
+              <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="border border-gray-200 rounded-md px-3 py-1 text-sm"
+              >
+                {yearOptions().map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="text-sm text-gray-600">Year:</div>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="border border-gray-200 rounded-md px-3 py-1 text-sm"
-            >
-              {yearOptions().map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[700px] w-full">
-            <thead>
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-[700px] w-full">
+              <thead>
               <tr className="text-left bg-gray-100 border-gray-200">
                 <th className="px-4 py-3 text-sm font-medium text-gray-500">Employee</th>
                 <th className="px-4 py-3 text-sm font-medium text-gray-500">EPF No</th>
@@ -769,181 +769,181 @@ const AttendanceTable = () => {
                 <th className="px-4 py-3 text-sm font-medium text-gray-500">Leave Days</th>
                 <th className="px-4 py-3 text-sm font-medium text-gray-500">Action</th>
               </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody>
               {summaryRows().map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-b-neutral-200 last:border-b-0 hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    <div className="flex items-center gap-3">
-                      {photoUrls[row.id] ? (
-                        <img
-                          src={photoUrls[row.id]}
-                          alt={row.name}
-                          className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-100"></div>
-                      )}
-                      <div className="font-medium">{row.name}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{row.epfNo}</td>
-                  <td className="px-4 py-3 text-sm">
+                  <tr
+                      key={row.id}
+                      className="border-b border-b-neutral-200 last:border-b-0 hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      <div className="flex items-center gap-3">
+                        {photoUrls[row.id] ? (
+                            <img
+                                src={photoUrls[row.id]}
+                                alt={row.name}
+                                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-100"></div>
+                        )}
+                        <div className="font-medium">{row.name}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{row.epfNo}</td>
+                    <td className="px-4 py-3 text-sm">
                     <span className="inline-flex items-center px-2 py-1 rounded-full bg-sky-100 text-sky-800 font-medium">
                       {row.workedDays}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
+                    </td>
+                    <td className="px-4 py-3 text-sm">
                     <span className="inline-flex items-center px-2 py-1 rounded-full bg-orange-100 text-orange-800 font-medium">
                       {row.leaveDays}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <button
-                      type="button"
-                      onClick={() => openCalendar(row.id)}
-                      className="px-3 py-1.5 rounded-md bg-sky-600 text-white hover:bg-sky-700 transition-colors"
-                    >
-                      View Calendar
-                    </button>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <button
+                          type="button"
+                          onClick={() => openCalendar(row.id)}
+                          className="px-3 py-1.5 rounded-md bg-sky-600 text-white hover:bg-sky-700 transition-colors"
+                      >
+                        View Calendar
+                      </button>
+                    </td>
+                  </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-3 text-xs text-gray-500 flex flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded bg-sky-400"></span>
-            Worked days
+              </tbody>
+            </table>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded bg-orange-400"></span>
-            Approved leave days
-          </div>
-        </div>
-      </div>
 
-      <Table
-        columns={columns}
-        data={paginatedData}
-        title="Attendance List"
-        searchKeys={[
-          "firstName",
-          "lastName",
-          "epfNo",
-          "email",
-          "attendanceList.working_status",
-        ]}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: setCurrentPage,
-        }}
-      />
-
-      {isCalendarOpen && calendarEmp ? (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <div className="text-base font-semibold text-gray-900">
-                {calendarEmp.firstName} {calendarEmp.lastName} - {selectedYear}
-              </div>
-              <button
-                type="button"
-                onClick={closeCalendar}
-                className="px-3 py-1 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
+          <div className="mt-3 text-xs text-gray-500 flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 rounded bg-sky-400"></span>
+              Worked days
             </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 rounded bg-orange-400"></span>
+              Approved leave days
+            </div>
+          </div>
+        </div>
 
-            <div className="p-4 overflow-auto max-h-[80vh]">
-              {(() => {
-                const worked = workedDaysByEmpId(calendarEmp, selectedYear);
-                const leaves = leaveDaysByEmpId(calendarEmp.id, selectedYear);
-                const months = calendarMonths(selectedYear);
+        <Table
+            columns={columns}
+            data={paginatedData}
+            title="Attendance List"
+            searchKeys={[
+              "firstName",
+              "lastName",
+              "epfNo",
+              "email",
+              "attendanceList.working_status",
+            ]}
+            pagination={{
+              currentPage,
+              totalPages,
+              onPageChange: setCurrentPage,
+            }}
+        />
 
-                const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        {isCalendarOpen && calendarEmp ? (
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+              <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                  <div className="text-base font-semibold text-gray-900">
+                    {calendarEmp.firstName} {calendarEmp.lastName} - {selectedYear}
+                  </div>
+                  <button
+                      type="button"
+                      onClick={closeCalendar}
+                      className="px-3 py-1 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
 
-                const getCells = (year: number, month: number) => {
-                  const firstDay = new Date(year, month, 1);
-                  const startWeekday = firstDay.getDay();
-                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const start = new Date(year, month, 1 - startWeekday);
-                  const cells: { date: Date; inMonth: boolean; key: string }[] = [];
+                <div className="p-4 overflow-auto max-h-[80vh]">
+                  {(() => {
+                    const worked = workedDaysByEmpId(calendarEmp, selectedYear);
+                    const leaves = leaveDaysByEmpId(calendarEmp.id, selectedYear);
+                    const months = calendarMonths(selectedYear);
 
-                  for (let i = 0; i < 42; i += 1) {
-                    const d = new Date(start);
-                    d.setDate(start.getDate() + i);
-                    cells.push({
-                      date: d,
-                      inMonth: d.getMonth() === month,
-                      key: toDateKeyLocal(d),
-                    });
-                  }
+                    const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-                  if (daysInMonth <= 28 && startWeekday === 0) return cells.slice(0, 35);
-                  return cells;
-                };
+                    const getCells = (year: number, month: number) => {
+                      const firstDay = new Date(year, month, 1);
+                      const startWeekday = firstDay.getDay();
+                      const daysInMonth = new Date(year, month + 1, 0).getDate();
+                      const start = new Date(year, month, 1 - startWeekday);
+                      const cells: { date: Date; inMonth: boolean; key: string }[] = [];
 
-                return (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {months.map((m) => (
-                      <div key={m.month} className="border border-gray-200 rounded-xl p-3">
-                        <div className="text-sm font-semibold text-gray-900 mb-2">
-                          {m.label}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-[11px] text-gray-500 mb-1">
-                          {weekdayLabels.map((w) => (
-                            <div key={w} className="text-center">{w}</div>
+                      for (let i = 0; i < 42; i += 1) {
+                        const d = new Date(start);
+                        d.setDate(start.getDate() + i);
+                        cells.push({
+                          date: d,
+                          inMonth: d.getMonth() === month,
+                          key: toDateKeyLocal(d),
+                        });
+                      }
+
+                      if (daysInMonth <= 28 && startWeekday === 0) return cells.slice(0, 35);
+                      return cells;
+                    };
+
+                    return (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {months.map((m) => (
+                              <div key={m.month} className="border border-gray-200 rounded-xl p-3">
+                                <div className="text-sm font-semibold text-gray-900 mb-2">
+                                  {m.label}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1 text-[11px] text-gray-500 mb-1">
+                                  {weekdayLabels.map((w) => (
+                                      <div key={w} className="text-center">{w}</div>
+                                  ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                  {getCells(selectedYear, m.month).map((cell) => {
+                                    const isLeave = cell.inMonth && leaves.has(cell.key);
+                                    const isWorked = cell.inMonth && worked.has(cell.key);
+
+                                    const bg = isLeave
+                                        ? "bg-orange-300"
+                                        : isWorked
+                                            ? "bg-sky-300"
+                                            : "bg-transparent";
+                                    const text = cell.inMonth ? "text-gray-800" : "text-gray-300";
+
+                                    const title = cell.inMonth
+                                        ? isLeave
+                                            ? "Leave"
+                                            : isWorked
+                                                ? "Worked"
+                                                : ""
+                                        : "";
+
+                                    return (
+                                        <div
+                                            key={cell.key}
+                                            title={title}
+                                            className={`h-8 rounded-md border border-gray-100 flex items-center justify-center ${bg} ${text}`}
+                                        >
+                                          {cell.date.getDate()}
+                                        </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                           ))}
                         </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {getCells(selectedYear, m.month).map((cell) => {
-                            const isLeave = cell.inMonth && leaves.has(cell.key);
-                            const isWorked = cell.inMonth && worked.has(cell.key);
-
-                            const bg = isLeave
-                              ? "bg-orange-300"
-                              : isWorked
-                                ? "bg-sky-300"
-                                : "bg-transparent";
-                            const text = cell.inMonth ? "text-gray-800" : "text-gray-300";
-
-                            const title = cell.inMonth
-                              ? isLeave
-                                ? "Leave"
-                                : isWorked
-                                  ? "Worked"
-                                  : ""
-                              : "";
-
-                            return (
-                              <div
-                                key={cell.key}
-                                title={title}
-                                className={`h-8 rounded-md border border-gray-100 flex items-center justify-center ${bg} ${text}`}
-                              >
-                                {cell.date.getDate()}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
   );
 };
 

@@ -27,6 +27,7 @@ import CompanySettings from "./pages/CompanySettings";
 import EmployeeDashboard from "./pages/Employee/EmployeeDashboard";
 import PayroleList from "./pages/Employee/PayroleList";
 import EmployeeLeave from "./pages/Employee/EmployeeLeave";
+import MonthlyCalendarPage from "./pages/Attendance/MonthlyCalendarPage";
 
 // import Dashboard from "./pages/Dashboard";
 
@@ -61,6 +62,7 @@ function App() {
                 <Route path="attendance">
                   <Route index element={<Navigate to="list" replace />} />
                   <Route path="list" element={<AttendanceContent />} />
+                  <Route path="calendar" element={<MonthlyCalendarPage />} />
                   <Route path="mark" element={<AttendanceMark />} />
                 </Route>
                 <Route path="payrole">

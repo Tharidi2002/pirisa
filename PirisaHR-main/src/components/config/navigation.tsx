@@ -57,6 +57,11 @@ export const navItems: NavItem[] = [
         label: "Attendance List",
       },
       {
+        id: "monthly-calendar",
+        path: "/attendance/calendar", 
+        label: "Monthly Calendar",
+      },
+      {
         id: "mark-attendance",
         path: "/attendance/mark", 
         label: "Mark Attendance",
