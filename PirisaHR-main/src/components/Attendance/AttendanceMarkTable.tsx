@@ -17,6 +17,7 @@ interface Employee {
   lastName: string;
   epfNo: string;
   department: {
+    id: number;
     dpt_name: string;
   };
   attendanceList: Attendance[];
@@ -35,8 +36,23 @@ interface AttendanceRequest {
   working_status: "On-Site" | "Online";
 }
 
+interface EmployeeOnLeave {
+  id: number;
+  empId: number;
+  leaveType: string;
+  leaveStartDay: string;
+  leaveEndDay: string;
+  leaveDays: number;
+  leaveReason: string;
+  leaveStatus: string;
+}
+
 const AttendanceMarkTable = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
+  const [employeesOnLeave, setEmployeesOnLeave] = useState<EmployeeOnLeave[]>([]);
+  const [departments, setDepartments] = useState<{id: number; dpt_name: string}[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
@@ -82,8 +98,8 @@ const AttendanceMarkTable = () => {
 
         if (!response.ok) {
           if (response.status === 404) {
-            // Treat 404 as "no employees" rather than an error
             setEmployees([]);
+            setFilteredEmployees([]);
             return;
           }
           throw new Error("Failed to fetch employees");
@@ -93,6 +109,17 @@ const AttendanceMarkTable = () => {
         if (data.resultCode === 100) {
           const list = data.EmployeeList || [];
           setEmployees(list);
+          
+          // Extract unique departments
+          const uniqueDepts = Array.from(
+            new Map(
+              list
+                .filter((emp): emp is Employee & {department: {id: number; dpt_name: string}} => emp.department !== undefined)
+                .map(emp => [emp.department.id, {id: emp.department.id, dpt_name: emp.department.dpt_name}] as [number, {id: number; dpt_name: string}])
+            ).values()
+          );
+          setDepartments(uniqueDepts);
+          
           if (list.length > 0) {
             await fetchEmployeePhotos(list, token);
           }
@@ -106,8 +133,52 @@ const AttendanceMarkTable = () => {
       }
     };
 
-    fetchEmployees();
+    const fetchEmployeesOnLeave = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch(
+          "http://localhost:8080/emp_leave/employees-on-leave-today",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch employees on leave");
+        }
+
+        const data = await response.json();
+        if (data.resultCode === 100) {
+          setEmployeesOnLeave(data.employeesOnLeave || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch employees on leave:", err);
+      }
+    };
+
+    // Fetch both data sets sequentially to ensure proper filtering
+    const fetchData = async () => {
+      await fetchEmployees();
+      await fetchEmployeesOnLeave();
+    };
+
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    // Apply filtering when employees or employeesOnLeave data changes
+    if (employees.length > 0) {
+      applyDepartmentFilter(employees, selectedDepartment);
+    }
+  }, [employees, employeesOnLeave, selectedDepartment]);
 
   useEffect(() => {
     return () => {
@@ -353,6 +424,7 @@ const AttendanceMarkTable = () => {
       if (!response.ok) {
         if (response.status === 404) {
           setEmployees([]);
+          setFilteredEmployees([]);
           return;
         }
         throw new Error("Failed to fetch employees");
@@ -362,6 +434,18 @@ const AttendanceMarkTable = () => {
       if (data.resultCode === 100) {
         const list = data.EmployeeList || [];
         setEmployees(list);
+        applyDepartmentFilter(list, selectedDepartment);
+        
+        // Extract unique departments
+        const uniqueDepts = Array.from(
+          new Map(
+            list
+              .filter((emp): emp is Employee & {department: {id: number; dpt_name: string}} => emp.department !== undefined)
+              .map(emp => [emp.department.id, {id: emp.department.id, dpt_name: emp.department.dpt_name}] as [number, {id: number; dpt_name: string}])
+          ).values()
+        );
+        setDepartments(uniqueDepts);
+        
         if (list.length > 0) {
           await fetchEmployeePhotos(list, token);
         }
@@ -373,6 +457,51 @@ const AttendanceMarkTable = () => {
     } finally {
       setLoading(false);
     }
+
+    // Also fetch employees on leave
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const response = await fetch(
+          "http://localhost:8080/emp_leave/employees-on-leave-today",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.resultCode === 100) {
+            setEmployeesOnLeave(data.employeesOnLeave || []);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch employees on leave:", err);
+    }
+  };
+
+  const applyDepartmentFilter = (employeeList: Employee[], departmentId: number) => {
+    let filtered = employeeList;
+    
+    // Filter by department if selected
+    if (departmentId !== 0) {
+      filtered = filtered.filter(emp => emp.department && emp.department.id === departmentId);
+    }
+    
+    // Filter out employees who are on leave
+    filtered = filtered.filter(emp => !isEmployeeOnLeave(emp.id));
+    
+    setFilteredEmployees(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleDepartmentChange = (departmentId: number) => {
+    setSelectedDepartment(departmentId);
+    applyDepartmentFilter(employees, departmentId);
   };
 
   const hasActiveAttendance = (employee: Employee): Attendance | null => {
@@ -384,6 +513,120 @@ const AttendanceMarkTable = () => {
     }
     return null;
   };
+
+  const isEmployeeOnLeave = (empId: number): boolean => {
+    return employeesOnLeave.some(leave => leave.empId === empId);
+  };
+
+  const getEmployeeLeaveInfo = (empId: number): EmployeeOnLeave | null => {
+    return employeesOnLeave.find(leave => leave.empId === empId) || null;
+  };
+
+  // Get employees who are on leave for the leave table
+  const getEmployeesOnLeaveData = (): Employee[] => {
+    return employees.filter(emp => isEmployeeOnLeave(emp.id));
+  };
+
+  // Columns for employees on leave table
+  const leaveTableColumns = [
+    {
+      key: "photo",
+      title: "Photo",
+      render: (item: Employee) => {
+        const imageUrl = photoUrls[item.id] || null;
+        return (
+          <div className="flex items-center justify-center w-10 h-10">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={`${item.firstName} ${item.lastName}`}
+                className="w-8 h-8 rounded-full object-cover"
+                onError={() => {
+                  setPhotoUrls((prev) => {
+                    const next = { ...prev };
+                    const existing = next[item.id];
+                    if (existing) {
+                      try {
+                        URL.revokeObjectURL(existing);
+                      } catch {
+                        // no-op
+                      }
+                      delete next[item.id];
+                    }
+                    return next;
+                  });
+                }}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <User size={16} className="text-gray-500" />
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "name",
+      title: "Name",
+      render: (item: Employee) => {
+        const leaveInfo = getEmployeeLeaveInfo(item.id);
+        return (
+          <div>
+            <span className="text-xs">{`${item.firstName} ${item.lastName}`}</span>
+            {leaveInfo && (
+              <div className="text-xs text-red-600 font-medium">On Leave</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "epfNo",
+      title: "Employee ID",
+      render: (item: Employee) => <span className="text-xs">{item.epfNo}</span>,
+    },
+    {
+      key: "department",
+      title: "Department",
+      render: (item: Employee) => (
+        <span className="text-xs">{item.department?.dpt_name || "N/A"}</span>
+      ),
+    },
+    {
+      key: "leaveType",
+      title: "Leave Type",
+      render: (item: Employee) => {
+        const leaveInfo = getEmployeeLeaveInfo(item.id);
+        return <span className="text-xs">{leaveInfo?.leaveType || "N/A"}</span>;
+      },
+    },
+    {
+      key: "leavePeriod",
+      title: "Leave Period",
+      render: (item: Employee) => {
+        const leaveInfo = getEmployeeLeaveInfo(item.id);
+        if (leaveInfo) {
+          const startDate = new Date(leaveInfo.leaveStartDay).toLocaleDateString();
+          const endDate = new Date(leaveInfo.leaveEndDay).toLocaleDateString();
+          return (
+            <span className="text-xs">
+              {startDate} - {endDate}
+            </span>
+          );
+        }
+        return <span className="text-xs">N/A</span>;
+      },
+    },
+    {
+      key: "leaveReason",
+      title: "Leave Reason",
+      render: (item: Employee) => {
+        const leaveInfo = getEmployeeLeaveInfo(item.id);
+        return <span className="text-xs">{leaveInfo?.leaveReason || "N/A"}</span>;
+      },
+    },
+  ];
 
   const columns = [
     {
@@ -546,25 +789,66 @@ const AttendanceMarkTable = () => {
     );
   }
 
-  const totalPages = Math.ceil(employees.length / rowsPerPage);
-  const paginatedData = employees.slice(
+  const totalPages = Math.ceil(filteredEmployees.length / rowsPerPage);
+  const paginatedData = filteredEmployees.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
   return (
-    <div className="p-6">
-      <Table
-        columns={columns}
-        data={paginatedData}
-        title="Attendance"
-        searchKeys={["firstName", "lastName", "epfNo", "department.dpt_name"]}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: setCurrentPage,
-        }}
-      />
+    <div className="p-6 space-y-6">
+      {/* Department Filter */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">Department:</label>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => handleDepartmentChange(Number(e.target.value))}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value={0}>All Departments</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.dpt_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm text-gray-600">
+            Showing {filteredEmployees.length} of {employees.length} employees available for attendance
+          </div>
+        </div>
+      </div>
+
+      {/* Employees Available for Attendance */}
+      <div>
+        <Table
+          columns={columns}
+          data={paginatedData}
+          title="Mark Attendance"
+          searchKeys={["firstName", "lastName", "epfNo", "department.dpt_name"]}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+          }}
+        />
+      </div>
+
+      {/* Employees on Leave */}
+      {getEmployeesOnLeaveData().length > 0 && (
+        <div>
+          <Table
+            columns={leaveTableColumns}
+            data={getEmployeesOnLeaveData()}
+            title="Employees on Leave (Cannot Mark Attendance)"
+            searchKeys={["firstName", "lastName", "epfNo", "department.dpt_name"]}
+            pagination={undefined}
+          />
+        </div>
+      )}
+      
       <ToastContainer />
     </div>
   );

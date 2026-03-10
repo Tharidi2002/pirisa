@@ -25,6 +25,10 @@ interface Attendance {
   dob: string;
   status: string;
   basicSalary: number;
+  department?: {
+    id: number;
+    dpt_name: string;
+  };
   photo?: {
     photoUrl?: string;
   };
@@ -68,9 +72,9 @@ interface EmpDetailsApiResponse {
 
 const AttendanceTable = () => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
-  const [filteredAttendance, setFilteredAttendance] = useState<Attendance[]>(
-      []
-  );
+  const [filteredAttendance, setFilteredAttendance] = useState<Attendance[]>([]);
+  const [departments, setDepartments] = useState<{id: number; dpt_name: string}[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
   const [leaveByEmpId, setLeaveByEmpId] = useState<Record<number, EmpDetailsLeaveDTO[]>>(
       {}
   );
@@ -280,6 +284,17 @@ const AttendanceTable = () => {
         const employeeList = data.EmployeeList || [];
         setAttendance(employeeList);
         setFilteredAttendance(employeeList);
+        
+        // Extract unique departments
+        const uniqueDepts = Array.from(
+          new Map(
+            employeeList
+              .filter((emp): emp is Attendance & {department: {id: number; dpt_name: string}} => emp.department !== undefined)
+              .map(emp => [emp.department.id, {id: emp.department.id, dpt_name: emp.department.dpt_name}] as [number, {id: number; dpt_name: string}])
+          ).values()
+        );
+        setDepartments(uniqueDepts);
+        
         setLeaveByEmpId(leaveMap);
 
         if (employeeList.length > 0) {
@@ -339,9 +354,9 @@ const AttendanceTable = () => {
                 toDateKeyLocal(new Date(att.startedAt)) === selectedDate
         ),
       }));
-      setFilteredAttendance(filtered);
+      applyDepartmentFilter(filtered, selectedDepartment);
     }
-  }, [attendance, selectedDate]);
+  }, [attendance, selectedDate, selectedDepartment]);
 
   // Handle date filter change
   const handleDateChange = (date: string) => {
@@ -353,9 +368,35 @@ const AttendanceTable = () => {
             (att) => toDateKeyLocal(new Date(att.startedAt)) === date
         ),
       }));
-      setFilteredAttendance(filtered);
+      applyDepartmentFilter(filtered, selectedDepartment);
     } else {
-      setFilteredAttendance(attendance); // Reset to all data if no date is selected
+      applyDepartmentFilter(attendance, selectedDepartment); // Reset to all data if no date is selected
+    }
+  };
+
+  const applyDepartmentFilter = (employeeList: Attendance[], departmentId: number) => {
+    if (departmentId === 0) {
+      setFilteredAttendance(employeeList);
+    } else {
+      const filtered = employeeList.filter(emp => emp.department && emp.department.id === departmentId);
+      setFilteredAttendance(filtered);
+    }
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleDepartmentChange = (departmentId: number) => {
+    setSelectedDepartment(departmentId);
+    if (selectedDate && attendance.length > 0) {
+      const filtered = attendance.map((emp) => ({
+        ...emp,
+        attendanceList: emp.attendanceList.filter(
+            (att) =>
+                toDateKeyLocal(new Date(att.startedAt)) === selectedDate
+        ),
+      }));
+      applyDepartmentFilter(filtered, departmentId);
+    } else {
+      applyDepartmentFilter(attendance, departmentId);
     }
   };
 
@@ -737,6 +778,30 @@ const AttendanceTable = () => {
   return (
       <div className="p-6">
         <DateFilter onDateChange={handleDateChange} />
+        
+        {/* Department Filter */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-700">Department:</label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => handleDepartmentChange(Number(e.target.value))}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value={0}>All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.dpt_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="text-sm text-gray-600">
+              Showing {filteredAttendance.length} of {attendance.length} employees
+            </div>
+          </div>
+        </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">

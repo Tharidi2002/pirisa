@@ -11,8 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -90,6 +92,24 @@ public class EmployeeLeaveRequestController {
             return new ResponseEntity<>(responseBody, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @GetMapping(value = "/employees-on-leave-today", produces = {"application/json"})
+    public ResponseEntity<?> getEmployeesOnLeaveToday() {
+        try {
+            LocalDateTime today = LocalDateTime.now();
+            List<EmployeeLeave> employeesOnLeave = employeeLeaveRequestService.getEmployeesOnLeaveForDate(today);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successfully retrieved employees on leave");
+            response.put("employeesOnLeave", employeesOnLeave);
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 

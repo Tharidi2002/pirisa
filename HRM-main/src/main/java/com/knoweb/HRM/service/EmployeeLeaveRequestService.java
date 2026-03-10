@@ -6,6 +6,8 @@ import com.knoweb.HRM.repository.EmployeeLeaveRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,5 +32,9 @@ public class EmployeeLeaveRequestService {
     public EmployeeLeave getEmployeeLeaveById(long id) {
         Optional<EmployeeLeave> optionalUser = employeeLeaveRequestRepository.findById(id);
         return optionalUser.orElse(null);
+    }
+
+    public List<EmployeeLeave> getEmployeesOnLeaveForDate(LocalDateTime currentDate) {
+        return employeeLeaveRequestRepository.findEmployeesOnLeaveForDate(currentDate);
     }
 }
