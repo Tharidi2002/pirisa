@@ -34,6 +34,7 @@ interface AttendanceRequest {
   endedAt: string | null;
   empId: number;
   working_status: "On-Site" | "Online";
+  attendance_status: string;
 }
 
 interface EmployeeOnLeave {
@@ -286,6 +287,7 @@ const AttendanceMarkTable = () => {
                   endedAt: null,
                   empId: empId,
                   working_status: status,
+                  attendance_status: "ACTIVE",
                 };
 
                 const response = await fetch(

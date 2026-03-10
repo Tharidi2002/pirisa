@@ -1,5 +1,5 @@
 import AttendanceChart from "../components/dashboard/AttendanceChart";
-import AttendanceStatsCard from "../components/dashboard/AttendanceStatsCard";
+import DashboardCalendar from "../components/dashboard/DashboardCalendar";
 import CandidatesListTable from "../components/dashboard/CandidatesListTable";
 import RealtimeInsightCard from "../components/dashboard/DashboardTimeCard";
 import DepartmentStats from "../components/dashboard/DepartmentStats";
@@ -13,9 +13,6 @@ const DashboardPage = () => (
       <div className="lg:col-span-4">
         <RealtimeInsightCard />
       </div>
-      <div className="lg:col-span-8">
-        <AttendanceStatsCard />
-      </div>
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -25,6 +22,10 @@ const DashboardPage = () => (
       <div className="lg:col-span-8">
         <EmployeeGrowthChart />
       </div>
+    </div>
+
+    <div className="w-full">
+      <DashboardCalendar />
     </div>
 
     <div className="w-full">
