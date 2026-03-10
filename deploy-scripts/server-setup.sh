@@ -11,9 +11,9 @@ echo "🔧 Setting up server for Pirisa HRM..."
 echo "📦 Updating system packages..."
 sudo apt update && sudo apt upgrade -y
 
-# Install Java 25
-echo "☕ Installing Java 25..."
-sudo apt install -y openjdk-25-jre-headless
+# Install Java 17
+echo "☕ Installing Java 17..."
+sudo apt install -y openjdk-17-jre-headless
 
 # Install Nginx
 echo "🌐 Installing Nginx..."
@@ -25,29 +25,29 @@ sudo apt install -y certbot python3-certbot-nginx
 
 # Create application directories
 echo "📁 Creating application directories..."
-sudo mkdir -p /opt/hrm-backend
+sudo mkdir -p /var/www/pirisa/backend
 sudo mkdir -p /var/www/pirisa/frontend
 sudo mkdir -p /var/log/pirisa
 
 # Create systemd service for backend
 echo "⚙️  Creating backend service..."
-sudo tee /etc/systemd/system/hrm-backend.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/pirisa-backend.service > /dev/null <<EOF
 [Unit]
-Description=HRM Backend Service
+Description=Pirisa HRM Backend
 After=network.target
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=/opt/hrm-backend
-ExecStart=/usr/bin/java -jar /opt/hrm-backend/hrm-backend.jar
+User=www-data
+WorkingDirectory=/var/www/pirisa/backend
+ExecStart=/usr/bin/java -jar /var/www/pirisa/backend/app.jar
 Restart=always
 RestartSec=10
 StandardOutput=append:/var/log/pirisa/backend.log
 StandardError=append:/var/log/pirisa/backend-error.log
 
 Environment="JAVA_OPTS=-Xms512m -Xmx1024m"
-Environment="SPRING_PROFILES_ACTIVE=prod"
+Environment="SPRING_PROFILES_ACTIVE=production"
 
 [Install]
 WantedBy=multi-user.target
@@ -82,7 +82,7 @@ server {
 
     # Serve profile images
     location /profile-images {
-        alias /opt/hrm-backend/profile-images;
+        alias /var/www/pirisa/backend/profile-images;
         autoindex off;
     }
 }
@@ -95,7 +95,6 @@ sudo rm -f /etc/nginx/sites-enabled/default
 
 # Set permissions
 echo "🔑 Setting permissions..."
-sudo chown -R root:root /opt/hrm-backend
 sudo chown -R www-data:www-data /var/www/pirisa
 sudo chown -R www-data:www-data /var/log/pirisa
 

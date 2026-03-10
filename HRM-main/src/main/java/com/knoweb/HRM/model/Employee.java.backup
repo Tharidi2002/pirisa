@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.List;
 
@@ -27,30 +28,48 @@ public class Employee implements Serializable {
 
     private String emp_no;
 
+    @NotBlank(message = "First name is required")
+    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String first_name;
 
+    @NotBlank(message = "Last name is required")
+    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String last_name;
 
-    private double basic_salary;
+    private float basic_salary;
 
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     @Column(unique = true)
     private String email;
 
     @Column(unique = true, nullable = false)
     private String username;
 
+    @NotBlank(message = "Gender is required")
+    @Pattern(regexp = "^(MALE|FEMALE|OTHER)$", message = "Gender must be MALE, FEMALE, or OTHER")
     private String gender;
 
-    @Column(name ="dob", nullable = false)
-    private String dob;
+    @NotBlank(message = "Date of birth is required")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Date of birth must be in YYYY-MM-DD format")
+    @Column(name = "dob", nullable = false)
+    private String DOB;
 
+    @NotBlank(message = "Phone number is required")
+    @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 characters")
     private String phone;
 
+    @NotBlank(message = "Address is required")
+    @Size(min = 5, max = 200, message = "Address must be between 5 and 200 characters")
     private String address;
 
+    @NotBlank(message = "NIC is required")
+    @Size(min = 10, max = 15, message = "NIC must be between 10 and 15 characters")
     @Column(name = "nic", nullable = false)
-    private String nic;
+    private String NIC;
 
+    @NotBlank(message = "Date of joining is required")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Date of joining must be in YYYY-MM-DD format")
     private String date_of_joining;
 
     private String status="ACTIVE";

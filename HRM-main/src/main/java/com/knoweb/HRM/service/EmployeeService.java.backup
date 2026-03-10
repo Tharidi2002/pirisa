@@ -23,10 +23,16 @@ public class EmployeeService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private SecurityConfig bCryptPasswordEncoder;
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SecurityConfig securityConfig;
 
 //    public Employee createEmployee(Employee employee) {
 //        return employeeRepository.save(employee);
@@ -36,6 +42,9 @@ public class EmployeeService {
 
 
     public Employee createEmployee(Employee emp) {
+        // Validate employee data before saving
+        validateEmployeeNotNull(emp);
+        
         emp.setUsername(emp.getEmail());
         // 1) Generate a secure random temporary password (12 chars alphanumeric)
         String tempPwd = new SecureRandom()
@@ -102,8 +111,8 @@ public class EmployeeService {
                 employee.getPhone(),
                 employee.getAddress(),
                 employee.getDate_of_joining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getAttendanceList().stream().map(attendance -> new AttendanceDTO(
                         attendance.getId(),
@@ -142,8 +151,8 @@ public class EmployeeService {
                 employee.getPhone(),
                 employee.getAddress(),
                 employee.getDate_of_joining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
                         payrole.getId(),
@@ -181,8 +190,8 @@ public class EmployeeService {
                 employee.getPhone(),
                 employee.getAddress(),
                 employee.getDate_of_joining(),
-                employee.getNic(),
-                employee.getDob(),
+                employee.getNIC(),
+                employee.getDOB(),
                 employee.getStatus(),
                 employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
                         payrole.getId(),
@@ -234,8 +243,8 @@ public class EmployeeService {
                     employee.getPhone(),
                     employee.getAddress(),
                     employee.getDate_of_joining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
 
                     new EmpDetailsDepartmentDTO(
@@ -288,8 +297,8 @@ public class EmployeeService {
                     employee.getPhone(),
                     employee.getAddress(),
                     employee.getDate_of_joining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
 
                     new EmpDetailsDepartmentDTO(
@@ -347,8 +356,8 @@ public class EmployeeService {
                             employee.getPhone(),
                             employee.getAddress(),
                             employee.getDate_of_joining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
@@ -401,8 +410,8 @@ public class EmployeeService {
                             employee.getPhone(),
                             employee.getAddress(),
                             employee.getDate_of_joining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
@@ -456,8 +465,8 @@ public class EmployeeService {
                             employee.getPhone(),
                             employee.getAddress(),
                             employee.getDate_of_joining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             new EmpDetailsDepartmentDTO(
                                     employee.getDepartment() != null ? employee.getDepartment().getId() : null,
@@ -528,8 +537,8 @@ public class EmployeeService {
                     employee.getPhone(),
                     employee.getAddress(),
                     employee.getDate_of_joining(),
-                    employee.getNic(),
-                    employee.getDob(),
+                    employee.getNIC(),
+                    employee.getDOB(),
                     employee.getStatus(),
                     latestAttendanceList,
                     departmentDTO,
@@ -582,8 +591,8 @@ public class EmployeeService {
                             employee.getPhone(),
                             employee.getAddress(),
                             employee.getDate_of_joining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
 
                             new EmpDetailsDepartmentDTO(
@@ -607,6 +616,9 @@ public class EmployeeService {
 
 
     public Employee updateEmployee(Long emp_id, Employee updateEmployee) {
+        // Validate employee data before updating
+        validateEmployeeNotNull(updateEmployee);
+        
         Employee employee = getEmployeeById(emp_id);
         if (employee != null) {
             employee.setEpf_no(updateEmployee.getEpf_no());
@@ -618,11 +630,11 @@ public class EmployeeService {
             // Keep username in sync with email (login identifier)
             employee.setUsername(updateEmployee.getEmail());
             employee.setGender(updateEmployee.getGender());
-            employee.setDob(updateEmployee.getDob());
+            employee.setDOB(updateEmployee.getDOB());
             employee.setPhone(updateEmployee.getPhone());
             employee.setAddress(updateEmployee.getAddress());
             employee.setDate_of_joining(updateEmployee.getDate_of_joining());
-            employee.setNic(updateEmployee.getNic());
+            employee.setNIC(updateEmployee.getNIC());
             if (updateEmployee.getStatus() != null && !updateEmployee.getStatus().trim().isEmpty()) {
                 employee.setStatus(updateEmployee.getStatus());
             }
@@ -632,6 +644,49 @@ public class EmployeeService {
             return employeeRepository.save(employee);
         }
         return null;
+    }
+
+    // Validation method to ensure no null values for required fields
+    private void validateEmployeeNotNull(Employee emp) {
+        if (emp == null) {
+            throw new IllegalArgumentException("Employee object cannot be null");
+        }
+        if (emp.getFirst_name() == null || emp.getFirst_name().trim().isEmpty()) {
+            throw new IllegalArgumentException("First name is required and cannot be null");
+        }
+        if (emp.getLast_name() == null || emp.getLast_name().trim().isEmpty()) {
+            throw new IllegalArgumentException("Last name is required and cannot be null");
+        }
+        if (emp.getEmail() == null || emp.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required and cannot be null");
+        }
+        if (emp.getDOB() == null || emp.getDOB().trim().isEmpty()) {
+            throw new IllegalArgumentException("Date of birth is required and cannot be null");
+        }
+        if (emp.getNIC() == null || emp.getNIC().trim().isEmpty()) {
+            throw new IllegalArgumentException("NIC is required and cannot be null");
+        }
+        if (emp.getAddress() == null || emp.getAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Address is required and cannot be null");
+        }
+        if (emp.getPhone() == null || emp.getPhone().trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required and cannot be null");
+        }
+        if (emp.getGender() == null || emp.getGender().trim().isEmpty()) {
+            throw new IllegalArgumentException("Gender is required and cannot be null");
+        }
+        if (emp.getDate_of_joining() == null || emp.getDate_of_joining().trim().isEmpty()) {
+            throw new IllegalArgumentException("Date of joining is required and cannot be null");
+        }
+        if (emp.getCmpId() <= 0) {
+            throw new IllegalArgumentException("Company ID is required and must be greater than 0");
+        }
+        if (emp.getDptId() <= 0) {
+            throw new IllegalArgumentException("Department ID is required and must be greater than 0");
+        }
+        if (emp.getDesignationId() <= 0) {
+            throw new IllegalArgumentException("Designation ID is required and must be greater than 0");
+        }
     }
 
 
@@ -663,8 +718,8 @@ public class EmployeeService {
                             employee.getPhone(),
                             employee.getAddress(),
                             employee.getDate_of_joining(),
-                            employee.getNic(),
-                            employee.getDob(),
+                            employee.getNIC(),
+                            employee.getDOB(),
                             employee.getStatus(),
                             filtered,
                             // dept DTO
@@ -699,11 +754,11 @@ public class EmployeeService {
         }
         Employee employee = employeeOptional.get();
         // Verify if the provided old password matches the stored password.
-        if (!passwordEncoder.matches(oldPassword, employee.getPassword())) {
+        if (!securityConfig.passwordEncoder().matches(oldPassword, employee.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect");
         }
         // Encrypt the new password using BCrypt and update the company.
-        String hashedPassword = passwordEncoder.encode(newPassword);
+        String hashedPassword = securityConfig.passwordEncoder().encode(newPassword);
         employee.setPassword(hashedPassword);
         return employeeRepository.save(employee);
     }
@@ -715,7 +770,7 @@ public class EmployeeService {
             throw new IllegalArgumentException("No Employee found with the provided email");
         }
         String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        String hashedPassword = passwordEncoder.encode(randomPassword);
+        String hashedPassword = securityConfig.passwordEncoder().encode(randomPassword);
         employee.setPassword(hashedPassword);
 
         employeeRepository.save(employee);

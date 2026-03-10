@@ -18,7 +18,7 @@ interface EmployeeDetails {
   DOB: string;
   phone: string;
   address: string;
-  NIC: string;
+  nic: string;
   date_of_joining: string;
   cmp_id: number;
   dptId: number;
@@ -62,7 +62,7 @@ const EmployeeRegistration: React.FC = () => {
     DOB: "",
     phone: "",
     address: "",
-    NIC: "",
+    nic: "",
     date_of_joining: "",
     cmp_id: 0,
     dptId: 0,
@@ -236,10 +236,10 @@ const EmployeeRegistration: React.FC = () => {
       basic_salary: Number(employeeDetails.basic_salary),
       email: employeeDetails.email,
       gender: employeeDetails.gender,
-      DOB: formattedDOB,
+      dob: formattedDOB,
       phone: employeeDetails.phone,
       address: employeeDetails.address,
-      NIC: employeeDetails.NIC,
+      nic: employeeDetails.nic,
       date_of_joining: formattedJoiningDate,
       cmpId: Number(cmpId),
       dptId: Number(employeeDetails.dptId),
@@ -419,7 +419,7 @@ const EmployeeRegistration: React.FC = () => {
           DOB: "",
           phone: "",
           address: "",
-          NIC: "",
+          nic: "",
           date_of_joining: "",
           cmp_id: 0,
           dptId: 0,
@@ -484,7 +484,7 @@ const EmployeeRegistration: React.FC = () => {
           DOB: "",
           phone: "",
           address: "",
-          NIC: "",
+          nic: "",
           date_of_joining: "",
           cmp_id: 0,
           dptId: 0,
@@ -753,15 +753,15 @@ const EmployeeRegistration: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                <TranslatableText text="NIC" />
+                <TranslatableText text="nic" />
               </label>
               <input
                 type="text"
-                name="NIC"
-                value={employeeDetails.NIC}
+                name="nic"
+                value={employeeDetails.nic}
                 onChange={handleInputChange}
                 className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter NIC"
+                placeholder="Enter nic Number"
               />
             </div>
             <div>

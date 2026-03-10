@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, CheckCircle, XCircle, Clock, Coffee } from "lucide-react";
 
 interface AttendanceRecord {
   id: number;
@@ -376,189 +376,246 @@ const MonthlyAttendanceCalendar = () => {
   }
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:gap-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-sky-500 flex-shrink-0" />
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 break-words">Monthly Attendance Calendar</h1>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
-          <div className="w-full sm:w-auto text-center sm:text-left">
-            <div className="text-base sm:text-lg lg:text-xl font-semibold text-gray-800">
-              {monthNames[currentMonth]} {currentYear}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
-            <button
-              onClick={goToPreviousMonth}
-              className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-            <button
-              onClick={goToToday}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-xs sm:text-sm font-medium flex-shrink-0"
-            >
-              Today
-            </button>
-            <button
-              onClick={goToNextMonth}
-              className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
-              aria-label="Next month"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm">
-        <div className="flex items-center gap-1 sm:gap-2">
-          <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded bg-green-500"></span>
-          <span className="text-gray-700 text-xs sm:text-sm">Present</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded bg-orange-400"></span>
-          <span className="text-gray-700 text-xs sm:text-sm">Leave</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded bg-yellow-400"></span>
-          <span className="text-gray-700 text-xs sm:text-sm">In Progress</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded bg-red-400"></span>
-          <span className="text-gray-700 text-xs sm:text-sm">Absent</span>
-        </div>
-      </div>
-
-      {/* Monthly Summary Calendar */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-1 sm:p-2 lg:p-4">
-          {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 lg:gap-2 mb-1 sm:mb-2">
-            {weekdayLabels.map(day => (
-              <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 py-1 sm:py-2">
-                <span className="hidden sm:inline">{day}</span>
-                <span className="sm:hidden">{day.charAt(0)}</span>
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                  <CalendarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">Monthly Attendance Calendar</h1>
+                  <p className="text-blue-100 text-sm sm:text-base mt-1">Track and monitor employee attendance patterns</p>
+                </div>
               </div>
-            ))}
+              <div className="hidden sm:block">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                  <div className="text-white text-sm">Total Employees</div>
+                  <div className="text-2xl font-bold text-white">{employees.length}</div>
+                </div>
+              </div>
+            </div>
           </div>
           
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 lg:gap-2">
-            {calendarDays.map((day, index) => {
-              const summary = getDailySummary(day.dateKey);
-              const bgColor = getSummaryColor(day);
-              
-              return (
-                <div
-                  key={index}
-                  className={`
-                    relative aspect-square rounded border flex flex-col items-center justify-center
-                    ${day.isCurrentMonth && !isFutureDate(day.dateKey) ? "cursor-pointer hover:scale-105" : "cursor-default"}
-                    transition-all
-                    ${day.isCurrentMonth ? "border-gray-200" : "border-gray-100 bg-gray-50"}
-                    ${day.isToday ? "ring-1 sm:ring-2 ring-sky-500" : ""}
-                  `}
-                  onClick={() => !isFutureDate(day.dateKey) && setSelectedDate(day.dateKey)}
-                  title={`${day.dateKey}: ${isFutureDate(day.dateKey) ? 'Future date' : `${summary.present} present, ${summary.leave} leave, ${summary.absent} absent, ${summary.pending} pending`}`}
+          <div className="p-6 sm:p-8">
+            {/* Month Navigation */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+              <div className="text-center sm:text-left">
+                <div className="text-2xl sm:text-3xl font-bold text-gray-800">
+                  {monthNames[currentMonth]} {currentYear}
+                </div>
+                <div className="text-gray-500 text-sm mt-1">
+                  {new Date(currentYear, currentMonth, 1).toLocaleDateString('en-US', { month: 'long' })} Overview
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all hover:scale-105 shadow-sm"
+                  aria-label="Previous month"
                 >
-                  <span className={`text-xs sm:text-sm font-bold ${day.isCurrentMonth ? "text-gray-700" : "text-gray-400"}`}>
-                    {day.date}
-                  </span>
-                  {day.isCurrentMonth && !isFutureDate(day.dateKey) && (
-                    <>
-                      <div className={`w-full h-0.5 sm:h-1 rounded-full mt-0.5 sm:mt-1 ${bgColor}`}></div>
-                      <div className="text-xs text-gray-600 mt-0.5 sm:mt-1 hidden sm:block">
-                        {summary.present}/{summary.total}
-                      </div>
-                    </>
-                  )}
-                  {day.isCurrentMonth && isFutureDate(day.dateKey) && (
-                    <div className="text-xs text-gray-400 mt-1 hidden sm:block">
-                      Future
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </button>
+                <button
+                  onClick={goToToday}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:scale-105 font-medium"
+                >
+                  Today
+                </button>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all hover:scale-105 shadow-sm"
+                  aria-label="Next month"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+            </div>
 
-      {/* Day Detail Modal */}
-      {selectedDate && !isFutureDate(selectedDate) && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-1 sm:p-2 lg:p-4">
-          <div className="w-full max-w-lg sm:max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden max-h-[95vh] sm:max-h-[90vh] lg:max-h-[80vh]">
-            <div className="flex items-center justify-between px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-gray-200">
-              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-800 pr-2">
-                <div className="hidden sm:block">
-                  Attendance Summary for {new Date(selectedDate).toLocaleDateString(undefined, { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+            {/* Enhanced Legend */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
+                <div>
+                  <div className="font-medium text-green-800">Present</div>
+                  <div className="text-xs text-green-600">On time</div>
                 </div>
-                <div className="sm:hidden text-center">
-                  {new Date(selectedDate).toLocaleDateString(undefined, { 
-                    month: 'short', 
-                    day: 'numeric' 
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
+                <div className="w-4 h-4 rounded-full bg-orange-400 shadow-sm"></div>
+                <div>
+                  <div className="font-medium text-orange-800">Leave</div>
+                  <div className="text-xs text-orange-600">Approved</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+                <div className="w-4 h-4 rounded-full bg-yellow-400 shadow-sm"></div>
+                <div>
+                  <div className="font-medium text-yellow-800">In Progress</div>
+                  <div className="text-xs text-yellow-600">Working</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
+                <div className="w-4 h-4 rounded-full bg-red-400 shadow-sm"></div>
+                <div>
+                  <div className="font-medium text-red-800">Absent</div>
+                  <div className="text-xs text-red-600">No record</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Monthly Calendar */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="p-4 sm:p-6">
+                {/* Weekday Headers */}
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {weekdayLabels.map(day => (
+                    <div key={day} className="text-center text-sm font-semibold text-gray-600 py-3 bg-gray-50 rounded-lg">
+                      <span className="hidden sm:inline">{day}</span>
+                      <span className="sm:hidden">{day.charAt(0)}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-2">
+                  {calendarDays.map((day, index) => {
+                    const summary = getDailySummary(day.dateKey);
+                    const bgColor = getSummaryColor(day);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`
+                          relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center
+                          ${day.isCurrentMonth && !isFutureDate(day.dateKey) ? "cursor-pointer hover:scale-105 hover:shadow-lg" : "cursor-default"}
+                          transition-all duration-200
+                          ${day.isCurrentMonth ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50"}
+                          ${day.isToday ? "ring-3 ring-blue-500 ring-opacity-50 border-blue-300" : ""}
+                          ${!day.isCurrentMonth ? "opacity-40" : ""}
+                        `}
+                        onClick={() => !isFutureDate(day.dateKey) && setSelectedDate(day.dateKey)}
+                        title={`${day.dateKey}: ${isFutureDate(day.dateKey) ? 'Future date' : `${summary.present} present, ${summary.leave} leave, ${summary.absent} absent, ${summary.pending} pending`}`}
+                      >
+                        <span className={`text-sm font-bold ${day.isCurrentMonth ? "text-gray-800" : "text-gray-500"}`}>
+                          {day.date}
+                        </span>
+                        {day.isCurrentMonth && !isFutureDate(day.dateKey) && (
+                          <>
+                            <div className={`w-full h-1 rounded-full mt-1 ${bgColor} shadow-sm`}></div>
+                            <div className="text-xs text-gray-600 mt-1 font-medium hidden sm:block">
+                              {summary.present}/{summary.total}
+                            </div>
+                          </>
+                        )}
+                        {day.isCurrentMonth && isFutureDate(day.dateKey) && (
+                          <div className="text-xs text-gray-400 mt-1 hidden sm:block">
+                            Future
+                          </div>
+                        )}
+                        {day.isToday && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                    );
                   })}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedDate(null)}
-                className="px-1.5 sm:px-2 lg:px-3 py-1 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 flex-shrink-0 text-xs sm:text-sm"
-              >
-                Close
-              </button>
+            </div>
+          </div>
+        </div>
+
+      {/* Enhanced Day Detail Modal */}
+      {selectedDate && !isFutureDate(selectedDate) && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[95vh]">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+              <div className="flex items-center justify-between">
+                <div className="text-white">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CalendarIcon className="w-6 h-6" />
+                    <h2 className="text-xl sm:text-2xl font-bold">
+                      {new Date(selectedDate).toLocaleDateString(undefined, { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </h2>
+                  </div>
+                  <p className="text-blue-100">Detailed attendance breakdown</p>
+                </div>
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className="p-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-colors text-white"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
             </div>
             
-            <div className="p-2 sm:p-3 lg:p-4 overflow-auto max-h-[80vh] sm:max-h-[75vh] lg:max-h-[60vh]">
+            <div className="p-6 overflow-auto max-h-[60vh]">
               {(() => {
                 const summary = getDailySummary(selectedDate);
                 const presentPercentage = summary.total > 0 ? Math.round((summary.present / summary.total) * 100) : 0;
                 
                 return (
-                  <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 lg:gap-4">
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-1.5 sm:p-2 lg:p-4">
-                        <div className="text-base sm:text-lg lg:text-2xl font-bold text-green-700">{summary.present}</div>
-                        <div className="text-xs sm:text-sm text-green-600">Present</div>
-                        <div className="text-xs text-green-500">{presentPercentage}%</div>
+                  <div className="space-y-6">
+                    {/* Enhanced Summary Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <div className="text-2xl font-bold text-green-700">{summary.present}</div>
+                        </div>
+                        <div className="text-sm font-medium text-green-600">Present</div>
+                        <div className="text-xs text-green-500">{presentPercentage}% attendance</div>
                       </div>
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-1.5 sm:p-2 lg:p-4">
-                        <div className="text-base sm:text-lg lg:text-2xl font-bold text-orange-700">{summary.leave}</div>
-                        <div className="text-xs sm:text-sm text-orange-600">On Leave</div>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Coffee className="w-5 h-5 text-orange-600" />
+                          <div className="text-2xl font-bold text-orange-700">{summary.leave}</div>
+                        </div>
+                        <div className="text-sm font-medium text-orange-600">On Leave</div>
                         <div className="text-xs text-orange-500">
-                          {summary.total > 0 ? Math.round((summary.leave / summary.total) * 100) : 0}%
+                          {summary.total > 0 ? Math.round((summary.leave / summary.total) * 100) : 0}% of team
                         </div>
                       </div>
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-1.5 sm:p-2 lg:p-4">
-                        <div className="text-base sm:text-lg lg:text-2xl font-bold text-red-700">{summary.absent}</div>
-                        <div className="text-xs sm:text-sm text-red-600">Absent</div>
+                      <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <XCircle className="w-5 h-5 text-red-600" />
+                          <div className="text-2xl font-bold text-red-700">{summary.absent}</div>
+                        </div>
+                        <div className="text-sm font-medium text-red-600">Absent</div>
                         <div className="text-xs text-red-500">
-                          {summary.total > 0 ? Math.round((summary.absent / summary.total) * 100) : 0}%
+                          {summary.total > 0 ? Math.round((summary.absent / summary.total) * 100) : 0}% absent
                         </div>
                       </div>
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-1.5 sm:p-2 lg:p-4">
-                        <div className="text-base sm:text-lg lg:text-2xl font-bold text-yellow-700">{summary.pending}</div>
-                        <div className="text-xs sm:text-sm text-yellow-600">In Progress</div>
+                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock className="w-5 h-5 text-yellow-600" />
+                          <div className="text-2xl font-bold text-yellow-700">{summary.pending}</div>
+                        </div>
+                        <div className="text-sm font-medium text-yellow-600">In Progress</div>
                         <div className="text-xs text-yellow-500">
-                          {summary.total > 0 ? Math.round((summary.pending / summary.total) * 100) : 0}%
+                          {summary.total > 0 ? Math.round((summary.pending / summary.total) * 100) : 0}% working
                         </div>
                       </div>
                     </div>
                     
                     {/* Employee List */}
                     <div>
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-800 mb-1 sm:mb-2 lg:mb-3">Employee Details</h3>
-                      <div className="space-y-1 sm:space-y-2 max-h-30 sm:max-h-40 lg:max-h-60 overflow-y-auto">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Users className="w-5 h-5 text-gray-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Employee Details</h3>
+                        <span className="px-2 py-1 bg-gray-100 rounded-lg text-sm text-gray-600">
+                          {employees.length} employees
+                        </span>
+                      </div>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
                         {employees.map((employee) => {
                           const leaves = leaveByEmpId[employee.id] || [];
                           let isOnLeave = false;
@@ -584,42 +641,49 @@ const MonthlyAttendanceCalendar = () => {
 
                           let status = "Absent";
                           let statusColor = "bg-red-400";
+                          let statusIcon = <XCircle className="w-3 h-3" />;
                           
                           if (isOnLeave) {
                             status = "Leave";
                             statusColor = "bg-orange-400";
+                            statusIcon = <Coffee className="w-3 h-3" />;
                           } else if (attendanceRecords.length > 0) {
                             const hasEnded = attendanceRecords.some(att => isAttendanceEnded(att));
                             if (hasEnded) {
                               status = "Present";
                               statusColor = "bg-green-400";
+                              statusIcon = <CheckCircle className="w-3 h-3" />;
                             } else {
                               status = "In Progress";
                               statusColor = "bg-yellow-400";
+                              statusIcon = <Clock className="w-3 h-3" />;
                             }
                           }
                           
                           return (
-                            <div key={employee.id} className="flex items-center gap-1 sm:gap-2 lg:gap-3 p-1 sm:p-2 lg:p-3 rounded-lg hover:bg-gray-50">
+                            <div key={employee.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
                               {photoUrls[employee.id] ? (
                                 <img
                                   src={photoUrls[employee.id]}
                                   alt={`${employee.firstName} ${employee.lastName}`}
-                                  className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full object-cover flex-shrink-0"
+                                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-white shadow-sm"
                                 />
                               ) : (
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-medium flex-shrink-0 text-xs sm:text-sm">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm">
                                   {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-800 text-xs sm:text-sm truncate">{employee.firstName} {employee.lastName}</p>
-                                <p className="text-xs text-gray-500 truncate">{employee.epfNo}</p>
+                                <p className="font-semibold text-gray-800">{employee.firstName} {employee.lastName}</p>
+                                <p className="text-sm text-gray-500">{employee.epfNo}</p>
                               </div>
-                              <span className={`px-1 sm:px-2 lg:px-3 py-1 rounded-full text-xs font-medium text-white flex-shrink-0 ${statusColor}`}>
-                                <span className="hidden sm:inline">{status}</span>
-                                <span className="sm:hidden">{status.charAt(0)}</span>
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1.5 rounded-full text-sm font-medium text-white flex items-center gap-1 ${statusColor}`}>
+                                  {statusIcon}
+                                  <span className="hidden sm:inline">{status}</span>
+                                  <span className="sm:hidden">{status.charAt(0)}</span>
+                                </span>
+                              </div>
                             </div>
                           );
                         })}
@@ -632,7 +696,8 @@ const MonthlyAttendanceCalendar = () => {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
   );
 };
 
