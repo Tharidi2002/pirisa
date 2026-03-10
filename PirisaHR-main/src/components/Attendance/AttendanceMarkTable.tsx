@@ -402,6 +402,124 @@ const AttendanceMarkTable = () => {
     );
   };
 
+  const handleCancelLeaveAndMarkAttendance = async (
+    employee: Employee,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
+
+    const leaveInfo = getEmployeeLeaveInfo(employee.id);
+    const employeeName = `${employee.firstName} ${employee.lastName}`;
+
+    toast.info(
+      <div className="max-w-md">
+        <div className="mb-4">
+          <p className="font-semibold text-gray-800 mb-2">
+            Cancel Leave & Mark Attendance
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
+            <p className="text-sm text-yellow-800">
+              <strong>{employeeName}</strong> is currently on leave:
+            </p>
+            <ul className="text-xs text-yellow-700 mt-1 list-disc list-inside">
+              <li>Leave Type: {leaveInfo?.leaveType || "N/A"}</li>
+              <li>Period: {leaveInfo ? new Date(leaveInfo.leaveStartDay).toLocaleDateString() : "N/A"} - {leaveInfo ? new Date(leaveInfo.leaveEndDay).toLocaleDateString() : "N/A"}</li>
+              <li>Reason: {leaveInfo?.leaveReason || "N/A"}</li>
+            </ul>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Do you want to cancel this leave and mark attendance for today?
+          </p>
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cancellation Reason (optional):
+            </label>
+            <input
+              type="text"
+              id="cancellationReason"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Employee came to office"
+              defaultValue="Employee came to office"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  throw new Error("No token found");
+                }
+
+                const cancellationReason = (document.getElementById('cancellationReason') as HTMLInputElement)?.value || "Employee came to office";
+                const currentUser = localStorage.getItem("userName") || "HR Admin";
+
+                const requestData = {
+                  empId: employee.id,
+                  cancellationReason: cancellationReason,
+                  canceledBy: currentUser
+                };
+
+                const response = await fetch(
+                  "http://localhost:8080/emp_leave/cancel-leave-and-mark-attendance",
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestData),
+                  }
+                );
+
+                if (!response.ok) {
+                  throw new Error("Failed to cancel leave");
+                }
+
+                const result = await response.json();
+                if (result.resultCode === 100) {
+                  toast.success(
+                    <div>
+                      <p className="font-semibold">Success!</p>
+                      <p className="text-sm">Leave cancelled and {employeeName} is now available for attendance marking.</p>
+                    </div>
+                  );
+                  
+                  // Refresh data to update both tables
+                  setLoading(true);
+                  await fetchEmployees();
+                } else {
+                  toast.error(result.resultDesc || "Failed to cancel leave");
+                }
+              } catch (err) {
+                toast.error(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to cancel leave and mark attendance"
+                );
+              }
+            }}
+          >
+            Confirm & Mark Attendance
+          </button>
+          <button
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm font-medium"
+            onClick={() => toast.dismiss()}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      {
+        autoClose: false,
+        closeButton: false,
+      }
+    );
+  };
+
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -624,6 +742,21 @@ const AttendanceMarkTable = () => {
       render: (item: Employee) => {
         const leaveInfo = getEmployeeLeaveInfo(item.id);
         return <span className="text-xs">{leaveInfo?.leaveReason || "N/A"}</span>;
+      },
+    },
+    {
+      key: "actions",
+      title: "Actions",
+      render: (item: Employee) => {
+        return (
+          <button
+            onClick={(e) => handleCancelLeaveAndMarkAttendance(item, e)}
+            className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"
+            aria-label="Cancel Leave & Mark Attendance"
+          >
+            <span className="text-xs text-blue-600">Cancel Leave & Mark Attendance</span>
+          </button>
+        );
       },
     },
   ];

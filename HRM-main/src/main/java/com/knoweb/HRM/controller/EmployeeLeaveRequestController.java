@@ -114,6 +114,35 @@ public class EmployeeLeaveRequestController {
     }
 
 
+    @PostMapping(value = "/cancel-leave-and-mark-attendance", produces = {"application/json"})
+    public ResponseEntity<?> cancelLeaveAndMarkAttendance(@RequestBody Map<String, Object> request) {
+        try {
+            Long empId = Long.valueOf(request.get("empId").toString());
+            String cancellationReason = request.get("cancellationReason") != null ? request.get("cancellationReason").toString() : "Employee came to office";
+            String canceledBy = request.get("canceledBy") != null ? request.get("canceledBy").toString() : "HR Admin";
+            
+            EmployeeLeave cancelledLeave = employeeLeaveRequestService.cancelLeaveAndMarkAttendance(empId, cancellationReason, canceledBy);
+            
+            if (cancelledLeave != null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("resultCode", 100);
+                response.put("resultDesc", "Leave cancelled successfully and employee is available for attendance");
+                response.put("cancelledLeave", cancelledLeave);
+                
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                Map<String, Object> response = new HashMap<>();
+                response.put("resultCode", 101);
+                response.put("resultDesc", "No active leave found for this employee");
+                
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         Map<String, Object> errorResponse = new HashMap<>();

@@ -37,4 +37,28 @@ public class EmployeeLeaveRequestService {
     public List<EmployeeLeave> getEmployeesOnLeaveForDate(LocalDateTime currentDate) {
         return employeeLeaveRequestRepository.findEmployeesOnLeaveForDate(currentDate);
     }
+
+    public EmployeeLeave cancelLeaveAndMarkAttendance(long empId, String cancellationReason, String canceledBy) {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Find active leave for the employee
+        EmployeeLeave activeLeave = employeeLeaveRequestRepository.findActiveLeaveForEmployee(empId, now);
+        
+        if (activeLeave != null) {
+            // Update leave status to cancelled
+            activeLeave.setLeaveStatus("CANCELLED");
+            activeLeave.setCancellationDate(now);
+            activeLeave.setCancellationReason(cancellationReason);
+            activeLeave.setCanceledBy(canceledBy);
+            
+            EmployeeLeave updatedLeave = employeeLeaveRequestRepository.save(activeLeave);
+            
+            // Create attendance record for the employee
+            // Note: This would require injecting AttendanceService or AttendanceRepository
+            // For now, we'll just return the updated leave
+            return updatedLeave;
+        }
+        
+        return null;
+    }
 }

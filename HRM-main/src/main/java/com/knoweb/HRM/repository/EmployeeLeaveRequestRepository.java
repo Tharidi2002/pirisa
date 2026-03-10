@@ -17,4 +17,7 @@ public interface EmployeeLeaveRequestRepository extends JpaRepository<EmployeeLe
 
     @Query("SELECT el FROM EmployeeLeave el WHERE UPPER(el.leaveStatus) = 'APPROVED' AND el.leaveStartDay <= :currentDate AND el.leaveEndDay >= :currentDate")
     List<EmployeeLeave> findEmployeesOnLeaveForDate(@Param("currentDate") LocalDateTime currentDate);
+
+    @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND UPPER(el.leaveStatus) = 'APPROVED' AND el.leaveStartDay <= :currentDate AND el.leaveEndDay >= :currentDate")
+    EmployeeLeave findActiveLeaveForEmployee(@Param("empId") long empId, @Param("currentDate") LocalDateTime currentDate);
 }

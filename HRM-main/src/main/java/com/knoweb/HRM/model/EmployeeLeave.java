@@ -37,6 +37,15 @@ public class EmployeeLeave {
     @Column(name = "emp_id")
     private long empId;
 
+    @Column(name = "cancellation_date")
+    private LocalDateTime cancellationDate;
+
+    @Column(name = "canceled_by")
+    private String canceledBy;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
     @PrePersist
     @PreUpdate
     public void calculateLeaveDays() {
