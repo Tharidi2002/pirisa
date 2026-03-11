@@ -47,6 +47,33 @@ public class CalendarEventService {
             event.setAllDay(updatedEvent.getAllDay());
             event.setLocation(updatedEvent.getLocation());
             
+            // Update status if provided
+            if (updatedEvent.getStatus() != null) {
+                event.setStatus(updatedEvent.getStatus());
+            }
+            
+            // Update other fields if provided
+            if (updatedEvent.getCompletionPercentage() != null) {
+                event.setCompletionPercentage(updatedEvent.getCompletionPercentage());
+            }
+            if (updatedEvent.getHasTime() != null) {
+                event.setHasTime(updatedEvent.getHasTime());
+            }
+            if (updatedEvent.getIsEndDateOptional() != null) {
+                event.setIsEndDateOptional(updatedEvent.getIsEndDateOptional());
+            }
+            
+            return calendarEventRepository.save(event);
+        }
+        return null;
+    }
+
+    // Update event status only
+    public CalendarEvent updateEventStatus(Long eventId, String status) {
+        Optional<CalendarEvent> existingEvent = calendarEventRepository.findById(eventId);
+        if (existingEvent.isPresent()) {
+            CalendarEvent event = existingEvent.get();
+            event.setStatus(status);
             return calendarEventRepository.save(event);
         }
         return null;

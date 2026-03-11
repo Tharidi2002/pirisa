@@ -250,6 +250,56 @@ public class CalendarEventController {
         }
     }
 
+    // Update event status
+    @PutMapping("/events/{eventId}/status")
+    public ResponseEntity<?> updateEventStatus(@PathVariable Long eventId, @RequestBody Map<String, String> statusRequest) {
+        try {
+            String status = statusRequest.get("status");
+            if (status == null || status.trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Status is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
+            // Validate status value
+            if (!status.equals("PENDING") && !status.equals("IN_PROGRESS") && 
+                !status.equals("COMPLETED") && !status.equals("CANCELLED")) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 102);
+                errorResponse.put("resultDesc", "Invalid status value. Must be PENDING, IN_PROGRESS, COMPLETED, or CANCELLED");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
+            CalendarEvent event = calendarEventService.updateEventStatus(eventId, status);
+            if (event == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 404);
+                errorResponse.put("resultDesc", "Event not found");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+            
+            // Send real-time update to all clients
+            messagingTemplate.convertAndSend("/topic/calendar/" + event.getCompanyId(), Map.of(
+                "action", "STATUS_UPDATE",
+                "eventId", eventId,
+                "status", status
+            ));
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Event status updated successfully");
+            response.put("event", event);
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 500);
+            errorResponse.put("resultDesc", "Error updating event status: " + e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Delete event
     @DeleteMapping("/events/{eventId}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {

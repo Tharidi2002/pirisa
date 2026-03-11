@@ -58,6 +58,18 @@ public class CalendarEvent implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "status")
+    private String status = "PENDING"; // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+
+    @Column(name = "completion_percentage")
+    private Integer completionPercentage = 0;
+
+    @Column(name = "has_time")
+    private Boolean hasTime = true;
+
+    @Column(name = "is_end_date_optional")
+    private Boolean isEndDateOptional = false;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
