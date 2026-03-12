@@ -7,7 +7,6 @@ import com.knoweb.HRM.model.Company;
 import com.knoweb.HRM.model.Employee;
 import com.knoweb.HRM.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,6 @@ import java.util.stream.Collectors;
 @Service
 public class EmployeeService {
 
-    @Value("${app.domain}")
-    private String domain;
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -518,7 +515,7 @@ public class EmployeeService {
                     new EmpDetailsDocumentsDTO(
                             employee.getDocuments().getPhoto(),
                             employee.getDocuments().getPhoto() != null ? 
-                                domain + "/api/profile-image/view/" + employee.getId() : null) : null;
+                                "http://localhost:8080/api/profile-image/view/" + employee.getId() : null) : null;
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),

@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/calendar")
-@CrossOrigin(origins = "http://129.212.239.12:5174")
+@CrossOrigin(origins = "http://localhost:5174")
 public class CalendarEventController {
 
     @Autowired

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { buildApiUrl } from "../../config/api";
 import LeaveCard from "./LeaveCard";
 
 interface CompanyLeave {
@@ -49,7 +48,7 @@ export const LeaveCards: React.FC = () => {
 
         // Set up axios instance with auth token
         const api = axios.create({
-          baseURL: buildApiUrl(""),
+          baseURL: "http://localhost:8080",
           headers: {
             Authorization: `Bearer ${token}`,
           },
