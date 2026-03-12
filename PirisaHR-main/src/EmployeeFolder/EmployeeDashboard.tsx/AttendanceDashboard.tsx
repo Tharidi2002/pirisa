@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { buildApiUrl } from "../config/api";import { Calendar, Clock, MapPin, AlertCircle } from "lucide-react";
+import { buildApiUrl } from "../../config/api";import { Calendar, Clock, MapPin, AlertCircle } from "lucide-react";
 
 interface AttendanceRecord {
   id: number;
