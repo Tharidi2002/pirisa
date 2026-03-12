@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/profile-image")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:5174"})
+@CrossOrigin(origins = {"http://129.212.239.12:5174", "http://129.212.239.12", "http://localhost:3000", "http://localhost:3001", "http://localhost:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:5174"})
 public class ProfileImageController {
 
     @Autowired

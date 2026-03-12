@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   PlusCircleIcon,
   PencilIcon,
   TrashIcon,
@@ -64,7 +65,7 @@ const DepartmentDesignationManager = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://localhost:8080/department/company/${cmpId}`,
+        buildApiUrl(`/department/company/${cmpId}`),
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -106,7 +107,7 @@ const DepartmentDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/department/add_department",
+        buildApiUrl("/department/add_department"),
         payload,
         {
           headers: {
@@ -141,7 +142,7 @@ const DepartmentDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/department/update_department",
+        buildApiUrl("/department/update_department"),
         payload,
         {
           headers: {
@@ -166,7 +167,7 @@ const DepartmentDesignationManager = () => {
   const deleteDepartment = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/department/delete/${id}`,
+        buildApiUrl(`/department/delete/${id}`),
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -193,7 +194,7 @@ const DepartmentDesignationManager = () => {
   }) => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/designation/add_designation",
+        buildApiUrl("/designation/add_designation"),
         designationData,
         {
           headers: {
@@ -218,7 +219,7 @@ const DepartmentDesignationManager = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/designation/delete/${id}`,
+        buildApiUrl(`/designation/delete/${id}`),
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

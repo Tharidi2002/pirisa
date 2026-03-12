@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   LineChart,
   Line,
   XAxis,
@@ -58,14 +59,14 @@ const AttendanceChart = () => {
       }
 
       const [empRes, attRes] = await Promise.all([
-        fetch(`http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`, {
+        fetch(buildApiUrl(`/employee/EmpDetailsList/${cmpnyId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           signal,
         }),
-        fetch(`http://localhost:8080/employee/attendanceList/${cmpnyId}/${month}`, {
+        fetch(buildApiUrl(`/employee/attendanceList/${cmpnyId}/${month}`), {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

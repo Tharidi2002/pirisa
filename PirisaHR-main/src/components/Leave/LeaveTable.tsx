@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
 import Table from "../table/Table";
 import { Check, X } from "lucide-react";
 import { Tooltip } from "react-tooltip";
@@ -57,14 +58,14 @@ const LeaveTable = () => {
       let endpoint = "";
       switch (status) {
         case "APPROVED":
-          endpoint = `http://localhost:8080/employee/ApprovedEmpDetailsList/${cmpId}`;
+          endpoint = buildApiUrl(`/employee/ApprovedEmpDetailsList/${cmpId}`);
           break;
         case "REJECTED":
-          endpoint = `http://localhost:8080/employee/RejectedEmpDetailsList/${cmpId}`;
+          endpoint = buildApiUrl(`/employee/RejectedEmpDetailsList/${cmpId}`);
           break;
         case "PENDING":
         default:
-          endpoint = `http://localhost:8080/employee/PendingEmpDetailsList/${cmpId}`;
+          endpoint = buildApiUrl(`/employee/PendingEmpDetailsList/${cmpId}`);
       }
 
       const response = await fetch(endpoint, {
@@ -142,7 +143,7 @@ const LeaveTable = () => {
       }
 
       const response = await fetch(
-        `http://localhost:8080/emp_leave/${leaveId}`,
+        buildApiUrl(`/emp_leave/${leaveId}`),
         {
           method: "PUT",
           headers: {

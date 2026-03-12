@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+
+import { buildApiUrl } from "../config/api";import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
 
@@ -68,7 +69,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch payslip details
       const payslipRes = await fetch(
-        `http://localhost:8080/employee/payroleListEmp/${employeeId}`,
+        buildApiUrl(`/employee/payroleListEmp/${employeeId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,7 +100,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company details
       const companyRes = await fetch(
-        `http://localhost:8080/company/companyDetails/${companyId}`,
+        buildApiUrl(`/company/companyDetails/${companyId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -117,7 +118,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch employee details
       const employeeRes = await fetch(
-        `http://localhost:8080/employee/emp/${employeeId}`,
+        buildApiUrl(`/employee/emp/${employeeId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,7 +143,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company logo
       const logoRes = await fetch(
-        `http://localhost:8080/logo/view/${companyId}`,
+        buildApiUrl(`/logo/view/${companyId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,

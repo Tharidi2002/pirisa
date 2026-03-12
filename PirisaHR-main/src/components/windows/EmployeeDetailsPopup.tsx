@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   Calendar,
   DollarSign,
   Eye,
@@ -107,7 +108,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     for (const docType of documentTypes) {
       try {
         const response = await fetch(
-          `http://localhost:8080/document/view/emp/${empId}/${docType}`,
+          buildApiUrl(`/document/view/emp/${empId}/${docType}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -135,7 +136,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch employee details
           const employeeResponse = await fetch(
-            `http://localhost:8080/employee/emp/${id}`,
+            buildApiUrl(`/employee/emp/${id}`),
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -158,7 +159,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           // Fetch company leave types (non-blocking)
           try {
             const companyLeaveResponse = await fetch(
-              `http://localhost:8080/company_leave/company/${cmpnyId}`,
+              buildApiUrl(`/company_leave/company/${cmpnyId}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -201,7 +202,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           // Fetch employee photo
           try {
             const existsResp = await fetch(
-              `http://localhost:8080/api/profile-image/exists/${id}`,
+              buildApiUrl(`/api/profile-image/exists/${id}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -218,7 +219,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
               if (hasImage) {
                 const imgResp = await fetch(
-                  `http://localhost:8080/api/profile-image/view/${id}`,
+                  buildApiUrl(`/api/profile-image/view/${id}`),
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -324,7 +325,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         return;
       }
 
-      const url = `http://localhost:8080/document/view/emp/${id}/${documentType}`;
+      const url = buildApiUrl(`/document/view/emp/${id}/${documentType}`);
 
       const response = await fetch(url, {
         headers: {

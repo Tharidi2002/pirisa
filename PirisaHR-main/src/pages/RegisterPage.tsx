@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
@@ -95,7 +96,7 @@ const RegisterPage: React.FC = () => {
       
       console.log("DEBUG - Sending registration data:", requestData);
       
-      const response = await fetch("http://localhost:8080/api/company/register", {
+      const response = await fetch(buildApiUrl("/api/company/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

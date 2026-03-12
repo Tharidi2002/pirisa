@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   FaBuilding,
   FaEnvelope,
   FaMapMarkerAlt,
@@ -55,7 +56,7 @@ const CompanySettings = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/company/companyDetails/${cmpId}`,
+          buildApiUrl(`/company/companyDetails/${cmpId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -85,7 +86,7 @@ const CompanySettings = () => {
 
         // Fetch existing logo
         const logoResponse = await fetch(
-          `http://localhost:8080/logo/view/${cmpId}`,
+          buildApiUrl(`/logo/view/${cmpId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -142,7 +143,7 @@ const CompanySettings = () => {
     try {
       // Update company details
       const response = await fetch(
-        `http://localhost:8080/company/${cmpId}`,
+        buildApiUrl(`/company/${cmpId}`),
         {
           method: "PUT",
           headers: {
@@ -164,7 +165,7 @@ const CompanySettings = () => {
         logoFormData.append("logo", logoFile);
 
         const logoResponse = await fetch(
-          "http://localhost:8080/logo/upload",
+          buildApiUrl("/logo/upload"),
           {
             method: "POST",
             headers: {

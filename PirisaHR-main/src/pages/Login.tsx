@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import backgroundImage from "../assets/images/loginBackground.jpg";
 import { ToastContainer, toast } from "react-toastify";
@@ -64,7 +65,7 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/login", {
+      const response = await fetch(buildApiUrl("/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,9 +158,9 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/password/forgotPassword?email=${encodeURIComponent(
+        buildApiUrl(`/password/forgotPassword?email=${encodeURIComponent(
           resetEmail
-        )}`,
+        )}`),
         {
           method: "POST",
         }

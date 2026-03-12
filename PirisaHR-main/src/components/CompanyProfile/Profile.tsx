@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   FaBuilding,
   FaCalendarAlt,
   FaEnvelope,
@@ -46,7 +47,7 @@ function Profile() {
       try {
         // Fetch company details
         const companyResponse = await fetch(
-          `http://localhost:8080/company/companyDetails/${cmpId}`,
+          buildApiUrl(`/company/companyDetails/${cmpId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ function Profile() {
 
         // Fetch logo
         const logoResponse = await fetch(
-          `http://localhost:8080/logo/view/${cmpId}`,
+          buildApiUrl(`/logo/view/${cmpId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,

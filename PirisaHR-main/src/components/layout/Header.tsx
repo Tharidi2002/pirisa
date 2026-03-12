@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
+
+import { buildApiUrl } from "../config/api";import {
   FaBell,
   FaEnvelope,
   FaBars,
@@ -159,7 +160,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
+        buildApiUrl(`/employee/EmpDetailsListByEmp/${empId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -210,7 +211,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/employee/payroleListEmp/${empId}`,
+        buildApiUrl(`/employee/payroleListEmp/${empId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -254,7 +255,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/employee/PendingEmpDetailsList/${cmpnyId}`,
+        buildApiUrl(`/employee/PendingEmpDetailsList/${cmpnyId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -402,7 +403,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const existsResp = await fetch(
-              `http://localhost:8080/api/profile-image/exists/${empId}`,
+              buildApiUrl(`/api/profile-image/exists/${empId}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -419,7 +420,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
               if (hasImage) {
                 const response = await fetch(
-                  `http://localhost:8080/api/profile-image/view/${empId}`,
+                  buildApiUrl(`/api/profile-image/view/${empId}`),
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -453,7 +454,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://localhost:8080/logo/view/${cmpId}`,
+            buildApiUrl(`/logo/view/${cmpId}`),
             {
               headers: {
                 Authorization: `Bearer ${token}`,

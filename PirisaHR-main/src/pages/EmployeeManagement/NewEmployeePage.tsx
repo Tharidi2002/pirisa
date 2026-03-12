@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
+
+import { buildApiUrl } from "../config/api";import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
@@ -112,7 +113,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/department/company/${cmpId}`,
+        buildApiUrl(`/department/company/${cmpId}`),
         {
           method: "GET",
           headers: {
@@ -250,7 +251,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/employee/add_employee",
+        buildApiUrl("/employee/add_employee"),
         {
           method: "POST",
           headers: {
@@ -350,7 +351,7 @@ const EmployeeRegistration: React.FC = () => {
         profileFormData.append("profileImage", documents.photo);
         
         const profileResponse = await fetch(
-          `http://localhost:8080/api/profile-image/upload/${currentEmpId}`,
+          buildApiUrl(`/api/profile-image/upload/${currentEmpId}`),
           {
             method: "POST",
             headers: {
@@ -386,7 +387,7 @@ const EmployeeRegistration: React.FC = () => {
       let documentResponse = null;
       if (hasOtherFiles) {
         documentResponse = await fetch(
-          "http://localhost:8080/document/upload-all",
+          buildApiUrl("/document/upload-all"),
           {
             method: "POST",
             headers: {
@@ -458,7 +459,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        "http://localhost:8080/document/upload-all",
+        buildApiUrl("/document/upload-all"),
         {
           method: "POST",
           headers: {

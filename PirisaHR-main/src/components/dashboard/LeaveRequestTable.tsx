@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Table from "../table/Table";
+
+import { buildApiUrl } from "../config/api";import Table from "../table/Table";
 import { Check, X } from "lucide-react";
 
 interface LeaveRequest {
@@ -73,7 +74,7 @@ const LeaveRequestTable = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
+        buildApiUrl(`/employee/EmpDetailsList/${cmpnyId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,7 +143,7 @@ const LeaveRequestTable = () => {
         empIds.map(async (empId) => {
           try {
             const existsResp = await fetch(
-              `http://localhost:8080/api/profile-image/exists/${empId}`,
+              buildApiUrl(`/api/profile-image/exists/${empId}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -159,7 +160,7 @@ const LeaveRequestTable = () => {
             if (!hasImage) return { empId, url: null as string | null };
 
             const imgResp = await fetch(
-              `http://localhost:8080/api/profile-image/view/${empId}`,
+              buildApiUrl(`/api/profile-image/view/${empId}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,

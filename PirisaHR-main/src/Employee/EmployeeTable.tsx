@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
 import Table from "../components/table/Table";
 import { Pencil, Trash2, User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
@@ -70,7 +71,7 @@ const EmployeeTable = () => {
       }
 
       const response = await fetch(
-        `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
+        buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -164,7 +165,7 @@ const EmployeeTable = () => {
       try {
         // First check if employee has a profile image
         const existsResponse = await fetch(
-          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
+          buildApiUrl(`/api/profile-image/exists/${employee.id}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -182,7 +183,7 @@ const EmployeeTable = () => {
           if (hasImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
-              `http://localhost:8080/api/profile-image/view/${employee.id}`,
+              buildApiUrl(`/api/profile-image/view/${employee.id}`),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -242,7 +243,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://localhost:8080/employee/${id}`,
+                  buildApiUrl(`/employee/${id}`),
                   {
                     method: "DELETE",
                     headers: {
@@ -434,7 +435,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
+                  buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,

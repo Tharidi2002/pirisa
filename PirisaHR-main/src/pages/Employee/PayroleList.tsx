@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { FaDownload, FaFilePdf, FaCalendarAlt } from "react-icons/fa";
+
+import { buildApiUrl } from "../config/api";import { FaDownload, FaFilePdf, FaCalendarAlt } from "react-icons/fa";
 import { X } from "lucide-react";
 import Loading from "../../components/Loading/Loading";
 import { jsPDF } from "jspdf";
@@ -73,7 +74,7 @@ const PayroleList = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/employee/payroleListEmp/${empId}`,
+          buildApiUrl(`/employee/payroleListEmp/${empId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -19,7 +19,7 @@ public class HrmApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOriginPatterns("http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
+						.allowedOriginPatterns("http://129.212.239.12:5174", "http://129.212.239.12", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
 						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 						.allowCredentials(true)
 						.allowedHeaders("*");
