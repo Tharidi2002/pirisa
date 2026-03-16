@@ -14,7 +14,7 @@ import {
   addMonths,
   subMonths,
   isToday,
-  parseISO,
+  parse,
   isValid
 } from "date-fns";
 import {
@@ -161,7 +161,7 @@ const STATUS_CONFIG = {
 
 const formatEventDate = (dateStr: string, includeTime: boolean = true): string => {
   try {
-    const date = parseISO(dateStr);
+    const date = parse(dateStr, "yyyy-MM-dd'T'HH:mm:ss", new Date());
     if (!isValid(date)) return dateStr;
     return includeTime ? format(date, "MMM dd, yyyy HH:mm") : format(date, "MMM dd, yyyy");
   } catch {
