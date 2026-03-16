@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 
 import { useEffect, useMemo, useState } from "react";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface EmployeeData {
   month: string;
@@ -38,7 +39,7 @@ const EmployeeGrowthChart = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
+          `${getBaseUrl()}/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

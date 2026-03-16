@@ -10,6 +10,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 function Profile() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -46,7 +47,7 @@ function Profile() {
       try {
         // Fetch company details
         const companyResponse = await fetch(
-          `http://localhost:8080/company/companyDetails/${cmpId}`,
+          `${getBaseUrl()}/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ function Profile() {
 
         // Fetch logo
         const logoResponse = await fetch(
-          `http://localhost:8080/logo/view/${cmpId}`,
+          `${getBaseUrl()}/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

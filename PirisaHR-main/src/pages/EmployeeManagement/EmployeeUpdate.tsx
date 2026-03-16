@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileImageUpload from "../../components/ProfileImageUpload";
 import { isEmail, isNonEmpty, isNonNegativeNumber, isPhone } from "../../utils/validation";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -117,7 +118,7 @@ const EmployeeUpdate: React.FC = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/employee/emp/${id}`,
+        `${getBaseUrl()}/employee/emp/${id}`,
         {
           method: "GET",
           headers: {
@@ -188,7 +189,7 @@ const EmployeeUpdate: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/department/company/${cmpId}`,
+        `${getBaseUrl()}/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -406,7 +407,7 @@ const EmployeeUpdate: React.FC = () => {
     }, 15000);
 
     try {
-      const response = await fetch(`http://localhost:8080/employee/${id}`, {
+      const response = await fetch(`${getBaseUrl()}/employee/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

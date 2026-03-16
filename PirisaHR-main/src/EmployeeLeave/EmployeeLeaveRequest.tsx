@@ -3,6 +3,7 @@ import { FaCalendarAlt, FaPaperPlane } from "react-icons/fa";
 import Loading from "../components/Loading/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getApiBaseUrl, getBaseUrl } from "../utils/apiConfig";
 
 interface LeaveRequestForm {
   leaveType: string;
@@ -45,7 +46,7 @@ function EmployeeLeaveRequest() {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/company_leave/company/${cmpId}`,
+          `${getBaseUrl()}/company_leave/company/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -138,7 +139,7 @@ function EmployeeLeaveRequest() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/emp_leave/add_leave",
+        "${getBaseUrl()}/emp_leave/add_leave",
         {
           method: "POST",
           headers: {

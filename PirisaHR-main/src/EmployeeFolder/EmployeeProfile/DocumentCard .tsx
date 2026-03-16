@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { useRef } from "react";
 import { toast } from "react-toastify";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface DocumentCardProps {
   name: string;
@@ -68,7 +69,7 @@ export const DocumentCard = ({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/document/update/${empId}`,
+        `${getBaseUrl()}/document/update/${empId}`,
         {
           method: "PUT",
           headers: {

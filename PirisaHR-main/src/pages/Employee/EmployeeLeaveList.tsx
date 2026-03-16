@@ -10,6 +10,7 @@ import {
 import Loading from "../../components/Loading/Loading";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface LeaveItem {
   id: number;
@@ -51,7 +52,7 @@ const EmployeeLeaveList = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
+          `${getBaseUrl()}/employee/EmpDetailsListByEmp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

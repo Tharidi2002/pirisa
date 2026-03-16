@@ -6,6 +6,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
+import { axiosInstance } from "../../api/config/axios";
 
 interface Department {
   id: number;
@@ -63,8 +64,8 @@ const DepartmentDesignationManager = () => {
     try {
       setLoading(true);
       const cmpId = getCompanyId();
-      const response = await axios.get<ApiResponse>(
-        `http://localhost:8080/department/company/${cmpId}`,
+      const response = await axiosInstance.get<ApiResponse>(
+        `/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -105,8 +106,8 @@ const DepartmentDesignationManager = () => {
         dpt_desc: departmentData.dpt_desc || "",
       };
 
-      const response = await axios.post(
-        "http://localhost:8080/department/add_department",
+      const response = await axiosInstance.post(
+        "/department/add_department",
         payload,
         {
           headers: {
@@ -140,8 +141,8 @@ const DepartmentDesignationManager = () => {
         dpt_desc: departmentData.dpt_desc || "",
       };
 
-      const response = await axios.post(
-        "http://localhost:8080/department/update_department",
+      const response = await axiosInstance.post(
+        "/department/update_department",
         payload,
         {
           headers: {
@@ -165,8 +166,8 @@ const DepartmentDesignationManager = () => {
   // Delete department
   const deleteDepartment = async (id: number) => {
     try {
-      const response = await axios.delete(
-        `http://localhost:8080/department/delete/${id}`,
+      const response = await axiosInstance.delete(
+        `/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -192,8 +193,8 @@ const DepartmentDesignationManager = () => {
     dptId: number;
   }) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/designation/add_designation",
+      const response = await axiosInstance.post(
+        "/designation/add_designation",
         designationData,
         {
           headers: {
@@ -217,8 +218,8 @@ const DepartmentDesignationManager = () => {
   // Delete designation
   const deleteDesignation = async (id: number) => {
     try {
-      const response = await axios.delete(
-        `http://localhost:8080/designation/delete/${id}`,
+      const response = await axiosInstance.delete(
+        `/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

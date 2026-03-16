@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getApiBaseUrl, getBaseUrl } from "../utils/apiConfig";
 
 interface CompanyDetails {
   cmp_name?: string;
@@ -55,7 +56,7 @@ const CompanySettings = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/company/companyDetails/${cmpId}`,
+          `${getBaseUrl()}/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -85,7 +86,7 @@ const CompanySettings = () => {
 
         // Fetch existing logo
         const logoResponse = await fetch(
-          `http://localhost:8080/logo/view/${cmpId}`,
+          `${getBaseUrl()}/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -142,7 +143,7 @@ const CompanySettings = () => {
     try {
       // Update company details
       const response = await fetch(
-        `http://localhost:8080/company/${cmpId}`,
+        `${getBaseUrl()}/company/${cmpId}`,
         {
           method: "PUT",
           headers: {
@@ -164,7 +165,7 @@ const CompanySettings = () => {
         logoFormData.append("logo", logoFile);
 
         const logoResponse = await fetch(
-          "http://localhost:8080/logo/upload",
+          "${getBaseUrl()}/logo/upload",
           {
             method: "POST",
             headers: {

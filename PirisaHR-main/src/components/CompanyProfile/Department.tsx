@@ -6,6 +6,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
+import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface Department {
   id: number;
@@ -66,7 +67,7 @@ const Department = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://localhost:8080/department/company/${cmpId}`,
+        `${getBaseUrl()}/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -111,7 +112,7 @@ const Department = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/department/add_department",
+        "${getBaseUrl()}/department/add_department",
         payload,
         {
           headers: {
@@ -150,7 +151,7 @@ const Department = () => {
       };
 
       const response = await axios.put(
-        "http://localhost:8080/department/update_department",
+        "${getBaseUrl()}/department/update_department",
         payload,
         {
           headers: {
@@ -179,7 +180,7 @@ const Department = () => {
   const deleteDepartment = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/department/${id}`,
+        `${getBaseUrl()}/department/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -206,7 +207,7 @@ const Department = () => {
   }) => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/designation/add_designation",
+        "${getBaseUrl()}/designation/add_designation",
         designationData,
         {
           headers: {
@@ -231,7 +232,7 @@ const Department = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/designation/${id}`,
+        `${getBaseUrl()}/designation/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -383,7 +384,7 @@ const Department = () => {
     try {
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://localhost:8080/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
+        `${getBaseUrl()}/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
