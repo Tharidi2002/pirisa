@@ -1,0 +1,6 @@
+@echo off
+echo Starting Pirisa HRM Frontend...
+cd /d "F:\New folder\PirisaHR-main"
+echo Current directory: %CD%
+echo Starting development server...
+npm run dev
