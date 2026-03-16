@@ -1,6 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
-
-import { buildApiUrl } from "../config/api";import { FaSave, FaClock, FaEdit, FaMoneyCheck } from "react-icons/fa";
+import { FaSave, FaClock, FaEdit, FaMoneyCheck } from "react-icons/fa";
 
 interface OTDetails {
   id?: number;
@@ -61,8 +60,8 @@ const OTSetting: React.FC = () => {
     try {
       const method = otDetails?.id ? "PUT" : "POST";
       const url = otDetails?.id
-        ? buildApiUrl(`/companyOT/${cmpId}`)
-        : buildApiUrl("/companyOT/add_OTDetails");
+        ? `http://localhost:8080/companyOT/${cmpId}`
+        : "http://localhost:8080/companyOT/add_OTDetails";
 
       const response = await fetch(url, {
         method,
@@ -117,7 +116,7 @@ const OTSetting: React.FC = () => {
 
       try {
         const response = await fetch(
-          buildApiUrl(`/companyOT/${cmpId}`),
+          `http://localhost:8080/companyOT/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

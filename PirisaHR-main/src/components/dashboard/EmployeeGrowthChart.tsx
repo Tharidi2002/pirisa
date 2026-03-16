@@ -8,8 +8,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-
-import { buildApiUrl } from "../config/api";import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface EmployeeData {
   month: string;
@@ -39,7 +38,7 @@ const EmployeeGrowthChart = () => {
     (async () => {
       try {
         const res = await fetch(
-          buildApiUrl(`/employee/EmpDetailsList/${cmpnyId}`),
+          `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

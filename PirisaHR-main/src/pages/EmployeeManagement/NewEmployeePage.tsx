@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
+import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
@@ -113,7 +112,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        buildApiUrl(`/department/company/${cmpId}`),
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -251,7 +250,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        buildApiUrl("/employee/add_employee"),
+        "http://localhost:8080/employee/add_employee",
         {
           method: "POST",
           headers: {
@@ -351,7 +350,7 @@ const EmployeeRegistration: React.FC = () => {
         profileFormData.append("profileImage", documents.photo);
         
         const profileResponse = await fetch(
-          buildApiUrl(`/api/profile-image/upload/${currentEmpId}`),
+          `http://localhost:8080/api/profile-image/upload/${currentEmpId}`,
           {
             method: "POST",
             headers: {
@@ -387,7 +386,7 @@ const EmployeeRegistration: React.FC = () => {
       let documentResponse = null;
       if (hasOtherFiles) {
         documentResponse = await fetch(
-          buildApiUrl("/document/upload-all"),
+          "http://localhost:8080/document/upload-all",
           {
             method: "POST",
             headers: {
@@ -459,7 +458,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        buildApiUrl("/document/upload-all"),
+        "http://localhost:8080/document/upload-all",
         {
           method: "POST",
           headers: {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import Table from "../../components/table/Table";
+import Table from "../../components/table/Table";
 import { User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -89,7 +88,7 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          buildApiUrl(`/employee/lastattendanceList/${companyId}`),
+          `http://localhost:8080/employee/lastattendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,7 +143,7 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          buildApiUrl("/emp_leave/employees-on-leave-today"),
+          "http://localhost:8080/emp_leave/employees-on-leave-today",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -210,7 +209,7 @@ const AttendanceMarkTable = () => {
       employeeList.map(async (employee) => {
         try {
           const existsResp = await fetch(
-            buildApiUrl(`/api/profile-image/exists/${employee.id}`),
+            `http://localhost:8080/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -227,7 +226,7 @@ const AttendanceMarkTable = () => {
           if (!hasImage) return;
 
           const imgResp = await fetch(
-            buildApiUrl(`/api/profile-image/view/${employee.id}`),
+            `http://localhost:8080/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -292,7 +291,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  buildApiUrl("/attendance/add_attendance"),
+                  "http://localhost:8080/attendance/add_attendance",
                   {
                     method: "POST",
                     headers: {
@@ -361,7 +360,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  buildApiUrl(`/attendance/update/${attendanceId}`),
+                  `http://localhost:8080/attendance/update/${attendanceId}`,
                   {
                     method: "PUT",
                     headers: {
@@ -467,7 +466,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  buildApiUrl("/emp_leave/cancel-leave-and-mark-attendance"),
+                  "http://localhost:8080/emp_leave/cancel-leave-and-mark-attendance",
                   {
                     method: "POST",
                     headers: {
@@ -533,7 +532,7 @@ const AttendanceMarkTable = () => {
       }
 
       const response = await fetch(
-        buildApiUrl(`/employee/lastattendanceList/${companyId}`),
+        `http://localhost:8080/employee/lastattendanceList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -584,7 +583,7 @@ const AttendanceMarkTable = () => {
       const token = localStorage.getItem("token");
       if (token) {
         const response = await fetch(
-          buildApiUrl("/emp_leave/employees-on-leave-today"),
+          "http://localhost:8080/emp_leave/employees-on-leave-today",
           {
             headers: {
               Authorization: `Bearer ${token}`,

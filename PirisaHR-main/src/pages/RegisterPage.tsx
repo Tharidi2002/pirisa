@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
+import { axiosInstance } from "../api/config/axios";
 
 interface CompanyRegistrationData {
   companyName: string;
@@ -96,18 +96,12 @@ const RegisterPage: React.FC = () => {
       
       console.log("DEBUG - Sending registration data:", requestData);
       
-      const response = await fetch(buildApiUrl("/api/company/register"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = await axiosInstance.post("/company/register", requestData);
 
-      const data = await response.json();
+      const data = response.data;
       console.log("DEBUG - Registration response:", data);
 
-      if (response.ok) {
+      if (response.status === 200) {
         toast.success("Registration successful! Please login with your credentials.");
         setTimeout(() => {
           navigate("/login");

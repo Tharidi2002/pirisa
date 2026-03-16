@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
-
-import { buildApiUrl } from "../config/api";const EmployeeGenderCard: React.FC = () => {
+const EmployeeGenderCard: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
@@ -19,7 +18,7 @@ import { buildApiUrl } from "../config/api";const EmployeeGenderCard: React.FC =
 
       try {
         const response = await fetch(
-          buildApiUrl(`/employee/EmpDetailsList/${cmpId}`),
+          `http://localhost:8080/employee/EmpDetailsList/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

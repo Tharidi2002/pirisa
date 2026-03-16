@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import {
+import {
   PlusCircleIcon,
   PencilIcon,
   TrashIcon,
@@ -65,7 +64,7 @@ const DepartmentDesignationManager = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        buildApiUrl(`/department/company/${cmpId}`),
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -107,7 +106,7 @@ const DepartmentDesignationManager = () => {
       };
 
       const response = await axios.post(
-        buildApiUrl("/department/add_department"),
+        "http://localhost:8080/department/add_department",
         payload,
         {
           headers: {
@@ -142,7 +141,7 @@ const DepartmentDesignationManager = () => {
       };
 
       const response = await axios.post(
-        buildApiUrl("/department/update_department"),
+        "http://localhost:8080/department/update_department",
         payload,
         {
           headers: {
@@ -167,7 +166,7 @@ const DepartmentDesignationManager = () => {
   const deleteDepartment = async (id: number) => {
     try {
       const response = await axios.delete(
-        buildApiUrl(`/department/delete/${id}`),
+        `http://localhost:8080/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -194,7 +193,7 @@ const DepartmentDesignationManager = () => {
   }) => {
     try {
       const response = await axios.post(
-        buildApiUrl("/designation/add_designation"),
+        "http://localhost:8080/designation/add_designation",
         designationData,
         {
           headers: {
@@ -219,7 +218,7 @@ const DepartmentDesignationManager = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        buildApiUrl(`/designation/delete/${id}`),
+        `http://localhost:8080/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

@@ -1,7 +1,6 @@
 // components/ProfileCard.tsx
 import { useRef, useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { FaBriefcase } from "react-icons/fa";
+import { FaBriefcase } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 interface ProfileCardProps {
@@ -42,7 +41,7 @@ export const ProfileCard = ({
     setLoading(true);
     try {
       const response = await fetch(
-        buildApiUrl(`/api/profile-image/upload/${empId}`),
+        `http://localhost:8080/api/profile-image/upload/${empId}`,
         {
           method: "POST",
           headers: {

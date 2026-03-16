@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import backgroundImage from "../assets/images/loginBackground.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
+import { axiosInstance } from "../api/config/axios";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -65,18 +65,12 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await fetch(buildApiUrl("/login"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: email,
-          password: password,
-        }),
+      const response = await axiosInstance.post("/login", {
+        username: email,
+        password: password,
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.response.resultCode === 100) {
         console.log("DEBUG - Login successful, storing data:", data.details);
@@ -157,16 +151,11 @@ const LoginPage: React.FC = () => {
     setIsForgotLoading(true);
 
     try {
-      const response = await fetch(
-        buildApiUrl(`/password/forgotPassword?email=${encodeURIComponent(
-          resetEmail
-        )}`),
-        {
-          method: "POST",
-        }
-      );
+      const response = await axiosInstance.post(`/password/forgotPassword?email=${encodeURIComponent(
+        resetEmail
+      )}`);
 
-      const data = await response.json();
+      const data = response.data;
       
       if (data.resultCode === 100) {
         // Show success message and close modal

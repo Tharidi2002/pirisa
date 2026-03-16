@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import axios from "axios";
 import Loading from "../Loading/Loading";
 //import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
@@ -54,7 +53,7 @@ const EmployeeStatsSection: React.FC = () => {
         }
 
         const response = await axios.get<ApiResponse>(
-          buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

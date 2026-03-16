@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import {
+import {
   FaCalendarAlt,
   FaCheck,
   FaTimes,
@@ -52,7 +51,7 @@ const EmployeeLeaveList = () => {
 
       try {
         const response = await fetch(
-          buildApiUrl(`/employee/EmpDetailsListByEmp/${empId}`),
+          `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -8,8 +8,7 @@ import {
   FaBirthdayCake,
   FaUpload,
 } from "react-icons/fa";
-
-import { buildApiUrl } from "../config/api";import { useRef } from "react";
+import { useRef } from "react";
 import { toast } from "react-toastify";
 
 interface DocumentCardProps {
@@ -69,7 +68,7 @@ export const DocumentCard = ({
 
     try {
       const response = await fetch(
-        buildApiUrl(`/document/update/${empId}`),
+        `http://localhost:8080/document/update/${empId}`,
         {
           method: "PUT",
           headers: {

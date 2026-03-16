@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import Table from "../../components/table/Table";
+import Table from "../../components/table/Table";
 import { User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -76,7 +75,7 @@ const SalaryStatusTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-          buildApiUrl(`/api/profile-image/exists/${employee.id}`),
+          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,7 +92,7 @@ const SalaryStatusTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-          buildApiUrl(`/api/profile-image/view/${employee.id}`),
+          `http://localhost:8080/api/profile-image/view/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -139,13 +138,13 @@ const SalaryStatusTable = () => {
       }
 
       const [payrollResponse, detailsResponse] = await Promise.all([
-        fetch(buildApiUrl(`/employee/payroleList/${companyId}`), {
+        fetch(`http://localhost:8080/employee/payroleList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }),
-        fetch(buildApiUrl(`/employee/EmpDetailsList/${companyId}`), {
+        fetch(`http://localhost:8080/employee/EmpDetailsList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

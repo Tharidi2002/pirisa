@@ -1,6 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
-
-import { buildApiUrl } from "../config/api";import { FaEdit, FaSave, FaPlus, FaTrash, FaTag } from "react-icons/fa";
+import { FaEdit, FaSave, FaPlus, FaTrash, FaTag } from "react-icons/fa";
 import axios from "axios";
 
 // Define types
@@ -53,7 +52,7 @@ const AllowanceSettings: React.FC = () => {
 
     try {
       const response = await axios.get(
-        buildApiUrl(`/allowance/company/${cmpId}`),
+        `http://localhost:8080/allowance/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -133,7 +132,7 @@ const AllowanceSettings: React.FC = () => {
       console.log("Update Payload:", payload); // Debug log
 
       const response = await axios.put(
-        buildApiUrl("/allowance/update_allowance"),
+        "http://localhost:8080/allowance/update_allowance",
         payload,
         {
           headers: {
@@ -194,7 +193,7 @@ const AllowanceSettings: React.FC = () => {
 
       try {
         const response = await axios.post(
-          buildApiUrl("/allowance/add_allowance"),
+          "http://localhost:8080/allowance/add_allowance",
           payload,
           {
             headers: {
@@ -240,7 +239,7 @@ const AllowanceSettings: React.FC = () => {
       try {
         console.log("Deleting allowance with ID:", id);
         const response = await axios.delete(
-          buildApiUrl(`/allowance/${id}`),
+          `http://localhost:8080/allowance/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

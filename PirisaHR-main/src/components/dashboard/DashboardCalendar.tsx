@@ -1,7 +1,6 @@
 // Alternative approach: Use native WebSocket implementation to avoid sockjs issues
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-
-import { buildApiUrl } from "../config/api";import { Client, IMessage } from '@stomp/stompjs';
+import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import {
   format,
@@ -254,7 +253,7 @@ const DashboardCalendar: React.FC = () => {
     try {
       console.log(`Updating event ${eventId} status to ${newStatus}`);
       
-      const response = await fetch(buildApiUrl(`/calendar/events/${eventId}/status`), {
+      const response = await fetch(`http://localhost:8080/calendar/events/${eventId}/status`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -279,7 +278,7 @@ const DashboardCalendar: React.FC = () => {
 
   const testBackendConnectivity = async (): Promise<boolean> => {
     try {
-      const response = await fetch(buildApiUrl('/actuator/health'), {
+      const response = await fetch('http://localhost:8080/actuator/health', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -448,7 +447,7 @@ const DashboardCalendar: React.FC = () => {
       };
 
       const response = await fetch(
-          buildApiUrl("/calendar/events"),
+          "http://localhost:8080/calendar/events",
           {
             method: "POST",
             headers: {
@@ -502,7 +501,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          buildApiUrl(`/calendar/events/${selectedEvent.id}`),
+          `http://localhost:8080/calendar/events/${selectedEvent.id}`,
           {
             method: "PUT",
             headers: {
@@ -554,7 +553,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          buildApiUrl(`/calendar/events/${eventId}`),
+          `http://localhost:8080/calendar/events/${eventId}`,
           {
             method: "DELETE",
             headers: {
@@ -644,7 +643,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const client = new Client({
-        webSocketFactory: () => new SockJS(buildApiUrl('/ws')),
+        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         debug: (str) => console.log('STOMP Debug:', str),
         reconnectDelay: 5000,
@@ -755,7 +754,7 @@ const DashboardCalendar: React.FC = () => {
       }
 
       let response = await fetch(
-          buildApiUrl(`/calendar/events/company/${companyId}/month/${year}/${month}`),
+          `http://localhost:8080/calendar/events/company/${companyId}/month/${year}/${month}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -770,7 +769,7 @@ const DashboardCalendar: React.FC = () => {
         data = await response.json();
       } else {
         response = await fetch(
-            buildApiUrl(`/calendar/events/company/${companyId}`),
+            `http://localhost:8080/calendar/events/company/${companyId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

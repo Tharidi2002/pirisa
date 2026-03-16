@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -118,7 +117,7 @@ const EmployeeUpdate: React.FC = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const response = await fetch(
-        buildApiUrl(`/employee/emp/${id}`),
+        `http://localhost:8080/employee/emp/${id}`,
         {
           method: "GET",
           headers: {
@@ -189,7 +188,7 @@ const EmployeeUpdate: React.FC = () => {
 
     try {
       const response = await fetch(
-        buildApiUrl(`/department/company/${cmpId}`),
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -407,7 +406,7 @@ const EmployeeUpdate: React.FC = () => {
     }, 15000);
 
     try {
-      const response = await fetch(buildApiUrl(`/employee/${id}`), {
+      const response = await fetch(`http://localhost:8080/employee/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

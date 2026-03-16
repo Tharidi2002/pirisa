@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-
-import { buildApiUrl } from "../config/api";import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
 import * as XLSX from "xlsx";
@@ -92,7 +91,7 @@ const PayroleReport: React.FC = () => {
 
     try {
       const response = await fetch(
-        buildApiUrl(`/employee/payroleList/${cmpId}`),
+        `http://localhost:8080/employee/payroleList/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

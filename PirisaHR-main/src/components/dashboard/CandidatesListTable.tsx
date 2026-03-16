@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 // import React, { useState } from 'react';
-
-import { buildApiUrl } from "../config/api";// import { FileText, Calendar, Download } from 'lucide-react';
+// import { FileText, Calendar, Download } from 'lucide-react';
 // import Table from "../table/Table";
 
 // // Extend BaseItem by adding id property
@@ -309,7 +308,7 @@ const CandidatesListTable = () => {
       (async () => {
         try {
           const res = await fetch(
-            buildApiUrl(`/employee/EmpDetailsList/${cmpnyId}`),
+            `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

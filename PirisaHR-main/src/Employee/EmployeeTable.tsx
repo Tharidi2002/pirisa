@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Table from "../components/table/Table";
 import { Pencil, Trash2, User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
@@ -71,7 +70,7 @@ const EmployeeTable = () => {
       }
 
       const response = await fetch(
-        buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
+        `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -165,7 +164,7 @@ const EmployeeTable = () => {
       try {
         // First check if employee has a profile image
         const existsResponse = await fetch(
-          buildApiUrl(`/api/profile-image/exists/${employee.id}`),
+          `http://localhost:8080/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -183,7 +182,7 @@ const EmployeeTable = () => {
           if (hasImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
-              buildApiUrl(`/api/profile-image/view/${employee.id}`),
+              `http://localhost:8080/api/profile-image/view/${employee.id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -243,7 +242,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  buildApiUrl(`/employee/${id}`),
+                  `http://localhost:8080/employee/${id}`,
                   {
                     method: "DELETE",
                     headers: {
@@ -435,7 +434,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
+                  `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,

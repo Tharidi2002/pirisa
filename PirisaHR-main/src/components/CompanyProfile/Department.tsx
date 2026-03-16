@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../config/api";import {
+import {
   PlusCircleIcon,
   PencilIcon,
   TrashIcon,
@@ -67,7 +66,7 @@ const Department = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        buildApiUrl(`/department/company/${cmpId}`),
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -112,7 +111,7 @@ const Department = () => {
       };
 
       const response = await axios.post(
-        buildApiUrl("/department/add_department"),
+        "http://localhost:8080/department/add_department",
         payload,
         {
           headers: {
@@ -151,7 +150,7 @@ const Department = () => {
       };
 
       const response = await axios.put(
-        buildApiUrl("/department/update_department"),
+        "http://localhost:8080/department/update_department",
         payload,
         {
           headers: {
@@ -180,7 +179,7 @@ const Department = () => {
   const deleteDepartment = async (id: number) => {
     try {
       const response = await axios.delete(
-        buildApiUrl(`/department/${id}`),
+        `http://localhost:8080/department/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -207,7 +206,7 @@ const Department = () => {
   }) => {
     try {
       const response = await axios.post(
-        buildApiUrl("/designation/add_designation"),
+        "http://localhost:8080/designation/add_designation",
         designationData,
         {
           headers: {
@@ -232,7 +231,7 @@ const Department = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        buildApiUrl(`/designation/${id}`),
+        `http://localhost:8080/designation/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -384,7 +383,7 @@ const Department = () => {
     try {
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        buildApiUrl(`/department/search/${cmpId}?query=${encodeURIComponent(query)}`),
+        `http://localhost:8080/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-
-import { buildApiUrl } from "../../config/api";import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
@@ -48,7 +47,7 @@ const PayslipList: React.FC = () => {
       if (!token) throw new Error("No token found");
 
       const response = await fetch(
-        buildApiUrl(`/employee/payroleListEmp/${employeeId}`),
+        `http://localhost:8080/employee/payroleListEmp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Table from "../table/Table";
 import { Trash2 } from "lucide-react";
 import DateFilter from "../Filters/DateFilter"; // Import the DateFilter component
@@ -167,7 +166,7 @@ const AttendanceTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-            buildApiUrl(`/api/profile-image/exists/${employee.id}`),
+            `http://localhost:8080/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -184,7 +183,7 @@ const AttendanceTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-            buildApiUrl(`/api/profile-image/view/${employee.id}`),
+            `http://localhost:8080/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -232,7 +231,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          buildApiUrl(`/employee/attendanceList/${companyId}`),
+          `http://localhost:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -242,7 +241,7 @@ const AttendanceTable = () => {
       );
 
       const leaveResponse = await fetch(
-          buildApiUrl(`/employee/EmpDetailsList/${companyId}`),
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -506,7 +505,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          buildApiUrl(`/attendance/${id}`),
+          `http://localhost:8080/attendance/${id}`,
           {
             method: "DELETE",
             headers: {
@@ -693,7 +692,7 @@ const AttendanceTable = () => {
                     }
 
                     const response = await fetch(
-                        buildApiUrl(`/employee/attendanceList/${companyId}`),
+                        `http://localhost:8080/employee/attendanceList/${companyId}`,
                         {
                           headers: {
                             Authorization: `Bearer ${token}`,

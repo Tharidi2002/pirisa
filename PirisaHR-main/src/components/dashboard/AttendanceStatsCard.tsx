@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
-import { buildApiUrl } from "../config/api";import StatisticItem from "../StatisticItem";
+import StatisticItem from "../StatisticItem";
 
 interface AttendanceDTO {
   id: number;
@@ -33,7 +32,7 @@ const AttendanceStatsCard = () => {
     (async () => {
       try {
         const res = await fetch(
-          buildApiUrl(`/employee/lastattendanceList/${cmpnyId}`),
+          `http://localhost:8080/employee/lastattendanceList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

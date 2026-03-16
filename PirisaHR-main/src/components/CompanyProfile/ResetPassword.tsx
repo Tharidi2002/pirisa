@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-import { buildApiUrl } from "../config/api";import { FaEye, FaEyeSlash, FaArrowLeft, FaSave } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaArrowLeft, FaSave } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -92,9 +91,9 @@ const PasswordReset = () => {
       };
 
       if (role === "EMPLOYEE" && empId) {
-        apiUrl = buildApiUrl(`/employee/changePassword/${empId}`);
+        apiUrl = `http://localhost:8080/employee/changePassword/${empId}`;
       } else if (role === "CMPNY" && cmpId) {
-        apiUrl = buildApiUrl(`/company/changePassword/${cmpId}`);
+        apiUrl = `http://localhost:8080/company/changePassword/${cmpId}`;
       } else {
         throw new Error("Invalid user role or missing ID");
       }
