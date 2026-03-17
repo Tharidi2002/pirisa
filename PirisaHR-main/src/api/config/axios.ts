@@ -1,9 +1,7 @@
 import axios from "axios";
 
 // Use production API URL
-const BASE_URL = import.meta.env.PROD 
-  ? "http://129.212.239.12/api"
-  : "http://localhost:8081/api";
+const BASE_URL = "http://129.212.239.12/api";
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
