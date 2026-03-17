@@ -5,7 +5,6 @@ import backgroundImage from "../assets/images/loginBackground.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
-import { axiosInstance } from "../api/config/axios";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -65,12 +64,18 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await axiosInstance.post("/login", {
-        username: email,
-        password: password,
+      const response = await fetch("http://localhost:8080/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password,
+        }),
       });
 
-      const data = response.data;
+      const data = await response.json();
 
       if (data.response.resultCode === 100) {
         console.log("DEBUG - Login successful, storing data:", data.details);
@@ -151,11 +156,16 @@ const LoginPage: React.FC = () => {
     setIsForgotLoading(true);
 
     try {
-      const response = await axiosInstance.post(`/password/forgotPassword?email=${encodeURIComponent(
-        resetEmail
-      )}`);
+      const response = await fetch(
+        `http://localhost:8080/password/forgotPassword?email=${encodeURIComponent(
+          resetEmail
+        )}`,
+        {
+          method: "POST",
+        }
+      );
 
-      const data = response.data;
+      const data = await response.json();
       
       if (data.resultCode === 100) {
         // Show success message and close modal

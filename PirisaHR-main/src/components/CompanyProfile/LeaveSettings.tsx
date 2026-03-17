@@ -3,7 +3,6 @@ import { FaEdit, FaSave, FaPlus, FaCalendarAlt, FaTrash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading"; // Adjust the path as needed
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 // Define types
 interface LeaveType {
@@ -51,7 +50,7 @@ const LeaveSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-          `${getBaseUrl()}/company_leave/company/${cmpId}`,
+          `http://localhost:8080/company_leave/company/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -117,7 +116,7 @@ const LeaveSettings: React.FC = () => {
     setSavingEdit(true);
     try {
       const response = await fetch(
-          `${getBaseUrl()}/company_leave/update_leave`,
+          `http://localhost:8080/company_leave/update_leave`,
           {
             method: "PUT",
             headers: {
@@ -190,7 +189,7 @@ const LeaveSettings: React.FC = () => {
     setSavingNew(true);
     try {
       const response = await fetch(
-          `${getBaseUrl()}/company_leave/add_leave`,
+          `http://localhost:8080/company_leave/add_leave`,
           {
             method: "POST",
             headers: {
@@ -250,7 +249,7 @@ const LeaveSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-          `${getBaseUrl()}/company_leave/${id}`,
+          `http://localhost:8080/company_leave/${id}`,
           {
             method: "DELETE",
             headers: {

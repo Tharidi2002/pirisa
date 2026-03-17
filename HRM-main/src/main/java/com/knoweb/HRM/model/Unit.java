@@ -15,21 +15,24 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "department")
-public class Department implements Serializable {
+public class Unit implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "dpt_id")
-    private long id;
+    private Long id;
 
-    private String dpt_name;
+    @Column(name = "dpt_name")
+    private String dptName;
 
-    private String dpt_code;
+    @Column(name = "dpt_code")
+    private String dptCode;
 
-    private String dpt_desc;
+    @Column(name = "dpt_desc")
+    private String dptDesc;
 
     @Column(name = "cmp_id")
-    private long cmpId;
+    private Long cmpId;
 
     @OneToMany(targetEntity = Designation.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id")

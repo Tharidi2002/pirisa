@@ -6,7 +6,6 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
 import PayslipModal from "../../components/PayRole/PayslipModal";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { axiosInstance } from "../../api/config/axios";
 
 interface Payslip {
   id: number;
@@ -44,11 +43,22 @@ const PayslipList: React.FC = () => {
 
   const fetchPayslips = async () => {
     try {
-      const response = await axiosInstance.get(
-        `/employee/payroleListEmp/${employeeId}`
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      const response = await fetch(
+        `http://localhost:8080/employee/payroleListEmp/${employeeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      const data: ApiResponse = response.data;
+      if (!response.ok) throw new Error("Failed to fetch payslips");
+
+      const data: ApiResponse = await response.json();
       if (data.resultCode === 100) {
         const employee = data.EmployeeList.find(
           (emp) => emp.id === parseInt(employeeId || "0")

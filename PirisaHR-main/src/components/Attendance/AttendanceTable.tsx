@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Table from "../table/Table";
 import { Trash2 } from "lucide-react";
 import DateFilter from "../Filters/DateFilter"; // Import the DateFilter component
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface Column<T> {
   key: string;
@@ -167,7 +166,7 @@ const AttendanceTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-            `${getApiBaseUrl()}/profile-image/exists/${employee.id}`,
+            `http://localhost:8080/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -184,7 +183,7 @@ const AttendanceTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-            `${getApiBaseUrl()}/profile-image/view/${employee.id}`,
+            `http://localhost:8080/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -232,7 +231,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `${getBaseUrl()}/employee/attendanceList/${companyId}`,
+          `http://localhost:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -242,7 +241,7 @@ const AttendanceTable = () => {
       );
 
       const leaveResponse = await fetch(
-          `${getBaseUrl()}/employee/EmpDetailsList/${companyId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -506,7 +505,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `${getBaseUrl()}/attendance/${id}`,
+          `http://localhost:8080/attendance/${id}`,
           {
             method: "DELETE",
             headers: {
@@ -693,7 +692,7 @@ const AttendanceTable = () => {
                     }
 
                     const response = await fetch(
-                        `${getBaseUrl()}/employee/attendanceList/${companyId}`,
+                        `http://localhost:8080/employee/attendanceList/${companyId}`,
                         {
                           headers: {
                             Authorization: `Bearer ${token}`,

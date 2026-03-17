@@ -2,7 +2,6 @@
 // import React, { useState } from 'react';
 // import { FileText, Calendar, Download } from 'lucide-react';
 // import Table from "../table/Table";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 // // Extend BaseItem by adding id property
 // interface CandidatesList {
@@ -309,7 +308,7 @@ const CandidatesListTable = () => {
       (async () => {
         try {
           const res = await fetch(
-            `${getBaseUrl()}/employee/EmpDetailsList/${cmpnyId}`,
+            `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

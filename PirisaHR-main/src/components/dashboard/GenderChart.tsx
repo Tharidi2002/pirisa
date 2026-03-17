@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 const EmployeeGenderCard: React.FC = () => {
   const [total, setTotal] = useState(0);
@@ -19,7 +18,7 @@ const EmployeeGenderCard: React.FC = () => {
 
       try {
         const response = await fetch(
-          `${getBaseUrl()}/employee/EmpDetailsList/${cmpId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

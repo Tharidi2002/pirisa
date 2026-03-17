@@ -6,9 +6,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
-interface Department {
+interface Unit {
   id: number;
   dpt_name: string;
   dpt_code: string;
@@ -24,17 +23,17 @@ interface Designation {
 }
 
 interface ApiResponse {
-  DepartmentList: Department[];
+  UnitList: Unit[];
   resultCode: number;
   resultDesc: string;
 }
 
-const Department = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
+const Unit = () => {
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [showUnitModal, setShowUnitModal] = useState(false);
   const [showDesignationModal, setShowDesignationModal] = useState(false);
-  const [currentDepartment, setCurrentDepartment] =
-    useState<Partial<Department> | null>(null);
+  const [currentUnit, setCurrentUnit] =
+    useState<Partial<Unit> | null>(null);
   const [currentDesignation, setCurrentDesignation] = useState<{
     designation: string;
     dptId: number;
@@ -42,13 +41,13 @@ const Department = () => {
     designation: "",
     dptId: 1,
   });
-  // const [expandedDepartment, setExpandedDepartment] = useState<number | null>(
+  // const [expandedUnit, setExpandedUnit] = useState<number | null>(
   //   null
   // );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+  const [filteredUnits, setFilteredUnits] = useState<Unit[]>([]);
 
   // Get company ID from localStorage
   const getCompanyId = (): number => {
@@ -61,13 +60,13 @@ const Department = () => {
     return localStorage.getItem("token") || "";
   };
 
-  // Fetch departments and designations
-  const fetchDepartments = async () => {
+  // Fetch units and designations
+  const fetchUnits = async () => {
     try {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `${getBaseUrl()}/department/company/${cmpId}`,
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -78,21 +77,21 @@ const Department = () => {
 
       if (
         response.data.resultCode === 100 &&
-        Array.isArray(response.data.DepartmentList)
+        Array.isArray(response.data.UnitList)
       ) {
-        setDepartments(response.data.DepartmentList);
-        setFilteredDepartments(response.data.DepartmentList);
+        setUnits(response.data.UnitList);
+        setFilteredUnits(response.data.UnitList);
       } else if (response.data.resultCode === 102) {
-        setError(response.data.resultDesc || "Department code or name already exists");
+        setError(response.data.resultDesc || "Unit code or name already exists");
       } else {
-        setError(response.data.resultDesc || "Failed to fetch departments");
+        setError(response.data.resultDesc || "Failed to fetch units");
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        // Treat 404 as "no departments" rather than an error
-        setDepartments([]);
+        // Treat 404 as "no units" rather than an error
+        setUnits([]);
       } else {
-        setError("Error fetching departments. Please try again later.");
+        setError("Error fetching units. Please try again later.");
         console.error(err);
       }
     } finally {
@@ -100,19 +99,19 @@ const Department = () => {
     }
   };
 
-  // Add new department
-  const addDepartment = async (departmentData: Partial<Department>) => {
+  // Add new unit
+  const addUnit = async (unitData: Partial<Unit>) => {
     try {
       const cmpId = getCompanyId();
       const payload = {
-        dpt_name: departmentData.dpt_name,
-        dpt_code: departmentData.dpt_code,
+        dpt_name: unitData.dpt_name,
+        dpt_code: unitData.dpt_code,
         cmpId: cmpId,
-        dpt_desc: departmentData.dpt_desc || "",
+        dpt_desc: unitData.dpt_desc || "",
       };
 
       const response = await axios.post(
-        "${getBaseUrl()}/department/add_department",
+        "http://localhost:8080/department/add_department",
         payload,
         {
           headers: {
@@ -122,36 +121,36 @@ const Department = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       } else if (response.status === 400) {
         const errorData = response.data;
-        setError(errorData.resultDesc || "Failed to add department");
+        setError(errorData.resultDesc || "Failed to add unit");
         return false;
       }
       return false;
     } catch (err) {
-      console.error("Error adding department:", err);
-      setError("Failed to add department. Please try again.");
+      console.error("Error adding unit:", err);
+      setError("Failed to add unit. Please try again.");
       return false;
     }
   };
 
-  // Update existing department
-  const updateDepartment = async (departmentData: Partial<Department>) => {
+  // Update existing unit
+  const updateUnit = async (unitData: Partial<Unit>) => {
     try {
-      if (!departmentData.id) return false;
+      if (!unitData.id) return false;
 
       const payload = {
-        id: departmentData.id,
-        dpt_name: departmentData.dpt_name,
-        dpt_code: departmentData.dpt_code,
+        id: unitData.id,
+        dpt_name: unitData.dpt_name,
+        dpt_code: unitData.dpt_code,
         cmpId: getCompanyId(),
-        dpt_desc: departmentData.dpt_desc || "",
+        dpt_desc: unitData.dpt_desc || "",
       };
 
       const response = await axios.put(
-        "${getBaseUrl()}/department/update_department",
+        "http://localhost:8080/department/update_department",
         payload,
         {
           headers: {
@@ -161,26 +160,26 @@ const Department = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       } else if (response.status === 400) {
         const errorData = response.data;
-        setError(errorData.resultDesc || "Failed to update department");
+        setError(errorData.resultDesc || "Failed to update unit");
         return false;
       }
       return false;
     } catch (err) {
-      console.error("Error updating department:", err);
-      setError("Failed to update department. Please try again.");
+      console.error("Error updating unit:", err);
+      setError("Failed to update unit. Please try again.");
       return false;
     }
   };
 
-  // Delete department
-  const deleteDepartment = async (id: number) => {
+  // Delete unit
+  const deleteUnit = async (id: number) => {
     try {
       const response = await axios.delete(
-        `${getBaseUrl()}/department/${id}`,
+        `http://localhost:8080/department/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -189,13 +188,13 @@ const Department = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
     } catch (err) {
-      console.error("Error deleting department:", err);
-      setError("Failed to delete department. Please try again.");
+      console.error("Error deleting unit:", err);
+      setError("Failed to delete unit. Please try again.");
       return false;
     }
   };
@@ -207,7 +206,7 @@ const Department = () => {
   }) => {
     try {
       const response = await axios.post(
-        "${getBaseUrl()}/designation/add_designation",
+        "http://localhost:8080/designation/add_designation",
         designationData,
         {
           headers: {
@@ -217,7 +216,7 @@ const Department = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
@@ -232,7 +231,7 @@ const Department = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `${getBaseUrl()}/designation/${id}`,
+        `http://localhost:8080/designation/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -241,7 +240,7 @@ const Department = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
@@ -252,72 +251,72 @@ const Department = () => {
     }
   };
 
-  // Load departments on component mount
+  // Load units on component mount
   useEffect(() => {
-    fetchDepartments();
+    fetchUnits();
   }, []);
 
-  // Department Modal Functions
-  const handleOpenDepartmentModal = (dept: Department | null = null) => {
+  // Unit Modal Functions
+  const handleOpenUnitModal = (dept: Unit | null = null) => {
     if (dept) {
-      setCurrentDepartment({
+      setCurrentUnit({
         id: dept.id,
         dpt_name: dept.dpt_name,
         dpt_code: dept.dpt_code,
         dpt_desc: dept.dpt_desc,
       });
     } else {
-      setCurrentDepartment({ dpt_name: "", dpt_code: "", dpt_desc: "" });
+      setCurrentUnit({ dpt_name: "", dpt_code: "", dpt_desc: "" });
     }
-    setShowDepartmentModal(true);
+    setShowUnitModal(true);
   };
 
-  const handleCloseDepartmentModal = () => {
-    setCurrentDepartment(null);
-    setShowDepartmentModal(false);
+  const handleCloseUnitModal = () => {
+    setCurrentUnit(null);
+    setShowUnitModal(false);
   };
 
-  const handleDepartmentSubmit = async (e: React.FormEvent) => {
+  const handleUnitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentDepartment?.dpt_name?.trim() || !currentDepartment?.dpt_code?.trim()) {
-      setError("Department name and code are required");
+    if (!currentUnit?.dpt_name?.trim() || !currentUnit?.dpt_code?.trim()) {
+      setError("Unit name and code are required");
       return;
     }
 
     // Check if trying to update department code or name for existing department
-    if (currentDepartment.id) {
-      const originalDept = departments.find(d => d.id === currentDepartment.id);
+    if (currentUnit.id) {
+      const originalDept = units.find(d => d.id === currentUnit.id);
       if (originalDept) {
-        if (originalDept.dpt_code !== currentDepartment.dpt_code || 
-            originalDept.dpt_name !== currentDepartment.dpt_name) {
-          setError("Department code and name cannot be updated as they are professional identifiers");
+        if (originalDept.dpt_code !== currentUnit.dpt_code || 
+            originalDept.dpt_name !== currentUnit.dpt_name) {
+          setError("Unit code and name cannot be updated as they are professional identifiers");
           return;
         }
       }
     }
 
-    // Client-side validation for duplicates (only for new departments)
-    if (!currentDepartment.id) {
-      const isDuplicate = departments.some(dept => 
-        dept.dpt_code?.toLowerCase() === currentDepartment.dpt_code?.toLowerCase() ||
-        dept.dpt_name?.toLowerCase() === currentDepartment.dpt_name?.toLowerCase()
+    // Client-side validation for duplicates (only for new units)
+    if (!currentUnit.id) {
+      const isDuplicate = units.some(dept => 
+        dept.dpt_code?.toLowerCase() === currentUnit.dpt_code?.toLowerCase() ||
+        dept.dpt_name?.toLowerCase() === currentUnit.dpt_name?.toLowerCase()
       );
 
       if (isDuplicate) {
-        setError("Department code or name already exists");
+        setError("Unit code or name already exists");
         return;
       }
     }
 
     let success = false;
-    if (currentDepartment.id) {
-      success = await updateDepartment(currentDepartment);
+    if (currentUnit.id) {
+      success = await updateUnit(currentUnit);
     } else {
-      success = await addDepartment(currentDepartment);
+      success = await addUnit(currentUnit);
     }
 
     if (success) {
-      handleCloseDepartmentModal();
+      handleCloseUnitModal();
       setError("");
     }
   };
@@ -342,17 +341,17 @@ const Department = () => {
     }
   };
 
-  // const toggleDepartmentExpand = (id: number) => {
-  //   setExpandedDepartment(expandedDepartment === id ? null : id);
+  // const toggleUnitExpand = (id: number) => {
+  //   setExpandedUnit(expandedUnit === id ? null : id);
   // };
 
-  const handleDeleteDepartment = async (id: number) => {
+  const handleDeleteUnit = async (id: number) => {
     if (
       confirm(
         "Are you sure you want to delete this department? All associated designations will also be deleted."
       )
     ) {
-      const success = await deleteDepartment(id);
+      const success = await deleteUnit(id);
       if (!success) {
         setError("Failed to delete department. Please try again.");
       } else {
@@ -377,14 +376,14 @@ const Department = () => {
     setSearchQuery(query);
     
     if (!query.trim()) {
-      setFilteredDepartments(departments);
+      setFilteredUnits(units);
       return;
     }
 
     try {
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `${getBaseUrl()}/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
+        `http://localhost:8080/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -392,17 +391,17 @@ const Department = () => {
         }
       );
 
-      if (response.data.resultCode === 100 && Array.isArray(response.data.DepartmentList)) {
-        setFilteredDepartments(response.data.DepartmentList);
+      if (response.data.resultCode === 100 && Array.isArray(response.data.UnitList)) {
+        setFilteredUnits(response.data.UnitList);
       }
     } catch {
       // If API fails, do client-side filtering
-      const filtered = departments.filter(dept =>
+      const filtered = units.filter(dept =>
         dept.dpt_name.toLowerCase().includes(query.toLowerCase()) ||
         dept.dpt_code.toLowerCase().includes(query.toLowerCase()) ||
         (dept.dpt_desc && dept.dpt_desc.toLowerCase().includes(query.toLowerCase()))
       );
-      setFilteredDepartments(filtered);
+      setFilteredUnits(filtered);
     }
   };
 
@@ -426,7 +425,7 @@ const Department = () => {
           className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
           onClick={() => {
             setError("");
-            fetchDepartments();
+            fetchUnits();
           }}
         >
           Try Again
@@ -443,16 +442,16 @@ const Department = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="w-full sm:w-auto">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
-                Department & Designation Management
+                Unit & Designation Management
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your company departments and job designations</p>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your company units and job designations</p>
             </div>
             <button
-              onClick={() => handleOpenDepartmentModal()}
+              onClick={() => handleOpenUnitModal()}
               className="w-full sm:w-auto flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              <span className="text-sm sm:text-base">Add Department</span>
+              <span className="text-sm sm:text-base">Add Unit</span>
             </button>
           </div>
         </div>
@@ -494,7 +493,7 @@ const Department = () => {
             </div>
             <input
               type="text"
-              placeholder="Search departments by name, code, or description..."
+              placeholder="Search units by name, code, or description..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="block w-full pl-9 sm:pl-10 pr-8 sm:pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
@@ -512,41 +511,41 @@ const Department = () => {
           </div>
           {searchQuery && (
             <p className="mt-2 text-xs sm:text-sm text-gray-600">
-              Found {filteredDepartments.length} department{filteredDepartments.length !== 1 ? 's' : ''} matching "{searchQuery}"
+              Found {filteredUnits.length} department{filteredUnits.length !== 1 ? 's' : ''} matching "{searchQuery}"
             </p>
           )}
         </div>
 
-      {/* Department List */}
-      {filteredDepartments.length === 0 ? (
+      {/* Unit List */}
+      {filteredUnits.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 lg:p-12 text-center">
           <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <h3 className="mt-4 text-base sm:text-lg font-medium text-gray-900">
-            {searchQuery ? "No departments found matching your search" : "No departments found"}
+            {searchQuery ? "No units found matching your search" : "No units found"}
           </h3>
           <p className="mt-2 text-sm text-gray-500 px-4">
-            {searchQuery ? "Try a different search term or clear the search" : "Get started by creating your first department."}
+            {searchQuery ? "Try a different search term or clear the search" : "Get started by creating your first unit."}
           </p>
           {!searchQuery && (
             <button
-              onClick={() => handleOpenDepartmentModal()}
+              onClick={() => handleOpenUnitModal()}
               className="mt-4 sm:mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <PlusCircleIcon className="w-4 h-4 mr-2" />
-              Add Department
+              Add Unit
             </button>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-          {filteredDepartments.map((dept) => (
+          {filteredUnits.map((dept) => (
             <div
               key={dept.id}
               className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
             >
-              {/* Department Header */}
+              {/* Unit Header */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
@@ -566,20 +565,20 @@ const Department = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenDepartmentModal(dept);
+                        handleOpenUnitModal(dept);
                       }}
                       className="p-1.5 sm:p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit Department"
+                      title="Edit Unit"
                     >
                       <PencilIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteDepartment(dept.id);
+                        handleDeleteUnit(dept.id);
                       }}
                       className="p-1.5 sm:p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Department"
+                      title="Delete Unit"
                     >
                       <TrashIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -587,7 +586,7 @@ const Department = () => {
                 </div>
               </div>
 
-              {/* Department Description */}
+              {/* Unit Description */}
               {dept.dpt_desc && (
                 <div className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 border-b border-gray-200">
                   <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{dept.dpt_desc}</p>
@@ -647,8 +646,8 @@ const Department = () => {
         </div>
       )}
 
-      {/* Department Modal */}
-      {showDepartmentModal && (
+      {/* Unit Modal */}
+      {showUnitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div
             className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
@@ -656,16 +655,16 @@ const Department = () => {
           >
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-                {currentDepartment?.id ? "Edit Department" : "Add New Department"}
+                {currentUnit?.id ? "Edit Unit" : "Add New Unit"}
               </h2>
             </div>
             
-            <form onSubmit={handleDepartmentSubmit} className="p-4 sm:p-6">
+            <form onSubmit={handleUnitSubmit} className="p-4 sm:p-6">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department Name <span className="text-red-500">*</span>
-                    {currentDepartment?.id && (
+                    Unit Name <span className="text-red-500">*</span>
+                    {currentUnit?.id && (
                       <span className="ml-2 text-xs text-gray-500 font-normal block sm:inline">
                         (Cannot be edited - professional identifier)
                       </span>
@@ -673,24 +672,24 @@ const Department = () => {
                   </label>
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border ${currentDepartment?.id ? 'bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base`}
-                    value={currentDepartment?.dpt_name || ""}
+                    className={`w-full px-3 py-2 border ${currentUnit?.id ? 'bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base`}
+                    value={currentUnit?.dpt_name || ""}
                     onChange={(e) =>
-                      !currentDepartment?.id && setCurrentDepartment((prev) => ({
+                      !currentUnit?.id && setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_name: e.target.value,
                       }))
                     }
                     placeholder="e.g., Human Resources"
                     required
-                    readOnly={!!currentDepartment?.id}
+                    readOnly={!!currentUnit?.id}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department Code <span className="text-red-500">*</span>
-                    {currentDepartment?.id && (
+                    Unit Code <span className="text-red-500">*</span>
+                    {currentUnit?.id && (
                       <span className="ml-2 text-xs text-gray-500 font-normal block sm:inline">
                         (Cannot be edited - professional identifier)
                       </span>
@@ -698,17 +697,17 @@ const Department = () => {
                   </label>
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border ${currentDepartment?.id ? 'bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base`}
-                    value={currentDepartment?.dpt_code || ""}
+                    className={`w-full px-3 py-2 border ${currentUnit?.id ? 'bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base`}
+                    value={currentUnit?.dpt_code || ""}
                     onChange={(e) =>
-                      !currentDepartment?.id && setCurrentDepartment((prev) => ({
+                      !currentUnit?.id && setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_code: e.target.value.toUpperCase(),
                       }))
                     }
                     placeholder="e.g., HR"
                     required
-                    readOnly={!!currentDepartment?.id}
+                    readOnly={!!currentUnit?.id}
                   />
                 </div>
                 
@@ -719,9 +718,9 @@ const Department = () => {
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm sm:text-base"
                     rows={3}
-                    value={currentDepartment?.dpt_desc || ""}
+                    value={currentUnit?.dpt_desc || ""}
                     onChange={(e) =>
-                      setCurrentDepartment((prev) => ({
+                      setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_desc: e.target.value,
                       }))
@@ -734,7 +733,7 @@ const Department = () => {
               <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={handleCloseDepartmentModal}
+                  onClick={handleCloseUnitModal}
                   className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm sm:text-base"
                 >
                   Cancel
@@ -743,7 +742,7 @@ const Department = () => {
                   type="submit"
                   className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors text-sm sm:text-base"
                 >
-                  {currentDepartment?.id ? "Update Department" : "Create Department"}
+                  {currentUnit?.id ? "Update Unit" : "Create Unit"}
                 </button>
               </div>
             </form>
@@ -766,7 +765,7 @@ const Department = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department <span className="text-red-500">*</span>
+                    Unit <span className="text-red-500">*</span>
                   </label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
@@ -779,8 +778,8 @@ const Department = () => {
                     }
                     required
                   >
-                    <option value="">Select a department</option>
-                    {departments.map((dept) => (
+                    <option value="">Select a unit</option>
+                    {units.map((dept) => (
                       <option key={dept.id} value={dept.id}>
                         {dept.dpt_name} ({dept.dpt_code})
                       </option>
@@ -832,4 +831,4 @@ const Department = () => {
   );
 };
 
-export default Department;
+export default Unit;

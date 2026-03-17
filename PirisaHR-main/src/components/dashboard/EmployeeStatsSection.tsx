@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import axios from "axios";
 import Loading from "../Loading/Loading";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 //import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 
 // Define the structure of the employee data
@@ -54,7 +53,7 @@ const EmployeeStatsSection: React.FC = () => {
         }
 
         const response = await axios.get<ApiResponse>(
-          `${getBaseUrl()}/employee/EmpDetailsList/${companyId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -84,7 +84,11 @@ public class Employee implements Serializable {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id", insertable = false, updatable = false)
-    private Department department;
+    private Unit unit;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id", insertable = false, updatable = false)
+    private Unit department;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "designation_id", referencedColumnName = "designation_id", insertable = false, updatable = false)

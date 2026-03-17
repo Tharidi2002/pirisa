@@ -3,7 +3,7 @@ package com.knoweb.HRM.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.knoweb.HRM.model.Allowance;
 import com.knoweb.HRM.model.CompanyLeave;
-import com.knoweb.HRM.model.Department;
+import com.knoweb.HRM.model.Unit;
 import com.knoweb.HRM.service.AllowanceService;
 import com.knoweb.HRM.service.CompanyLeaveService;
 import org.springframework.beans.factory.annotation.Autowired;

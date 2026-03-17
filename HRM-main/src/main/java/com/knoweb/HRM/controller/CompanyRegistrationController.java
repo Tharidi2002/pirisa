@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/company")
-@CrossOrigin(origins = {"http://localhost:5174", "http://129.212.239.12"})
+@CrossOrigin(origins = "http://localhost:5174")
 public class CompanyRegistrationController {
 
     @Autowired

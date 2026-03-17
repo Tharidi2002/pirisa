@@ -1,7 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { FaEdit, FaSave, FaPlus, FaTag } from "react-icons/fa";
 import axios from "axios";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 // Define types
 interface Bonus {
@@ -45,7 +44,7 @@ const BonusSettings: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${getBaseUrl()}/bonus/company/${cmpId}`,
+        `http://localhost:8080/bonus/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -116,7 +115,7 @@ const BonusSettings: React.FC = () => {
       };
 
       const response = await axios.put(
-        `${getBaseUrl()}/bonus/update/${editingId}`,
+        `http://localhost:8080/bonus/update/${editingId}`,
         payload,
         {
           headers: {
@@ -169,7 +168,7 @@ const BonusSettings: React.FC = () => {
 
       try {
         const response = await axios.post(
-          "${getBaseUrl()}/bonus/add_bonus",
+          "http://localhost:8080/bonus/add_bonus",
           payload,
           {
             headers: {
@@ -211,7 +210,7 @@ const BonusSettings: React.FC = () => {
 
       try {
         const response = await axios.delete(
-          `${getBaseUrl()}/bonus/delete/${id}`,
+          `http://localhost:8080/bonus/delete/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

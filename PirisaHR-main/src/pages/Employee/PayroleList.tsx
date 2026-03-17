@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import Loading from "../../components/Loading/Loading";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface PayrollItem {
   id: number;
@@ -74,7 +73,7 @@ const PayroleList = () => {
 
       try {
         const response = await fetch(
-          `${getBaseUrl()}/employee/payroleListEmp/${empId}`,
+          `http://localhost:8080/employee/payroleListEmp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

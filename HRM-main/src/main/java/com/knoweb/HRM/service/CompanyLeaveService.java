@@ -1,7 +1,7 @@
 package com.knoweb.HRM.service;
 
 import com.knoweb.HRM.model.CompanyLeave;
-import com.knoweb.HRM.model.Department;
+import com.knoweb.HRM.model.Unit;
 import com.knoweb.HRM.repository.CompanyLeaveRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

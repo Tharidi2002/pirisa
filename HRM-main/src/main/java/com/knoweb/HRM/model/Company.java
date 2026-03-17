@@ -71,9 +71,9 @@ public class Company implements Serializable {
     @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
     private List<Employee> eployeeList;
 
-    @OneToMany(targetEntity = Department.class, cascade = CascadeType.ALL)
+    @OneToMany(targetEntity = Unit.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id")
-    private List<Department> departmentList;
+    private List<Unit> unitList;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "cmp_id", referencedColumnName = "cmp_id", insertable = false, updatable = false)

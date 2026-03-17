@@ -6,9 +6,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
-import { axiosInstance } from "../../api/config/axios";
 
-interface Department {
+interface Unit {
   id: number;
   dpt_name: string;
   dpt_code: string;
@@ -24,17 +23,17 @@ interface Designation {
 }
 
 interface ApiResponse {
-  DepartmentList: Department[];
+  UnitList: Unit[];
   resultCode: number;
   resultDesc: string;
 }
 
-const DepartmentDesignationManager = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
+const UnitDesignationManager = () => {
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [showUnitModal, setShowUnitModal] = useState(false);
   const [showDesignationModal, setShowDesignationModal] = useState(false);
-  const [currentDepartment, setCurrentDepartment] =
-    useState<Partial<Department> | null>(null);
+  const [currentUnit, setCurrentUnit] =
+    useState<Partial<Unit> | null>(null);
   const [currentDesignation, setCurrentDesignation] = useState<{
     designation: string;
     dptId: number;
@@ -42,7 +41,7 @@ const DepartmentDesignationManager = () => {
     designation: "",
     dptId: 1,
   });
-  const [expandedDepartment, setExpandedDepartment] = useState<number | null>(
+  const [expandedUnit, setExpandedUnit] = useState<number | null>(
     null
   );
   const [loading, setLoading] = useState(true);
@@ -59,13 +58,13 @@ const DepartmentDesignationManager = () => {
     return localStorage.getItem("token") || "";
   };
 
-  // Fetch departments and designations
-  const fetchDepartments = async () => {
+  // Fetch units and designations
+  const fetchUnits = async () => {
     try {
       setLoading(true);
       const cmpId = getCompanyId();
-      const response = await axiosInstance.get<ApiResponse>(
-        `/department/company/${cmpId}`,
+      const response = await axios.get<ApiResponse>(
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -76,18 +75,18 @@ const DepartmentDesignationManager = () => {
 
       if (
         response.data.resultCode === 100 &&
-        Array.isArray(response.data.DepartmentList)
+        Array.isArray(response.data.UnitList)
       ) {
-        setDepartments(response.data.DepartmentList);
+        setUnits(response.data.UnitList);
       } else {
-        setError(response.data.resultDesc || "Failed to fetch departments");
+        setError(response.data.resultDesc || "Failed to fetch units");
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        // Treat 404 as "no departments" rather than an error
-        setDepartments([]);
+        // Treat 404 as "no units" rather than an error
+        setUnits([]);
       } else {
-        setError("Error fetching departments. Please try again later.");
+        setError("Error fetching units. Please try again later.");
         console.error(err);
       }
     } finally {
@@ -96,7 +95,7 @@ const DepartmentDesignationManager = () => {
   };
 
   // Add new department
-  const addDepartment = async (departmentData: Partial<Department>) => {
+  const addUnit = async (departmentData: Partial<Unit>) => {
     try {
       const cmpId = getCompanyId();
       const payload = {
@@ -106,8 +105,8 @@ const DepartmentDesignationManager = () => {
         dpt_desc: departmentData.dpt_desc || "",
       };
 
-      const response = await axiosInstance.post(
-        "/department/add_department",
+      const response = await axios.post(
+        "http://localhost:8080/department/add_department",
         payload,
         {
           headers: {
@@ -117,19 +116,19 @@ const DepartmentDesignationManager = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
     } catch (err) {
-      console.error("Error adding department:", err);
-      setError("Failed to add department. Please try again.");
+      console.error("Error adding unit:", err);
+      setError("Failed to add unit. Please try again.");
       return false;
     }
   };
 
   // Update existing department
-  const updateDepartment = async (departmentData: Partial<Department>) => {
+  const updateUnit = async (departmentData: Partial<Unit>) => {
     try {
       if (!departmentData.id) return false;
 
@@ -141,8 +140,8 @@ const DepartmentDesignationManager = () => {
         dpt_desc: departmentData.dpt_desc || "",
       };
 
-      const response = await axiosInstance.post(
-        "/department/update_department",
+      const response = await axios.post(
+        "http://localhost:8080/department/update_department",
         payload,
         {
           headers: {
@@ -152,22 +151,22 @@ const DepartmentDesignationManager = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
     } catch (err) {
-      console.error("Error updating department:", err);
-      setError("Failed to update department. Please try again.");
+      console.error("Error updating unit:", err);
+      setError("Failed to update unit. Please try again.");
       return false;
     }
   };
 
   // Delete department
-  const deleteDepartment = async (id: number) => {
+  const deleteUnit = async (id: number) => {
     try {
-      const response = await axiosInstance.delete(
-        `/department/delete/${id}`,
+      const response = await axios.delete(
+        `http://localhost:8080/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -176,13 +175,13 @@ const DepartmentDesignationManager = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
     } catch (err) {
-      console.error("Error deleting department:", err);
-      setError("Failed to delete department. Please try again.");
+      console.error("Error deleting unit:", err);
+      setError("Failed to delete unit. Please try again.");
       return false;
     }
   };
@@ -193,8 +192,8 @@ const DepartmentDesignationManager = () => {
     dptId: number;
   }) => {
     try {
-      const response = await axiosInstance.post(
-        "/designation/add_designation",
+      const response = await axios.post(
+        "http://localhost:8080/designation/add_designation",
         designationData,
         {
           headers: {
@@ -204,7 +203,7 @@ const DepartmentDesignationManager = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
@@ -218,8 +217,8 @@ const DepartmentDesignationManager = () => {
   // Delete designation
   const deleteDesignation = async (id: number) => {
     try {
-      const response = await axiosInstance.delete(
-        `/designation/delete/${id}`,
+      const response = await axios.delete(
+        `http://localhost:8080/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -228,7 +227,7 @@ const DepartmentDesignationManager = () => {
       );
 
       if (response.status === 200) {
-        await fetchDepartments(); // Refresh the list
+        await fetchUnits(); // Refresh the list
         return true;
       }
       return false;
@@ -239,44 +238,44 @@ const DepartmentDesignationManager = () => {
     }
   };
 
-  // Load departments on component mount
+  // Load units on component mount
   useEffect(() => {
-    fetchDepartments();
+    fetchUnits();
   }, []);
 
-  // Department Modal Functions
-  const handleOpenDepartmentModal = (dept: Department | null = null) => {
+  // Unit Modal Functions
+  const handleOpenUnitModal = (dept: Unit | null = null) => {
     if (dept) {
-      setCurrentDepartment({
+      setCurrentUnit({
         id: dept.id,
         dpt_name: dept.dpt_name,
         dpt_code: dept.dpt_code,
         dpt_desc: dept.dpt_desc,
       });
     } else {
-      setCurrentDepartment({ dpt_name: "", dpt_code: "", dpt_desc: "" });
+      setCurrentUnit({ dpt_name: "", dpt_code: "", dpt_desc: "" });
     }
-    setShowDepartmentModal(true);
+    setShowUnitModal(true);
   };
 
-  const handleCloseDepartmentModal = () => {
-    setCurrentDepartment(null);
-    setShowDepartmentModal(false);
+  const handleCloseUnitModal = () => {
+    setCurrentUnit(null);
+    setShowUnitModal(false);
   };
 
-  const handleDepartmentSubmit = async (e: React.FormEvent) => {
+  const handleUnitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentDepartment?.dpt_name || !currentDepartment?.dpt_code) return;
+    if (!currentUnit?.dpt_name || !currentUnit?.dpt_code) return;
 
     let success = false;
-    if (currentDepartment.id) {
-      success = await updateDepartment(currentDepartment);
+    if (currentUnit.id) {
+      success = await updateUnit(currentUnit);
     } else {
-      success = await addDepartment(currentDepartment);
+      success = await addUnit(currentUnit);
     }
 
     if (success) {
-      handleCloseDepartmentModal();
+      handleCloseUnitModal();
     }
   };
 
@@ -300,17 +299,17 @@ const DepartmentDesignationManager = () => {
     }
   };
 
-  const toggleDepartmentExpand = (id: number) => {
-    setExpandedDepartment(expandedDepartment === id ? null : id);
+  const toggleUnitExpand = (id: number) => {
+    setExpandedUnit(expandedUnit === id ? null : id);
   };
 
-  const handleDeleteDepartment = async (id: number) => {
+  const handleDeleteUnit = async (id: number) => {
     if (
       confirm(
-        "Are you sure you want to delete this department? All associated designations will also be deleted."
+        "Are you sure you want to delete this unit? All associated designations will also be deleted."
       )
     ) {
-      await deleteDepartment(id);
+      await deleteUnit(id);
     }
   };
 
@@ -340,7 +339,7 @@ const DepartmentDesignationManager = () => {
           className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
           onClick={() => {
             setError("");
-            fetchDepartments();
+            fetchUnits();
           }}
         >
           Try Again
@@ -353,43 +352,43 @@ const DepartmentDesignationManager = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          Department & Designation Management
+          Unit & Designation Management
         </h1>
         <button
-          onClick={() => handleOpenDepartmentModal()}
+          onClick={() => handleOpenUnitModal()}
           className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
         >
           <PlusCircleIcon className="w-5 h-5 mr-2" />
-          Add Department
+          Add Unit
         </button>
       </div>
 
-      {/* Department List */}
-      {departments.length === 0 ? (
+      {/* Unit List */}
+      {units.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg shadow-md">
           <p className="text-lg font-semibold text-gray-700">
-            No departments found
+            No units found
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Add your first department to get started.
+            Add your first unit to get started.
           </p>
           <button
-            onClick={() => handleOpenDepartmentModal()}
+            onClick={() => handleOpenUnitModal()}
             className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
           >
-            Add Department
+            Add Unit
           </button>
         </div>
       ) : (
         <div className="space-y-4">
-          {departments.map((dept) => (
+          {units.map((dept) => (
             <div
               key={dept.id}
               className="bg-white rounded-lg shadow-sm border border-gray-100"
             >
               <div
                 className="flex justify-between items-center p-4 cursor-pointer"
-                onClick={() => toggleDepartmentExpand(dept.id)}
+                onClick={() => toggleUnitExpand(dept.id)}
               >
                 <div>
                   <h2 className="text-lg font-medium text-gray-800">
@@ -401,7 +400,7 @@ const DepartmentDesignationManager = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenDepartmentModal(dept);
+                      handleOpenUnitModal(dept);
                     }}
                     className="p-1 text-sky-500 hover:text-sky-600"
                   >
@@ -410,7 +409,7 @@ const DepartmentDesignationManager = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteDepartment(dept.id);
+                      handleDeleteUnit(dept.id);
                     }}
                     className="p-1 text-red-500 hover:text-red-600"
                   >
@@ -420,7 +419,7 @@ const DepartmentDesignationManager = () => {
               </div>
 
               {/* Designations section (expandable) */}
-              {expandedDepartment === dept.id && (
+              {expandedUnit === dept.id && (
                 <div className="p-4 bg-gray-50 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-md font-medium text-gray-700">
@@ -466,28 +465,28 @@ const DepartmentDesignationManager = () => {
         </div>
       )}
 
-      {/* Department Modal */}
-      {showDepartmentModal && (
+      {/* Unit Modal */}
+      {showUnitModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
           <div
             className="bg-white rounded-lg max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold mb-4">
-              {currentDepartment?.id ? "Edit Department" : "Add New Department"}
+              {currentUnit?.id ? "Edit Unit" : "Add New Unit"}
             </h2>
-            <form onSubmit={handleDepartmentSubmit}>
+            <form onSubmit={handleUnitSubmit}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department Name
+                    Unit Name
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
-                    value={currentDepartment?.dpt_name || ""}
+                    value={currentUnit?.dpt_name || ""}
                     onChange={(e) =>
-                      setCurrentDepartment((prev) => ({
+                      setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_name: e.target.value,
                       }))
@@ -497,14 +496,14 @@ const DepartmentDesignationManager = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department Code
+                    Unit Code
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
-                    value={currentDepartment?.dpt_code || ""}
+                    value={currentUnit?.dpt_code || ""}
                     onChange={(e) =>
-                      setCurrentDepartment((prev) => ({
+                      setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_code: e.target.value,
                       }))
@@ -519,9 +518,9 @@ const DepartmentDesignationManager = () => {
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
                     rows={3}
-                    value={currentDepartment?.dpt_desc || ""}
+                    value={currentUnit?.dpt_desc || ""}
                     onChange={(e) =>
-                      setCurrentDepartment((prev) => ({
+                      setCurrentUnit((prev) => ({
                         ...prev!,
                         dpt_desc: e.target.value,
                       }))
@@ -532,7 +531,7 @@ const DepartmentDesignationManager = () => {
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
-                  onClick={handleCloseDepartmentModal}
+                  onClick={handleCloseUnitModal}
                   className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
@@ -541,7 +540,7 @@ const DepartmentDesignationManager = () => {
                   type="submit"
                   className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
                 >
-                  {currentDepartment?.id ? "Update" : "Create"}
+                  {currentUnit?.id ? "Update" : "Create"}
                 </button>
               </div>
             </form>
@@ -561,7 +560,7 @@ const DepartmentDesignationManager = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department
+                    Unit
                   </label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
@@ -574,7 +573,7 @@ const DepartmentDesignationManager = () => {
                     }
                     required
                   >
-                    {departments.map((dept) => (
+                    {units.map((dept) => (
                       <option key={dept.id} value={dept.id}>
                         {dept.dpt_name}
                       </option>
@@ -622,4 +621,4 @@ const DepartmentDesignationManager = () => {
   );
 };
 
-export default DepartmentDesignationManager;
+export default UnitDesignationManager;

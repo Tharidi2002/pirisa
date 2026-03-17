@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { PieChart, Pie, Cell } from "recharts";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface DepartmentData {
   name: string;
@@ -30,7 +29,7 @@ const DepartmentStats = () => {
     (async () => {
       try {
         const res = await fetch(
-          `${getBaseUrl()}/employee/EmpDetailsList/${cmpnyId}`,
+          `http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

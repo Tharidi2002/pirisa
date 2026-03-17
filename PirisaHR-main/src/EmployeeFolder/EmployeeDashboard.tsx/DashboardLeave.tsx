@@ -48,7 +48,7 @@ export const LeaveCards: React.FC = () => {
 
         // Set up axios instance with auth token
         const api = axios.create({
-          baseURL: "http://129.212.239.12/api",
+          baseURL: "http://localhost:8080",
           headers: {
             Authorization: `Bearer ${token}`,
           },

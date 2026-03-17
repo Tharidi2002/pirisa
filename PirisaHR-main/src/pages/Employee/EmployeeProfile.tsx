@@ -17,7 +17,6 @@ import { DocumentCard } from "../../EmployeeFolder/EmployeeProfile/DocumentCard 
 import { InfoItem } from "../../EmployeeFolder/EmployeeProfile/InfoItem";
 import { LeaveBalanceCard } from "../../EmployeeFolder/EmployeeProfile/LeaveBalanceCard ";
 import { ProfileCard } from "../../EmployeeFolder/EmployeeProfile/ProfileCard";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface EmployeeDetails {
   id: number;
@@ -75,7 +74,7 @@ const EmployeeProfile = () => {
     try {
       // Fetch employee details including leave history
       const employeeResponse = await fetch(
-        `${getBaseUrl()}/employee/EmpDetailsListByEmp/${empId}`,
+        `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -111,7 +110,7 @@ const EmployeeProfile = () => {
       // Fetch leave balances from backend (supports Balance As-of Date modes)
       try {
         const leaveBalanceResponse = await fetch(
-          `${getBaseUrl()}/leave_balance/employee/${empId}?asOfMode=${asOfMode}`,
+          `http://localhost:8080/leave_balance/employee/${empId}?asOfMode=${asOfMode}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -145,7 +144,7 @@ const EmployeeProfile = () => {
 
       // Fetch employee photo
       const existsResponse = await fetch(
-        `${getApiBaseUrl()}/profile-image/exists/${empId}`,
+        `http://localhost:8080/api/profile-image/exists/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -160,7 +159,7 @@ const EmployeeProfile = () => {
         );
         if (hasImage) {
           const imgResponse = await fetch(
-            `${getApiBaseUrl()}/profile-image/view/${empId}`,
+            `http://localhost:8080/api/profile-image/view/${empId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -198,8 +197,8 @@ const EmployeeProfile = () => {
       try {
         // Use profile image API for photo, document API for others
         const url = docType === "photo" 
-          ? `${getApiBaseUrl()}/profile-image/exists/${empId}`
-          : `${getBaseUrl()}/document/view/emp/${empId}/${docType}`;
+          ? `http://localhost:8080/api/profile-image/exists/${empId}`
+          : `http://localhost:8080/document/view/emp/${empId}/${docType}`;
           
         const response = await fetch(url, {
           headers: {
@@ -237,8 +236,8 @@ const EmployeeProfile = () => {
 
       // Use profile image API for photo, document API for others
       const url = documentType === "photo" 
-        ? `${getApiBaseUrl()}/profile-image/view/${empId}`
-        : `${getBaseUrl()}/document/view/emp/${empId}/${documentType}`;
+        ? `http://localhost:8080/api/profile-image/view/${empId}`
+        : `http://localhost:8080/document/view/emp/${empId}/${documentType}`;
         
       const response = await fetch(url, {
         headers: {

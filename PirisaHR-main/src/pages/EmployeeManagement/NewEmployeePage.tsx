@@ -4,7 +4,6 @@ import { TranslatableOption, TranslatableText } from "../../components/languages
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
-import { getApiBaseUrl, getBaseUrl } from "../../utils/apiConfig";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -113,7 +112,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${getBaseUrl()}/department/company/${cmpId}`,
+        `http://localhost:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -251,7 +250,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "${getBaseUrl()}/employee/add_employee",
+        "http://localhost:8080/employee/add_employee",
         {
           method: "POST",
           headers: {
@@ -351,7 +350,7 @@ const EmployeeRegistration: React.FC = () => {
         profileFormData.append("profileImage", documents.photo);
         
         const profileResponse = await fetch(
-          `${getApiBaseUrl()}/profile-image/upload/${currentEmpId}`,
+          `http://localhost:8080/api/profile-image/upload/${currentEmpId}`,
           {
             method: "POST",
             headers: {
@@ -387,7 +386,7 @@ const EmployeeRegistration: React.FC = () => {
       let documentResponse = null;
       if (hasOtherFiles) {
         documentResponse = await fetch(
-          "${getBaseUrl()}/document/upload-all",
+          "http://localhost:8080/document/upload-all",
           {
             method: "POST",
             headers: {
@@ -459,7 +458,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        "${getBaseUrl()}/document/upload-all",
+        "http://localhost:8080/document/upload-all",
         {
           method: "POST",
           headers: {

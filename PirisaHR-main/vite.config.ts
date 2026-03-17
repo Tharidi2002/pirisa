@@ -9,14 +9,7 @@ export default defineConfig({
   ],
   server: {
     port: 5174,
-    strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'http://129.212.239.12',
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    strictPort: true
   },
   define: {
     global: 'globalThis'
