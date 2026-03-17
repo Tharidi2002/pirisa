@@ -1,109 +1,87 @@
-name: Deploy to DigitalOcean
+name: Deploy PirisaHRM to Droplet
 
 on:
   push:
     branches:
       - main
-      - master
-  workflow_dispatch:
-
-env:
-  BACKEND_DIR: HRM-main
-  FRONTEND_DIR: PirisaHR-main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up JDK 17
+    #----------------------------------------------------
+    # Backend Build
+    #----------------------------------------------------
+    - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: '11'
         distribution: 'temurin'
+        cache: 'maven'
 
+    - name: Build Backend with Maven
+      run: |
+        echo "Building backend in HRM-main directory..."
+        mvn -f HRM-main/pom.xml clean package
+      
+    #----------------------------------------------------
+    # Frontend Build
+    #----------------------------------------------------
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: PirisaHR-main/package-lock.json
 
-    - name: Build Backend
-      working-directory: ${{ env.BACKEND_DIR }}
-      run: |
-        echo "📦 Building backend..."
-        chmod +x mvnw
-        ./mvnw clean package -DskipTests -e -X
-        echo "📂 Checking target directory..."
-        ls -la target/ || echo "Target directory not found"
-        echo "🔍 Finding JAR files..."
-        find . -name "*.jar" -type f
-        
+    - name: Install Frontend Dependencies
+      run: npm install --prefix PirisaHR-main
+
     - name: Build Frontend
-      working-directory: ${{ env.FRONTEND_DIR }}
-      run: |
-        echo "🎨 Building frontend..."
-        npm ci
-        npm run build
-        echo "📂 Checking dist directory..."
-        ls -la dist/ || echo "Dist directory not found"
+      run: npm run build --prefix PirisaHR-main
 
-    - name: Prepare deployment files
-      run: |
-        echo "📦 Preparing deployment package..."
-        mkdir -p deploy-package/backend
-        mkdir -p deploy-package/frontend
-        mkdir -p deploy-package/scripts
-        
-        echo "🔍 Looking for JAR files..."
-        find ${{ env.BACKEND_DIR }} -name "*.jar" -type f
-        
-        # Copy JAR file - find and copy the first JAR that's not empty
-        JAR_FILE=$(find ${{ env.BACKEND_DIR }}/target -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -type f | head -1)
-        if [ -n "$JAR_FILE" ]; then
-          echo "✅ Found JAR: $JAR_FILE"
-          cp "$JAR_FILE" deploy-package/backend/app.jar
-        else
-          echo "❌ No JAR file found!"
-          echo "Contents of backend directory:"
-          ls -laR ${{ env.BACKEND_DIR }}/target/
-          exit 1
-        fi
-        
-        # Copy frontend
-        if [ -d "${{ env.FRONTEND_DIR }}/dist" ]; then
-          echo "✅ Copying frontend..."
-          cp -r ${{ env.FRONTEND_DIR }}/dist/* deploy-package/frontend/
-        else
-          echo "❌ Frontend dist not found!"
-          exit 1
-        fi
-        
-        # Copy scripts
-        cp deploy-scripts/* deploy-package/scripts/
-        
-        echo "📋 Deployment package contents:"
-        ls -laR deploy-package/
-
-    - name: Deploy to DigitalOcean
-      uses: appleboy/scp-action@master
+    #----------------------------------------------------
+    # Deploy to Droplet
+    #----------------------------------------------------
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
       with:
-        host: ${{ secrets.DROPLET_IP }}
-        username: ${{ secrets.DROPLET_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "deploy-package/*"
-        target: "/tmp/pirisa-deploy"
-        strip_components: 1
+        known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
 
-    - name: Execute deployment script
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.DROPLET_IP }}
-        username: ${{ secrets.DROPLET_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /tmp/pirisa-deploy
-          chmod +x scripts/deploy.sh
-          sudo ./scripts/deploy.sh
+    - name: Add Droplet to Known Hosts
+      run: ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy files via SCP
+      run: |
+        # Deploy Backend .war file
+        scp -o StrictHostKeyChecking=no ./HRM-main/target/*.war ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_IP }}:/root/app.war
+        
+        # Deploy Frontend build files
+        # First, remove old files on server
+        ssh -o StrictHostKeyChecking=no ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_IP }} "rm -rf /var/www/html/*"
+        # Then, copy new files
+        scp -r -o StrictHostKeyChecking=no ./PirisaHR-main/dist/* ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_IP }}:/var/www/html/
+
+    - name: Restart Application on Droplet
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_IP }} << 'EOF'
+          # Find and kill the old running Java process
+          PID=$(pgrep -f "app.war")
+          if [ -n "$PID" ]; then
+            echo "Stopping existing application (PID: $PID)..."
+            kill $PID
+            # Wait for the process to terminate
+            sleep 5
+          fi
+          
+          # Start the new application
+          echo "Starting new application..."
+          nohup java -jar -Dspring.profiles.active=production /root/app.war > /root/app.log 2>&1 &
+          
+          echo "Deployment complete."
+        EOF
