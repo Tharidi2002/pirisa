@@ -123,6 +123,9 @@ public class CalendarEventController {
                 Object selectedDepts = eventData.get("selectedDepartments");
                 if (selectedDepts instanceof List) {
                     event.setSelectedDepartments(convertListToJson((List<?>) selectedDepts));
+                } else if (selectedDepts instanceof String) {
+                    // Handle string arrays like "[1,2,3]"
+                    event.setSelectedDepartments((String) selectedDepts);
                 }
             }
             
@@ -130,6 +133,9 @@ public class CalendarEventController {
                 Object selectedSubDepts = eventData.get("selectedSubDepartments");
                 if (selectedSubDepts instanceof List) {
                     event.setSelectedSubDepartments(convertListToJson((List<?>) selectedSubDepts));
+                } else if (selectedSubDepts instanceof String) {
+                    // Handle string arrays like "[1,2,3]"
+                    event.setSelectedSubDepartments((String) selectedSubDepts);
                 }
             }
             
@@ -140,6 +146,9 @@ public class CalendarEventController {
                 Object empIds = eventData.get("employeeIds");
                 if (empIds instanceof List) {
                     event.setEmployeeIds(convertListToJson((List<?>) empIds));
+                } else if (empIds instanceof String) {
+                    // Handle string arrays like "[1,2,3]"
+                    event.setEmployeeIds((String) empIds);
                 }
             }
             

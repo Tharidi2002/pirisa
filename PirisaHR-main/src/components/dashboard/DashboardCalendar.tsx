@@ -89,6 +89,7 @@ interface EventFormData {
   employeeIds?: number[];
   departmentId?: number | null;
   designationIds?: number[];
+  sendEmailNotifications?: boolean;
 }
 
 interface Department {
@@ -302,7 +303,8 @@ const DashboardCalendar: React.FC = () => {
     includeAllSubDepartments: false,
     employeeIds: [],
     departmentId: undefined,
-    designationIds: []
+    designationIds: [],
+    sendEmailNotifications: true
   });
 
   // ==================== Refs ====================
@@ -774,7 +776,8 @@ const DashboardCalendar: React.FC = () => {
           ? JSON.stringify(formData.selectedSubDepartments)
           : null,
         includeAllSubDepartments: formData.includeAllSubDepartments || false,
-        customEventType: formData.eventType === 'CUSTOM' ? formData.customEventType : null
+        customEventType: formData.eventType === 'CUSTOM' ? formData.customEventType : null,
+        sendEmailNotifications: formData.sendEmailNotifications || true
       };
 
       const response = await fetch(

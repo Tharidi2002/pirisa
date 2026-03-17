@@ -21,6 +21,7 @@ interface EventFormData {
   selectedSubDepartments?: number[];
   includeAllSubDepartments?: boolean;
   employeeIds?: number[];
+  sendEmailNotifications?: boolean;
 }
 
 interface Department {
@@ -112,6 +113,7 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
     selectedSubDepartments: [],
     includeAllSubDepartments: false,
     employeeIds: [],
+    sendEmailNotifications: true, // Default to true - send emails by default
     ...initialData
   });
 
@@ -628,7 +630,21 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
                   )}
                 </div>
 
-                {/* Search Results */}
+                {/* Email Notification Option */}
+                <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <input
+                    type="checkbox"
+                    id="sendEmailNotifications"
+                    checked={formData.sendEmailNotifications || false}
+                    onChange={(e) => handleInputChange('sendEmailNotifications', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="sendEmailNotifications" className="text-sm text-blue-800 font-medium cursor-pointer">
+                    Send email notifications to selected employees
+                  </label>
+                </div>
+
+                {/* Search Results Table */}
                 {showSearchResults && (
                   <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                     {searchLoading ? (
@@ -636,67 +652,113 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
                         <Loader size={20} className="animate-spin mx-auto" />
                       </div>
                     ) : searchResults.length > 0 ? (
-                      searchResults.map(employee => (
-                        <div
-                          key={employee.id}
-                          onClick={() => handleEmployeeSelect(employee)}
-                          className="flex items-center p-4 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                        >
-                          {/* Profile Picture */}
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-4 flex-shrink-0">
-                            {employee.profile_image ? (
-                              <img 
-                                src={employee.profile_image} 
-                                alt={`${employee.first_name} ${employee.last_name}`}
-                                className="w-full h-full rounded-full object-cover"
-                                onError={(e) => {
-                                  const target = e.currentTarget;
-                                  const nextElement = target.nextElementSibling as HTMLElement;
-                                  target.style.display = 'none';
-                                  if (nextElement) {
-                                    nextElement.style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : null}
-                            <div className="text-white font-semibold text-lg" style={{display: employee.profile_image ? 'none' : 'flex'}}>
-                              {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
-                            </div>
-                          </div>
-                          
-                          {/* Employee Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900 truncate">
-                              {employee.first_name} {employee.last_name}
-                            </div>
-                            <div className="text-sm text-gray-500 truncate">
-                              {employee.email}
-                            </div>
-                            <div className="text-xs text-gray-400 flex items-center space-x-2 mt-1">
-                              <span>ID: {employee.emp_no || employee.epf_no || 'N/A'}</span>
-                              {employee.department && (
-                                <span>• {typeof employee.department === 'object' ? employee.department.dptName : employee.department}</span>
-                              )}
-                              {employee.designation && (
-                                <span>• {typeof employee.designation === 'object' ? employee.designation.designation : employee.designation}</span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Selection Indicator */}
-                          <div className="ml-3">
-                            {formData.employeeIds?.includes(employee.id) ? (
-                              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                            )}
+                      <>
+                        {/* Table Header */}
+                        <div className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                          <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-700">
+                            <div className="col-span-1">Photo</div>
+                            <div className="col-span-3">Name</div>
+                            <div className="col-span-3">Email</div>
+                            <div className="col-span-2">Department</div>
+                            <div className="col-span-2">ID</div>
+                            <div className="col-span-1">Action</div>
                           </div>
                         </div>
-                      ))
+                        
+                        {/* Table Body */}
+                        <div className="divide-y divide-gray-100">
+                          {searchResults.map(employee => (
+                            <div
+                              key={employee.id}
+                              className="grid grid-cols-12 gap-2 px-3 py-2 items-center hover:bg-blue-50 cursor-pointer transition-colors"
+                              onClick={() => handleEmployeeSelect(employee)}
+                            >
+                              {/* Photo */}
+                              <div className="col-span-1 flex justify-center">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                  {employee.profile_image ? (
+                                    <img 
+                                      src={employee.profile_image} 
+                                      alt={`${employee.first_name} ${employee.last_name}`}
+                                      className="w-full h-full rounded-full object-cover"
+                                      onError={(e) => {
+                                        const target = e.currentTarget;
+                                        const nextElement = target.nextElementSibling as HTMLElement;
+                                        target.style.display = 'none';
+                                        if (nextElement) {
+                                          nextElement.style.display = 'flex';
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className="text-white text-xs font-semibold" style={{display: employee.profile_image ? 'none' : 'flex'}}>
+                                    {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Name */}
+                              <div className="col-span-3">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {employee.first_name} {employee.last_name}
+                                </div>
+                                {employee.designation && (
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {typeof employee.designation === 'object' ? employee.designation.designation : employee.designation}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Email */}
+                              <div className="col-span-3">
+                                <div className="text-sm text-gray-600 truncate">
+                                  {employee.email}
+                                </div>
+                              </div>
+                              
+                              {/* Department */}
+                              <div className="col-span-2">
+                                <div className="text-sm text-gray-600 truncate">
+                                  {employee.department ? (
+                                    typeof employee.department === 'object' ? employee.department.dptName : employee.department
+                                  ) : 'N/A'}
+                                </div>
+                              </div>
+                              
+                              {/* ID */}
+                              <div className="col-span-2">
+                                <div className="text-sm text-gray-600">
+                                  {employee.emp_no || employee.epf_no || 'N/A'}
+                                </div>
+                              </div>
+                              
+                              {/* Action */}
+                              <div className="col-span-1 flex justify-center">
+                                {formData.employeeIds?.includes(employee.id) ? (
+                                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEmployeeSelect(employee);
+                                    }}
+                                    className="w-6 h-6 rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:border-blue-500 transition-colors flex items-center justify-center"
+                                    title="Add employee"
+                                  >
+                                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     ) : (
                       <div className="p-4 text-center text-gray-500">
                         No employees found matching "{employeeSearchTerm}"
@@ -705,56 +767,167 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
                   </div>
                 )}
 
-                {/* Selected Employees */}
+                {/* Selected Employees Table */}
                 {selectedEmployees.length > 0 && (
                   <div className="mt-4">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Selected Employees ({selectedEmployees.length})</h5>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {selectedEmployees.map((employee: Employee) => (
-                        <div key={employee.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                          <div className="flex items-center flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3 flex-shrink-0">
-                              {employee.profile_image ? (
-                                <img 
-                                  src={employee.profile_image} 
-                                  alt={`${employee.first_name} ${employee.last_name}`}
-                                  className="w-full h-full rounded-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.currentTarget;
-                                    const nextElement = target.nextElementSibling as HTMLElement;
-                                    target.style.display = 'none';
-                                    if (nextElement) {
-                                      nextElement.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                              ) : null}
-                              <div className="text-white text-xs font-semibold" style={{display: employee.profile_image ? 'none' : 'flex'}}>
-                                {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+                    <div className="flex justify-between items-center mb-3">
+                      <h5 className="text-sm font-medium text-gray-700">Selected Employees ({selectedEmployees.length})</h5>
+                      <button
+                        onClick={() => {
+                          const updatedEmployeeIds: number[] = [];
+                          setFormData(prev => ({ ...prev, employeeIds: updatedEmployeeIds }));
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    
+                    {/* Table Header */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-t-lg">
+                      <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-700 border-b border-gray-200">
+                        <div className="col-span-1">Photo</div>
+                        <div className="col-span-3">Name</div>
+                        <div className="col-span-3">Email</div>
+                        <div className="col-span-2">Department</div>
+                        <div className="col-span-2">ID</div>
+                        <div className="col-span-1">Action</div>
+                      </div>
+                    </div>
+                    
+                    {/* Table Body */}
+                    <div className="bg-white border border-t-0 border-gray-200 rounded-b-lg overflow-hidden">
+                      <div className="max-h-48 overflow-y-auto">
+                        {selectedEmployees.map((employee: Employee) => (
+                          <div key={employee.id} className="grid grid-cols-12 gap-2 px-3 py-2 items-center border-b border-gray-100 hover:bg-gray-50 last:border-b-0">
+                            {/* Photo */}
+                            <div className="col-span-1 flex justify-center">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                {employee.profile_image ? (
+                                  <img 
+                                    src={employee.profile_image} 
+                                    alt={`${employee.first_name} ${employee.last_name}`}
+                                    className="w-full h-full rounded-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      const nextElement = target.nextElementSibling as HTMLElement;
+                                      target.style.display = 'none';
+                                      if (nextElement) {
+                                        nextElement.style.display = 'flex';
+                                      }
+                                    }}
+                                  />
+                                ) : null}
+                                <div className="text-white text-xs font-semibold" style={{display: employee.profile_image ? 'none' : 'flex'}}>
+                                  {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+                                </div>
                               </div>
                             </div>
-                            <div className="min-w-0 flex-1">
+                            
+                            {/* Name */}
+                            <div className="col-span-3">
                               <div className="text-sm font-medium text-gray-900 truncate">
                                 {employee.first_name} {employee.last_name}
                               </div>
-                              <div className="text-xs text-gray-500 truncate">
+                              {employee.designation && (
+                                <div className="text-xs text-gray-500 truncate">
+                                  {typeof employee.designation === 'object' ? employee.designation.designation : employee.designation}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Email */}
+                            <div className="col-span-3">
+                              <div className="text-sm text-gray-600 truncate">
                                 {employee.email}
                               </div>
                             </div>
+                            
+                            {/* Department */}
+                            <div className="col-span-2">
+                              <div className="text-sm text-gray-600 truncate">
+                                {employee.department ? (
+                                  typeof employee.department === 'object' ? employee.department.dptName : employee.department
+                                ) : 'N/A'}
+                              </div>
+                            </div>
+                            
+                            {/* ID */}
+                            <div className="col-span-2">
+                              <div className="text-sm text-gray-600">
+                                {employee.emp_no || employee.epf_no || 'N/A'}
+                              </div>
+                            </div>
+                            
+                            {/* Action */}
+                            <div className="col-span-1 flex justify-center">
+                              <button
+                                onClick={() => handleEmployeeRemove(employee.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors"
+                                title="Remove employee"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => handleEmployeeRemove(employee.id)}
-                            className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="border-t pt-4">
+            <div className="text-sm font-medium text-gray-700 mb-3">Quick Actions</div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  // Add 3 default employees (1, 2, 3)
+                  const defaultEmployees = [1, 2, 3];
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    employeeIds: defaultEmployees,
+                    visibility: 'SELECTED_EMPLOYEES'
+                  }));
+                  // Show success message
+                  alert('Added 3 employees to the event!');
+                }}
+                className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add 3 Employees
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  // Clear all employees
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    employeeIds: []
+                  }));
+                  alert('Cleared all employees!');
+                }}
+                className="px-3 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Clear Employees
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  // Check current employees
+                  const currentEmployees = formData.employeeIds || [];
+                  alert(`Currently selected employees: ${currentEmployees.length}\nEmployee IDs: [${currentEmployees.join(', ')}]`);
+                }}
+                className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Check Employees
+              </button>
+            </div>
           </div>
 
           {/* Form Actions */}

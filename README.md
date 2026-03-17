@@ -2,6 +2,23 @@
 
 A comprehensive Human Resource Management system built with modern web technologies, providing complete employee lifecycle management, payroll processing, attendance tracking, and company administration capabilities.
 
+## 🚀 **Live Application**
+
+**🌐 Production URL**: [http://129.212.239.12](http://129.212.239.12)
+
+- **Status**: ✅ **LIVE AND OPERATIONAL**
+- **Frontend**: http://129.212.239.12
+- **Backend API**: http://129.212.239.12/api
+- **Last Updated**: March 2026
+
+### Quick Access
+- **👤 Login**: Access the HRM system
+- **📅 Calendar**: Professional event management
+- **👥 Employees**: Complete employee management
+- **⏰ Attendance**: Time tracking and reports
+- **💰 Payroll**: Salary and compensation
+- **🏖️ Leave**: Leave management system
+
 ## 🏢 Project Overview
 
 Pirisa HRM is a full-stack web application designed to streamline HR processes for organizations of all sizes. The system provides intuitive interfaces for both HR administrators and employees, with robust backend services ensuring data security and reliability.
@@ -36,8 +53,12 @@ Pirisa HRM is a full-stack web application designed to streamline HR processes f
    ```
 
 4. **Access the Application**
-   - Frontend: http://129.212.239.12
-   - Backend API: http://129.212.239.12/api
+   - **Production URL**: http://129.212.239.12
+   - **Frontend**: http://129.212.239.12
+   - **Backend API**: http://129.212.239.12/api
+   - **Development**: 
+     - Frontend: http://localhost:5174
+     - Backend: http://localhost:8080
   
 ## 📋 System Architecture
 
@@ -108,6 +129,17 @@ Pirisa HRM is a full-stack web application designed to streamline HR processes f
 - Invoice generation
 - Payment history and tracking
 - Automated billing
+
+### 📅 Calendar & Event Management
+- Professional calendar system with event creation
+- Multiple event types (Meeting, Holiday, Deadline, Training, Custom)
+- Advanced visibility settings (Company, Departments, Employees)
+- Employee selection with professional table interface
+- Email notifications for event invitations
+- Department and sub-department filtering
+- "All Departments" selection option
+- Custom event types with color coding
+- Date/time management with optional controls
 
 ## 📁 Project Structure
 
@@ -251,6 +283,75 @@ npm run test
 docker-compose up -d
 ```
 
+## 🌐 Production Hosting
+
+### Live Production Server
+- **Server IP**: 129.212.239.12
+- **Production URL**: http://129.212.239.12
+- **Status**: ✅ **LIVE AND OPERATIONAL**
+
+### Hosting Configuration
+- **Web Server**: Nginx (Reverse Proxy)
+- **Application Server**: Tomcat (Backend)
+- **Static Hosting**: Vite Build (Frontend)
+- **Database**: Production MySQL/MariaDB
+- **SSL**: Configured for secure connections
+
+### Deployment Architecture
+```
+Internet → Nginx (129.212.239.12:80/443)
+    ├── Frontend (Static Files) → / (Root)
+    └── Backend API → /api (Proxy to Tomcat)
+```
+
+### Production Features
+- **✅ Auto-deployment**: GitHub Actions workflow
+- **✅ Zero-downtime**: Rolling updates
+- **✅ Monitoring**: Application health checks
+- **✅ Logging**: Centralized error tracking
+- **✅ Backups**: Automated database backups
+- **✅ SSL Certificate**: Secure HTTPS connections
+
+### GitHub Actions Deployment
+```yaml
+# Automated deployment workflow
+- Trigger: Push to main branch
+- Build: Frontend (Vite) + Backend (Maven)
+- Test: Unit tests + Integration tests
+- Deploy: Automatic deployment to production
+- Notify: Deployment status notifications
+```
+
+### Environment Variables
+```env
+# Production Environment
+VITE_API_BASE_URL=http://129.212.239.12/api
+NODE_ENV=production
+
+# Backend Production
+spring.profiles.active=production
+server.port=8080
+```
+
+### Monitoring and Maintenance
+- **Health Checks**: `/api/health` endpoint
+- **Application Logs**: Centralized logging system
+- **Performance Metrics**: Response time monitoring
+- **Error Tracking**: Automatic error reporting
+- **Database Monitoring**: Query performance tracking
+
+### Quick Deployment Commands
+```bash
+# One-click production deployment
+./deploy-perfect-production.bat
+
+# Verify deployment status
+./verify-production.bat
+
+# Check application health
+curl http://129.212.239.12/api/health
+```
+
 ## 📚 Documentation
 
 - **[Backend Documentation](./BACKEND.md)** - Detailed backend API documentation
@@ -284,6 +385,12 @@ For support and questions:
 - Payment integration with Stripe
 - Multi-language support
 - Responsive design
+- **NEW**: Professional calendar event system
+- **NEW**: Advanced employee selection with table interface
+- **NEW**: Email notifications for calendar events
+- **NEW**: Department and sub-department event filtering
+- **NEW**: Custom event types and visibility controls
+- **NEW**: Production deployment with automated CI/CD
 
 ## 🛠️ Technologies Used
 

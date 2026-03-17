@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 public class CalendarEventService {
@@ -54,6 +55,9 @@ public class CalendarEventService {
 
     @Autowired
     private EmployeeLeaveRepository employeeLeaveRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     // Create a new calendar event
     @Transactional
@@ -137,6 +141,21 @@ public class CalendarEventService {
             
             CalendarEvent savedEvent = calendarEventRepository.save(event);
             logger.info("Successfully created calendar event with ID: {}", savedEvent.getId());
+            
+            // Send email notifications to selected employees
+            if ("SELECTED_EMPLOYEES".equals(savedEvent.getVisibility()) && savedEvent.getEmployeeIds() != null) {
+                try {
+                    List<Long> employeeIds = parseEmployeeIds(savedEvent.getEmployeeIds());
+                    if (!employeeIds.isEmpty()) {
+                        emailService.sendCalendarEventNotification(savedEvent, employeeIds);
+                        logger.info("Sent email notifications to {} employees for event ID: {}", employeeIds.size(), savedEvent.getId());
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to send email notifications for event ID {}: {}", savedEvent.getId(), e.getMessage());
+                    // Don't throw exception here - email failure shouldn't break event creation
+                }
+            }
+            
             return savedEvent;
             
         } catch (Exception e) {
@@ -1227,5 +1246,42 @@ public class CalendarEventService {
         content.append("</div></body></html>");
         
         return content.toString();
+    }
+
+    /**
+     * Parse employee IDs from string format
+     */
+    private List<Long> parseEmployeeIds(String employeeIdsStr) {
+        try {
+            if (employeeIdsStr == null || employeeIdsStr.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // Handle string format like "[1,2,3]"
+            if (employeeIdsStr.startsWith("[") && employeeIdsStr.endsWith("]")) {
+                String[] ids = employeeIdsStr.substring(1, employeeIdsStr.length() - 1).split(",");
+                List<Long> result = new ArrayList<>();
+                for (String id : ids) {
+                    if (!id.trim().isEmpty()) {
+                        result.add(Long.parseLong(id.trim()));
+                    }
+                }
+                return result;
+            }
+            
+            // Handle comma-separated format like "1,2,3"
+            String[] ids = employeeIdsStr.split(",");
+            List<Long> result = new ArrayList<>();
+            for (String id : ids) {
+                if (!id.trim().isEmpty()) {
+                    result.add(Long.parseLong(id.trim()));
+                }
+            }
+            return result;
+            
+        } catch (Exception e) {
+            logger.error("Error parsing employee IDs: {}", employeeIdsStr, e);
+            return new ArrayList<>();
+        }
     }
 }
