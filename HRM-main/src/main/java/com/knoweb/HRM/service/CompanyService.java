@@ -119,6 +119,10 @@ public class CompanyService {
         return companyRepository.findByStripeCustomerId(stripeCustomerId);
     }
 
+    public void deleteCompany(Long cmp_id) {
+        companyRepository.deleteById(cmp_id);
+    }
+
  }
 
 

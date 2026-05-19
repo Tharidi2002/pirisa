@@ -184,7 +184,24 @@ public class CompanyController {
         }
     }
 
+    @DeleteMapping(value = "/{cmp_id}", produces = {"application/json"})
+    public ResponseEntity<?> deleteCompany(@PathVariable Long cmp_id) {
+        try {
+            companyService.deleteCompany(cmp_id);
 
+            Map<String, Object> companyResponse = new HashMap<>();
+            companyResponse.put("resultCode", 100);
+            companyResponse.put("resultDesc", "Successfully Deleted");
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("id", cmp_id);
+            responseBody.put("response", companyResponse);
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
