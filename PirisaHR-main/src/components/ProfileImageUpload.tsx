@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
+import ReactCrop, { Crop, PixelRatio } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import ImageCompressor, { CompressedImage } from '../utils/ImageCompressor';
 
 interface ProfileImageUploadProps {
@@ -18,6 +20,13 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const [deleting, setDeleting] = useState(false);
   const [hasProfileImage, setHasProfileImage] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<CompressedImage | null>(null);
+  
+  // Image cropping state
+  const [src, setSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     return () => {
@@ -108,7 +117,48 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper function to get cropped image
+  const getCroppedImg = (
+    image: HTMLImageElement,
+    crop: Crop,
+    fileName: string
+  ): Promise<Blob> => {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+
+    canvas.width = crop.width || 0;
+    canvas.height = crop.height || 0;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return Promise.reject(new Error('Failed to get canvas context'));
+    }
+
+    ctx.drawImage(
+      image,
+      (crop.x || 0) * scaleX,
+      (crop.y || 0) * scaleY,
+      (crop.width || 0) * scaleX,
+      (crop.height || 0) * scaleY,
+      0,
+      0,
+      crop.width || 0,
+      crop.height || 0
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Canvas is empty'));
+          return;
+        }
+        resolve(blob);
+      }, 'image/jpeg');
+    });
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -124,12 +174,31 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       return;
     }
 
-    setUploading(true);
-    setCompressionInfo(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSrc(reader.result as string);
+      setShowCropper(true);
+      // Initialize crop to center square
+      setCrop({
+        unit: '%',
+        width: 50,
+        height: 50,
+        x: 25,
+        y: 25,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!image || !crop) return;
 
     try {
-      // Compress the image
-      const compressed = await ImageCompressor.compressImage(file, {
+      const croppedBlob = await getCroppedImg(image, crop, 'cropped-image.jpg');
+      const croppedFile = new File([croppedBlob], 'cropped-image.jpg', { type: 'image/jpeg' });
+
+      // Compress the cropped image
+      const compressed = await ImageCompressor.compressImage(croppedFile, {
         maxWidth: 1920,
         maxHeight: 1080,
         quality: 0.8,
@@ -149,6 +218,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       });
 
       // Upload compressed image
+      setUploading(true);
       const formData = new FormData();
       formData.append('profileImage', compressed.file);
 
@@ -174,6 +244,8 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         });
         setHasProfileImage(true);
         onImageChange?.(true);
+        setShowCropper(false);
+        setSrc(null);
         await loadProfileImage();
       } else {
         toast.error(data.resultDesc || 'Failed to upload profile image', {
@@ -210,6 +282,13 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       setUploading(false);
       setTimeout(() => setCompressionInfo(null), 5000); // Clear compression info after 5 seconds
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSrc(null);
+    setCrop(undefined);
+    setImage(null);
   };
 
   const handleImageDelete = async () => {
@@ -306,7 +385,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             <input
               type="file"
               accept="image/*"
-              onChange={handleImageUpload}
+              onChange={handleImageSelect}
               className="hidden"
               disabled={uploading}
             />
@@ -405,6 +484,47 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           </div>
         )}
       </div>
+
+      {/* Image Cropper Modal */}
+      {showCropper && src && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-center">
+              Crop and Position Your Photo
+            </h3>
+            <div className="flex justify-center mb-4">
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                aspect={1}
+                circularCrop
+              >
+                <img
+                  src={src}
+                  alt="Upload preview"
+                  onLoad={(e) => setImage(e.currentTarget)}
+                  className="max-h-96"
+                />
+              </ReactCrop>
+            </div>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleCropCancel}
+                className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCropConfirm}
+                disabled={uploading}
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+              >
+                {uploading ? 'Uploading...' : 'Confirm & Upload'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

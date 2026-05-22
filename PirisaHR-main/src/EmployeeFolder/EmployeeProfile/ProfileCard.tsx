@@ -2,12 +2,14 @@
 import { useRef, useState } from "react";
 import { FaBriefcase } from "react-icons/fa";
 import { toast } from "react-toastify";
+import DynamicAvatar from "../../components/DynamicAvatar";
 
 interface ProfileCardProps {
   photoUrl: string;
   firstName: string;
   lastName: string;
   designation: string;
+  gender?: string;
   onPhotoUploaded: () => void;
 }
 
@@ -16,6 +18,7 @@ export const ProfileCard = ({
   firstName,
   lastName,
   designation,
+  gender,
   onPhotoUploaded,
 }: ProfileCardProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,15 +103,24 @@ export const ProfileCard = ({
           <span className="text-sky-500 font-medium">Updating photo...</span>
         </div>
       )}
-      <img
-        className="w-32 h-32 rounded-full border-4 border-gray-300 hover:border-gray-400 transition object-cover"
-        src={photoUrl}
-        alt="Employee"
-        onError={(e) => {
-          e.currentTarget.src = "/profile.jpg";
-        }}
-        style={loading ? { filter: "blur(2px)" } : {}}
-      />
+      {photoUrl && photoUrl !== "/profile.jpg" ? (
+        <img
+          className="w-32 h-32 rounded-full border-4 border-gray-300 hover:border-gray-400 transition object-cover"
+          src={photoUrl}
+          alt="Employee"
+          onError={(e) => {
+            e.currentTarget.src = "/profile.jpg";
+          }}
+          style={loading ? { filter: "blur(2px)" } : {}}
+        />
+      ) : (
+        <DynamicAvatar
+          firstName={firstName}
+          gender={gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+          size="xl"
+          className="border-4 border-gray-300 hover:border-gray-400 transition"
+        />
+      )}
       <h2 className="mt-4 text-xl font-semibold text-gray-900 hover:text-gray-700 transition">
         {`${firstName} ${lastName}`}
       </h2>

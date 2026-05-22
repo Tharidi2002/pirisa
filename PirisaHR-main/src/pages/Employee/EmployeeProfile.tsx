@@ -285,6 +285,7 @@ const EmployeeProfile = () => {
           firstName={employee.first_name}
           lastName={employee.last_name}
           designation={employee.designation.designation}
+          gender={employee.gender}
           onPhotoUploaded={fetchEmployeeData}
         />
 

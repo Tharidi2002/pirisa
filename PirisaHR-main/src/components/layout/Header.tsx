@@ -9,6 +9,7 @@ import {
 import { TranslatableText } from "../languages/TranslatableText";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageProvider";
+import DynamicAvatar from "../DynamicAvatar";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -81,6 +82,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [employeeFirstName, setEmployeeFirstName] = useState<string>("");
+  const [employeeGender, setEmployeeGender] = useState<string>("male");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -401,6 +404,24 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         // If employee, try to fetch employee photo first
         if (role === "EMPLOYEE" && empId) {
           try {
+            // Fetch employee details for dynamic avatar
+            const empResponse = await fetch(
+              `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (empResponse.ok) {
+              const empData = await empResponse.json();
+              if (empData.resultCode === 100 && empData.EmployeeLeaveList?.[0]) {
+                setEmployeeFirstName(empData.EmployeeLeaveList[0].firstName || "");
+                setEmployeeGender(empData.EmployeeLeaveList[0].gender || "male");
+              }
+            }
+
             const existsResp = await fetch(
               `http://localhost:8080/api/profile-image/exists/${empId}`,
               {
@@ -663,11 +684,20 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="flex items-center space-x-2 focus:outline-none"
           >
-            <img
-              src={logoUrl || "https://via.placeholder.com/150"}
-              alt="User"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full cursor-pointer"
-            />
+            {role === "EMPLOYEE" && !logoUrl ? (
+              <DynamicAvatar
+                firstName={employeeFirstName}
+                gender={employeeGender?.toLowerCase() === 'female' ? 'female' : 'male'}
+                size="md"
+                className="w-9 h-9 sm:w-10 sm:h-10 cursor-pointer"
+              />
+            ) : (
+              <img
+                src={logoUrl || "https://via.placeholder.com/150"}
+                alt="User"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full cursor-pointer"
+              />
+            )}
             <div className="flex flex-col cursor-pointer">
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
                 <TranslatableText

@@ -4,6 +4,7 @@ import { TranslatableOption, TranslatableText } from "../../components/languages
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
+import ProfileImageEditor from "../../components/ProfileImageEditor";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -32,7 +33,6 @@ interface Document {
   policeReport: File | null;
   bankPassbook: File | null;
   appointmentLetter: File | null;
-  photo: File | null;
 }
 
 interface Department {
@@ -76,7 +76,6 @@ const EmployeeRegistration: React.FC = () => {
     policeReport: null,
     bankPassbook: null,
     appointmentLetter: null,
-    photo: null,
   });
 
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -329,45 +328,19 @@ const EmployeeRegistration: React.FC = () => {
     // Debug: Log current documents state
     console.log("Current documents state:", documents);
     
-    // Check if we have any files to upload (profile picture or other documents)
-    const hasProfilePicture = documents && documents.photo !== null;
-    const hasOtherFiles = documents && Object.entries(documents).some(([key, file]) => file && key !== "photo");
+    // Check if we have any files to upload
+    const hasFiles = documents && Object.values(documents).some((file) => file !== null);
     
-    console.log("Has profile picture:", hasProfilePicture);
-    console.log("Has other files:", hasOtherFiles);
+    console.log("Has files:", hasFiles);
     
-    if (!hasProfilePicture && !hasOtherFiles) {
+    if (!hasFiles) {
       toast.error("Please select at least one document to upload.");
       setSubmittingDocs(false);
       return;
     }
 
     try {
-      // Handle profile picture separately using ProfileImageController
-      if (documents && documents.photo) {
-        console.log("Uploading profile picture...");
-        const profileFormData = new FormData();
-        profileFormData.append("profileImage", documents.photo);
-        
-        const profileResponse = await fetch(
-          `http://localhost:8080/api/profile-image/upload/${currentEmpId}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: profileFormData,
-          }
-        );
-        
-        if (!profileResponse.ok) {
-          toast.error("Failed to upload profile picture");
-        } else {
-          console.log("Profile picture uploaded successfully");
-        }
-      }
-
-      // Handle other documents using document upload API
+      // Handle documents using document upload API
       const otherDocsFormData = new FormData();
       let hasOtherFiles = false;
 
@@ -376,7 +349,7 @@ const EmployeeRegistration: React.FC = () => {
 
       if (documents) {
         Object.entries(documents).forEach(([key, file]) => {
-          if (file && key !== "photo") { // Skip photo as it's handled separately
+          if (file) {
             otherDocsFormData.append(key, file);
             hasOtherFiles = true;
           }
@@ -432,7 +405,6 @@ const EmployeeRegistration: React.FC = () => {
           policeReport: null,
           bankPassbook: null,
           appointmentLetter: null,
-          photo: null,
         });
       } else {
         toast.error(`Failed to upload documents: ${documentResponse?.status || 'Unknown error'}`);
@@ -497,7 +469,6 @@ const EmployeeRegistration: React.FC = () => {
           policeReport: null,
           bankPassbook: null,
           appointmentLetter: null,
-          photo: null,
         });
       } else {
         const text = await response.text();
@@ -516,38 +487,12 @@ const EmployeeRegistration: React.FC = () => {
         <form onSubmit={handleSubmitDetails} className="space-y-6">
           {/* Profile Picture Upload Section */}
           <div className="flex justify-center mb-8">
-            <div className="text-center">
-              <div className="w-32 h-32 mx-auto mb-4 border-2 border-gray-300 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center">
-                {documents.photo ? (
-                  <img
-                    src={URL.createObjectURL(documents.photo)}
-                    alt="Profile Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-center p-4">
-                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-xs">No Photo</span>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  <TranslatableText text="Profile Picture" />
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "photo")}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                />
-                <p className="text-xs text-gray-500">
-                  <TranslatableText text="Upload profile picture (Optional)" />
-                </p>
-              </div>
-            </div>
+            <ProfileImageEditor
+              employeeId={empId?.toString() || ""}
+              token={token || ""}
+              gender={employeeDetails.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+              firstName={employeeDetails.first_name}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -842,7 +787,6 @@ const EmployeeRegistration: React.FC = () => {
                 label: "Appointment Letter",
                 accept: ".pdf",
               },
-              { name: "photo", label: "Photo", accept: ".jpg,.jpeg,.png" },
             ].map((doc) => (
               <div key={doc.name}>
                 <label className="block text-sm font-medium text-gray-700">

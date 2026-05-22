@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ProfileImageUpload from "../../components/ProfileImageUpload";
+import ProfileImageEditor from "../../components/ProfileImageEditor";
 import { isEmail, isNonEmpty, isNonNegativeNumber, isPhone } from "../../utils/validation";
 
 interface EmployeeDetails {
@@ -512,10 +512,12 @@ const EmployeeUpdate: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Profile Image Section */}
         <div className="flex justify-center mb-8">
-          <ProfileImageUpload
+          <ProfileImageEditor
             employeeId={id || ""}
             token={token || ""}
             onImageChange={(hasImage) => setHasProfileImage(hasImage)}
+            gender={employeeDetails.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+            firstName={employeeDetails.first_name}
           />
         </div>
 

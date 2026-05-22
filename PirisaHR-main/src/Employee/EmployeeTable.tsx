@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Table from "../components/table/Table";
-import { Pencil, Trash2, User } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
+import DynamicAvatar from "../components/DynamicAvatar";
 
 interface Column<T> {
   key: string;
@@ -19,6 +20,7 @@ interface Employee {
   lastName: string;
   email: string;
   epfNo: string;
+  gender?: string;
   designation: {
     id: number;
     designation: string;
@@ -319,6 +321,7 @@ const EmployeeTable = () => {
       title: "Photo",
       render: (item) => {
         const imageUrl = photoUrls[item.id];
+        const gender = item.gender?.toLowerCase() === 'female' ? 'female' : 'male';
         
         return (
           <div className="flex items-center justify-center w-10 h-10">
@@ -328,7 +331,7 @@ const EmployeeTable = () => {
                 alt={`${item.firstName} ${item.lastName}`}
                 className="w-8 h-8 rounded-full object-cover"
                 onError={(e) => {
-                  // If image fails to load, hide it and show the user icon
+                  // If image fails to load, hide it and show the dynamic avatar
                   e.currentTarget.style.display = "none";
                   const nextSibling = e.currentTarget
                     .nextElementSibling as HTMLElement;
@@ -338,12 +341,12 @@ const EmployeeTable = () => {
                 }}
               />
             ) : null}
-            <div
-              className={`w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center ${
-                imageUrl ? "hidden" : ""
-              }`}
-            >
-              <User size={16} className="text-gray-500" />
+            <div className={imageUrl ? "hidden" : ""}>
+              <DynamicAvatar
+                firstName={item.firstName}
+                gender={gender}
+                size="sm"
+              />
             </div>
           </div>
         );

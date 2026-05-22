@@ -16,6 +16,7 @@ import {
   IdCard,
 } from "lucide-react";
 import Loading from "../Loading/Loading";
+import DynamicAvatar from "../DynamicAvatar";
 //import profile from "../../../public/profile.jpg";
 
 interface EmployeeDetails {
@@ -473,14 +474,20 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                 <div className="flex-shrink-0">
                   <div className="relative group">
                     <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-xl ring-4 ring-white">
-                      <img
-                        src={
-                          photoUrl ||
-                          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
-                        }
-                        alt="Profile"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      {photoUrl ? (
+                        <img
+                          src={photoUrl}
+                          alt="Profile"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <DynamicAvatar
+                          firstName={employee.first_name}
+                          gender={employee.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+                          size="xl"
+                          className="w-full h-full"
+                        />
+                      )}
                     </div>
                     <div className="absolute -bottom-3 -right-3 bg-gradient-to-r from-sky-600 to-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg">
                       {employee.designation.designation}

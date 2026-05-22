@@ -85,7 +85,7 @@ public class UnitController {
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
             response.put("resultDesc", "Successful");
-            response.put("UnitList", units);
+            response.put("DepartmentList", units);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
