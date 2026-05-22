@@ -24,6 +24,14 @@ public class BonusController {
     @PostMapping(value = "/add_bonus", produces = {"application/json"})
     public ResponseEntity<?> addBonus(@RequestBody Bonus bonus) {
         try {
+            // Validate required fields
+            if (bonus.getBonusName() == null || bonus.getBonusName().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Bonus name is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
             Bonus createdBonus = bonusService.createBonus(bonus);
             if (createdBonus != null) {
                 Map<String, Object> bonusResponse = new HashMap<>();

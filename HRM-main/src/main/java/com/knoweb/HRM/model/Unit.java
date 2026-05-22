@@ -1,5 +1,6 @@
 package com.knoweb.HRM.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,13 +23,16 @@ public class Unit implements Serializable {
     @Column(name = "dpt_id")
     private Long id;
 
-    @Column(name = "dpt_name")
+    @Column(name = "dpt_name", nullable = false)
+    @JsonProperty("dpt_name")
     private String dptName;
 
-    @Column(name = "dpt_code")
+    @Column(name = "dpt_code", nullable = false)
+    @JsonProperty("dpt_code")
     private String dptCode;
 
     @Column(name = "dpt_desc")
+    @JsonProperty("dpt_desc")
     private String dptDesc;
 
     @Column(name = "cmp_id")

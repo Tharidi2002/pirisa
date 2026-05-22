@@ -21,8 +21,10 @@ public class Allowance implements Serializable {
     @Column(name = "allowance_id")
     private long id;
 
+    @Column(nullable = false)
     private String allowanceName;
 
+    @Column(nullable = false)
     private String epfEligibleStatus;
 
     @Column(name = "cmp_id")

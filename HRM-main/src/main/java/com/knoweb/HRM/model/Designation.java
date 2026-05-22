@@ -21,6 +21,7 @@ public class Designation implements Serializable {
     @Column(name = "designation_id")
     private long id;
 
+    @Column(nullable = false)
     private String designation;
 
     @Column(name = "dpt_id")

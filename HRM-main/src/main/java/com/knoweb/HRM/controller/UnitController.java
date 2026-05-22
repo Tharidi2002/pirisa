@@ -24,20 +24,40 @@ public class UnitController {
     @PostMapping(value = "/add_department", produces = {"application/json"})
     public ResponseEntity<?> addUnit(@RequestBody Unit unit) {
         try {
+            // Validate required fields
+            if (unit.getDptName() == null || unit.getDptName().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Department name is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+            if (unit.getDptCode() == null || unit.getDptCode().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Department code is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+            if (unit.getCmpId() == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Company ID is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
             // Check for duplicate unit code or name within the same company
             List<Unit> existingDepts = unitService.getUnitsByCompanyId(unit.getCmpId());
-            boolean duplicate = existingDepts.stream().anyMatch(dept -> 
-                dept.getDptCode().equals(unit.getDptCode()) || 
+            boolean duplicate = existingDepts.stream().anyMatch(dept ->
+                dept.getDptCode().equals(unit.getDptCode()) ||
                 dept.getDptName().equalsIgnoreCase(unit.getDptName())
             );
-            
+
             if (duplicate) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("resultCode", 102);
                 errorResponse.put("resultDesc", "Unit code or name already exists");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
-            
+
             Unit createdUnit = unitService.createUnit(unit);
             if (createdUnit != null) {
                 Map<String, Object> unitResponse = new HashMap<>();

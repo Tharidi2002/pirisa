@@ -21,6 +21,7 @@ public class Bonus implements Serializable {
     @Column(name = "bonus_id")
     private long id;
 
+    @Column(nullable = false)
     private String bonusName;
 
     @Column(name = "cmp_id")

@@ -24,6 +24,20 @@ public class AllowanceController {
     @PostMapping(value = "/add_allowance", produces = {"application/json"})
     public ResponseEntity<?> addAllowance(@RequestBody Allowance allowance) {
         try {
+            // Validate required fields
+            if (allowance.getAllowanceName() == null || allowance.getAllowanceName().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Allowance name is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+            if (allowance.getEpfEligibleStatus() == null || allowance.getEpfEligibleStatus().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "EPF eligible status is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
             Allowance createdAllowance = allowanceService.createAllowance(allowance);
             if (createdAllowance != null) {
                 Map<String, Object> allowanceResponse = new HashMap<>();

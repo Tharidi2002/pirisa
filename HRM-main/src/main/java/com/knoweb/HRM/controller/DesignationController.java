@@ -22,6 +22,14 @@ public class DesignationController {
     @PostMapping(value = "/add_designation", produces = {"application/json"})
     public ResponseEntity<?> addDesignation(@RequestBody Designation designation) {
         try {
+            // Validate required fields
+            if (designation.getDesignation() == null || designation.getDesignation().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Designation name is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
             Designation createdDesignation = designationService.createDesignation(designation);
             if (createdDesignation != null) {
                 Map<String, Object> designationResponse = new HashMap<>();
