@@ -192,7 +192,8 @@ const EmployeeUpdate: React.FC = () => {
   };
 
   const fetchDepartments = async () => {
-    const cmpId = localStorage.getItem("cmpnyId");
+    const cmpId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
     if (!cmpId) {
       console.error("Company ID not found in local storage");
       setError("Company ID not found. Please log in again.");
@@ -212,8 +213,13 @@ const EmployeeUpdate: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.DepartmentList && Array.isArray(data.DepartmentList)) {
-          setDepartments(data.DepartmentList);
+        const departmentList =
+          (Array.isArray(data.DepartmentList) && data.DepartmentList) ||
+          (Array.isArray(data.UnitList) && data.UnitList) ||
+          null;
+
+        if (departmentList) {
+          setDepartments(departmentList);
         } else {
           setError("Invalid department data received.");
         }
@@ -354,7 +360,8 @@ const EmployeeUpdate: React.FC = () => {
       return;
     }
 
-    const cmpId = localStorage.getItem("cmpnyId");
+    const cmpId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
     if (!cmpId) {
       console.error("Company ID not found in localStorage");
       setError("Company ID not found.");

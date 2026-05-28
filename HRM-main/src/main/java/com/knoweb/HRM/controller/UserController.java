@@ -195,6 +195,40 @@ public class UserController {
         }
     }
 
+    @GetMapping(value = "/profile", produces = "application/json")
+    public ResponseEntity<?> getUserProfile() {
+        try {
+            // This endpoint should get the current logged-in user's profile
+            // For now, returning a placeholder response
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("message", "User profile endpoint - implement with authentication");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching user profile"));
+        }
+    }
+
+    @PutMapping(value = "/update", produces = "application/json")
+    public ResponseEntity<?> updateUserProfile(@RequestBody User updateUser) {
+        try {
+            // This endpoint should update the current logged-in user's profile
+            // For now, returning a placeholder response
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("message", "User update endpoint - implement with authentication");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while updating user profile"));
+        }
+    }
+
 
 
 

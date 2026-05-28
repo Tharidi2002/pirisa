@@ -129,7 +129,8 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
       const fetchData = async () => {
         try {
           const token = localStorage.getItem("token");
-          const cmpnyId = localStorage.getItem("cmpnyId");
+          const cmpnyId =
+            localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
           if (!token) {
             throw new Error("No token found");
           }
@@ -158,31 +159,35 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch company leave types (non-blocking)
           try {
-            const companyLeaveResponse = await fetch(
-              `http://localhost:8080/company_leave/company/${cmpnyId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              },
-            );
-
-            // Handle 404 gracefully - leave types may not be configured yet
-            if (companyLeaveResponse.status === 404) {
+            if (!cmpnyId) {
               setCompanyLeaves([]);
-            } else if (companyLeaveResponse.ok) {
-              const companyLeaveData = await companyLeaveResponse.json();
-              if (
-                companyLeaveData.resultCode === 100 &&
-                companyLeaveData.LeavetList
-              ) {
-                setCompanyLeaves(companyLeaveData.LeavetList);
+            } else {
+              const companyLeaveResponse = await fetch(
+                `http://localhost:8080/company_leave/company/${cmpnyId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                },
+              );
+
+              // Handle 404 gracefully - leave types may not be configured yet
+              if (companyLeaveResponse.status === 404) {
+                setCompanyLeaves([]);
+              } else if (companyLeaveResponse.ok) {
+                const companyLeaveData = await companyLeaveResponse.json();
+                if (
+                  companyLeaveData.resultCode === 100 &&
+                  companyLeaveData.LeavetList
+                ) {
+                  setCompanyLeaves(companyLeaveData.LeavetList);
+                } else {
+                  setCompanyLeaves([]);
+                }
               } else {
                 setCompanyLeaves([]);
               }
-            } else {
-              setCompanyLeaves([]);
             }
           } catch {
             setCompanyLeaves([]);

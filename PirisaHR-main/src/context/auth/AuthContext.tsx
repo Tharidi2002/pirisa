@@ -29,9 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(response.details.token);
     setIsAuthenticated(true);
     localStorage.setItem('token', response.details.token);
-    // Optionally store user role and company ID
+    // Optionally store user role and company ID under both keys for backward compatibility
     localStorage.setItem('userRole', response.details.Role);
     localStorage.setItem('companyId', response.details.CMPNY_Id.toString());
+    localStorage.setItem('cmpnyId', response.details.CMPNY_Id.toString());
   };
 
   const logout = () => {
@@ -41,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('companyId');
+    localStorage.removeItem('cmpnyId');
   };
 
   return (
