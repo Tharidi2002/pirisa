@@ -103,7 +103,8 @@ const EmployeeRegistration: React.FC = () => {
   }, [token]);
 
   const fetchDepartments = async () => {
-    const cmpId = localStorage.getItem("cmpnyId");
+    const cmpId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
     if (!cmpId) {
       console.error("Company ID not found in local storage");
       return;
@@ -123,14 +124,20 @@ const EmployeeRegistration: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         console.log("Departments API Response:", data);
-        if (data.DepartmentList && Array.isArray(data.DepartmentList)) {
-          console.log("Departments found:", data.DepartmentList);
-          setDepartments(data.DepartmentList);
+
+        const departmentList =
+          (Array.isArray(data.DepartmentList) && data.DepartmentList) ||
+          (Array.isArray(data.UnitList) && data.UnitList) ||
+          null;
+
+        if (departmentList) {
+          console.log("Departments found:", departmentList);
+          setDepartments(departmentList);
         } else {
           console.error("API response is not in expected format:", data);
         }
       } else {
-        console.error("Failed to fetch departments");
+        console.error("Failed to fetch departments", response.status);
       }
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -196,7 +203,8 @@ const EmployeeRegistration: React.FC = () => {
       return;
     }
 
-    const cmpId = localStorage.getItem("cmpnyId");
+    const cmpId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
     if (!cmpId) {
       console.error("Company ID not found in localStorage");
       return;
@@ -259,6 +267,16 @@ const EmployeeRegistration: React.FC = () => {
           body: JSON.stringify(payload),
         }
       );
+
+      if (!response.ok) {
+        // Handle non-200 responses
+        const errorText = await response.text();
+        console.error(`HTTP ${response.status} Error:`, errorText);
+        toast.error(
+          `Server error (${response.status}): Failed to save employee details. Please check with administrator.`
+        );
+        return;
+      }
 
       const data = await response.json();
       //console.log("Full response data:", data);

@@ -99,6 +99,10 @@ function Profile() {
     navigate("/company-settings");
   };
 
+  const handleLogoEdit = () => {
+    navigate("/company-settings");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -112,13 +116,25 @@ function Profile() {
       {/* Top Section */}
       <div className="flex flex-col lg:flex-row gap-6 pt-6">
         {/* Profile Card */}
-        <div className="w-full lg:w-1/3 flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-md transition hover:scale-105">
-          <img
-            className="w-24 h-24 rounded-full border-4 border-gray-300 hover:border-gray-400 transition"
-            src={logoUrl || "https://via.placeholder.com/150"}
-            alt="Company Logo"
-          />
-          <h2 className="mt-4 text-xl font-semibold text-gray-900 hover:text-gray-700 transition">
+        <div className="w-full lg:w-1/3 flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-md transition hover:shadow-lg">
+          <div className="relative mb-4">
+            <img
+              className="w-24 h-24 rounded-full border-4 border-gray-300 hover:border-gray-400 transition object-cover"
+              src={logoUrl || "https://via.placeholder.com/150"}
+              alt="Company Logo"
+            />
+            <button
+              onClick={handleLogoEdit}
+              className="absolute bottom-0 right-0 bg-sky-500 text-white p-2 rounded-full hover:bg-sky-600 transition shadow-lg"
+              title="Edit logo"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 hover:text-gray-700 transition">
             {companyData?.cmp_name || "Company Name"}
           </h2>
           <p className="text-gray-500 text-sm text-center flex items-center gap-1">

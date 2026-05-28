@@ -43,13 +43,8 @@ function App() {
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
-                <Route index element={<Navigate to="/employee-dashboard" replace />} />
                 <Route path="employee-dashboard" element={<EmployeeDashboard />} />
-
-                <Route index element={<Navigate to="/pay-role-list" replace />} />
                 <Route path="pay-role-list" element={<PayroleList />} />
-
-                <Route index element={<Navigate to="/emp-leave" replace />} />
                 <Route path="emp-leave" element={<EmployeeLeave />} />
 
 

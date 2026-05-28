@@ -346,7 +346,18 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
           pauseOnHover: true,
         });
 
-        // Upload compressed image
+        // Upload compressed image only if employeeId is available
+        if (!employeeId || employeeId.trim() === '') {
+          toast.info('Employee will be assigned an ID after creation. Profile picture will be uploaded then.', {
+            position: 'top-center',
+            autoClose: 4000,
+            closeButton: true,
+            pauseOnHover: true,
+          });
+          handleEditorClose();
+          return;
+        }
+
         setUploading(true);
         const formData = new FormData();
         formData.append('profileImage', compressed.file);

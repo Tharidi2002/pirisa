@@ -377,6 +377,13 @@ const EmployeeTable = () => {
       ),
     },
     {
+      key: "department",
+      title: "Department",
+      render: (item) => (
+        <span className="text-xs">{item.department?.dpt_name || "Unassigned"}</span>
+      ),
+    },
+    {
       key: "dateOfJoining",
       title: "Joined Date",
       render: (item) => <span className="text-xs">{item.dateOfJoining}</span>,
@@ -582,6 +589,7 @@ const EmployeeTable = () => {
                     "email",
                     "epfNo",
                     "designation.designation",
+                    "department.dpt_name",
                     "dateOfJoining",
                   ]}
                   pagination={{
