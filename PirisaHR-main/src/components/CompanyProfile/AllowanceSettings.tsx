@@ -57,10 +57,8 @@ const AllowanceSettings: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
-
-      console.log("API Response:", response); // Debug log
 
       if (
         response.status === 200 &&
@@ -79,17 +77,15 @@ const AllowanceSettings: React.FC = () => {
             id: item.id,
             name: item.allowanceName,
             epfEligibleStatus: item.epfEligibleStatus,
-          })
+          }),
         );
-        console.log("Mapped Allowances:", fetchedAllowances); // Debug log
         setAllowances(fetchedAllowances);
       } else {
-        console.log("Invalid response:", response.data);
-        alert('Failed to fetch allowances. Invalid response.');
+        alert("Failed to fetch allowances. Invalid response.");
       }
     } catch (error) {
       console.error("Error fetching allowances:", error);
-      alert('An error occurred while fetching allowances.');
+      alert("An error occurred while fetching allowances.");
     }
   };
 
@@ -129,8 +125,6 @@ const AllowanceSettings: React.FC = () => {
         cmpId: parseInt(cmpId, 10),
       };
 
-      console.log("Update Payload:", payload); // Debug log
-
       const response = await axios.put(
         "http://localhost:8080/allowance/update_allowance",
         payload,
@@ -138,18 +132,13 @@ const AllowanceSettings: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
-      console.log("Update Response:", response); // Debug log
-
       if (response.status === 200) {
-        console.log("Update successful, refreshing list...");
         await fetchAllowances(); // Refresh the list
-        console.log("List refreshed after update");
         setEditingId(null);
       } else {
-        console.log("Update Failed:", response);
         alert("Failed to update allowance.");
       }
     } catch (error) {
@@ -189,8 +178,6 @@ const AllowanceSettings: React.FC = () => {
         cmpId: parseInt(cmpId, 10),
       };
 
-      console.log("Add Payload:", payload); // Debug log
-
       try {
         const response = await axios.post(
           "http://localhost:8080/allowance/add_allowance",
@@ -199,10 +186,8 @@ const AllowanceSettings: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
-
-        console.log("Add Response:", response); // Debug log
 
         if (response.status === 200) {
           // Refresh the list of allowances after adding a new one
@@ -210,7 +195,6 @@ const AllowanceSettings: React.FC = () => {
           setNewAllowance({ name: "", epfEligibleStatus: "yes" });
           setIsAddingNew(false);
         } else {
-          console.log("Add Failed:", response);
           alert("Failed to save the new allowance.");
         }
       } catch (error) {
@@ -237,24 +221,18 @@ const AllowanceSettings: React.FC = () => {
       }
 
       try {
-        console.log("Deleting allowance with ID:", id);
         const response = await axios.delete(
           `http://localhost:8080/allowance/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
-        console.log("Delete Response:", response);
-
         if (response.status === 200) {
-          console.log("Delete successful, refreshing list...");
           await fetchAllowances(); // Refresh the list
-          console.log("List refreshed after delete");
         } else {
-          console.log("Delete Failed:", response);
           alert("Failed to delete allowance.");
         }
       } catch (error) {
@@ -287,7 +265,7 @@ const AllowanceSettings: React.FC = () => {
         } rounded hover:bg-sky-600`}
       >
         {currentPage}
-      </button>
+      </button>,
     );
 
     // Show the previous page if it exists
@@ -303,7 +281,7 @@ const AllowanceSettings: React.FC = () => {
           } rounded hover:bg-sky-600`}
         >
           {prevPage}
-        </button>
+        </button>,
       );
     }
 
@@ -320,7 +298,7 @@ const AllowanceSettings: React.FC = () => {
           } rounded hover:bg-sky-600`}
         >
           {nextPage}
-        </button>
+        </button>,
       );
     }
 

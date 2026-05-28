@@ -113,7 +113,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         availability[docType] = response.ok && response.status !== 204;
       } catch {
@@ -142,7 +142,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
 
           if (!employeeResponse.ok) {
@@ -165,10 +165,13 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                   Authorization: `Bearer ${token}`,
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
 
-            if (companyLeaveResponse.ok) {
+            // Handle 404 gracefully - leave types may not be configured yet
+            if (companyLeaveResponse.status === 404) {
+              setCompanyLeaves([]);
+            } else if (companyLeaveResponse.ok) {
               const companyLeaveData = await companyLeaveResponse.json();
               if (
                 companyLeaveData.resultCode === 100 &&
@@ -176,23 +179,12 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
               ) {
                 setCompanyLeaves(companyLeaveData.LeavetList);
               } else {
-                console.warn(
-                  "Company leave data not available or invalid:",
-                  companyLeaveData.resultDesc
-                );
                 setCompanyLeaves([]);
               }
             } else {
-              console.warn(
-                "Failed to fetch company leave types, proceeding without leave data"
-              );
               setCompanyLeaves([]);
             }
-          } catch (leaveError) {
-            console.warn(
-              "Could not fetch company leave data, proceeding without it:",
-              leaveError
-            );
+          } catch {
             setCompanyLeaves([]);
           }
 
@@ -207,14 +199,16 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              }
+              },
             );
 
             if (existsResp.ok) {
-              const existsData: { hasProfileImage?: boolean; exists?: boolean } =
-                await existsResp.json();
+              const existsData: {
+                hasProfileImage?: boolean;
+                exists?: boolean;
+              } = await existsResp.json();
               const hasImage = Boolean(
-                existsData?.hasProfileImage ?? existsData?.exists
+                existsData?.hasProfileImage ?? existsData?.exists,
               );
 
               if (hasImage) {
@@ -224,7 +218,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                     headers: {
                       Authorization: `Bearer ${token}`,
                     },
-                  }
+                  },
                 );
 
                 if (imgResp.ok) {
@@ -283,13 +277,13 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
       const approvedLeaves = employee.employeeLeaves.filter(
         (leave) =>
           leave.leaveType === companyLeave.leaveType &&
-          leave.leaveStatus === "APPROVED"
+          leave.leaveStatus === "APPROVED",
       );
 
       // Calculate total taken days
       const takenDays = approvedLeaves.reduce(
         (total, leave) => total + leave.leaveDays,
-        0
+        0,
       );
 
       return {
@@ -317,8 +311,8 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           `${documentType
             .replace(/([A-Z])/g, " $1")
             .replace(/^./, (str) =>
-              str.toUpperCase()
-            )} is not available for this employee`
+              str.toUpperCase(),
+            )} is not available for this employee`,
         );
         // Clear error after 3 seconds
         setTimeout(() => setError(null), 3000);
@@ -337,7 +331,9 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         setError(
           `${documentType
             .replace(/([A-Z])/g, " $1")
-            .replace(/^./, (str) => str.toUpperCase())} is not available for this employee`
+            .replace(/^./, (str) =>
+              str.toUpperCase(),
+            )} is not available for this employee`,
         );
         return;
       }
@@ -483,7 +479,11 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                       ) : (
                         <DynamicAvatar
                           firstName={employee.first_name}
-                          gender={employee.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+                          gender={
+                            employee.gender?.toLowerCase() === "female"
+                              ? "female"
+                              : "male"
+                          }
                           size="xl"
                           className="w-full h-full"
                         />
@@ -666,7 +666,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                               style={{
                                 width: `${Math.min(
                                   100,
-                                  (balance.remaining / balance.total) * 100
+                                  (balance.remaining / balance.total) * 100,
                                 )}%`,
                               }}
                             ></div>
@@ -674,7 +674,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                           <div className="absolute inset-0 flex items-center justify-center">
                             <span className="text-xs font-medium text-white drop-shadow-sm">
                               {Math.round(
-                                (balance.remaining / balance.total) * 100
+                                (balance.remaining / balance.total) * 100,
                               )}
                               %
                             </span>

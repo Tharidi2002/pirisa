@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
+import {
+  TranslatableOption,
+  TranslatableText,
+} from "../../components/languages/TranslatableText";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
@@ -118,12 +121,11 @@ const EmployeeRegistration: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Departments API Response:", data);
 
         const departmentList =
           (Array.isArray(data.DepartmentList) && data.DepartmentList) ||
@@ -131,13 +133,8 @@ const EmployeeRegistration: React.FC = () => {
           null;
 
         if (departmentList) {
-          console.log("Departments found:", departmentList);
           setDepartments(departmentList);
-        } else {
-          console.error("API response is not in expected format:", data);
         }
-      } else {
-        console.error("Failed to fetch departments", response.status);
       }
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -163,7 +160,7 @@ const EmployeeRegistration: React.FC = () => {
   const handleDesignationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const designationId = parseInt(e.target.value);
     const selectedDesignation = designations.find(
-      (desig) => desig.id === designationId
+      (desig) => desig.id === designationId,
     );
 
     if (selectedDesignation) {
@@ -176,7 +173,7 @@ const EmployeeRegistration: React.FC = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setEmployeeDetails((prev) => ({
@@ -187,7 +184,7 @@ const EmployeeRegistration: React.FC = () => {
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    documentType: string
+    documentType: string,
   ) => {
     const file = e.target.files?.[0] || null;
     setDocuments((prev) => ({
@@ -223,18 +220,13 @@ const EmployeeRegistration: React.FC = () => {
       setSubmittingDetails(false);
       return;
     }
-    
+
     if (!employeeDetails.designationId || employeeDetails.designationId === 0) {
       toast.error("Please select a designation");
       setSubmittingDetails(false);
       return;
     }
 
-    console.log("Current employee details before submission:", employeeDetails);
-    console.log("Selected dptId:", employeeDetails.dptId);
-    console.log("Selected designationId:", employeeDetails.designationId);
-    console.log("Available departments:", departments);
-    
     const payload = {
       epf_no: employeeDetails.epf_no,
       emp_no: employeeDetails.emp_no,
@@ -252,8 +244,6 @@ const EmployeeRegistration: React.FC = () => {
       dptId: Number(employeeDetails.dptId),
       designationId: Number(employeeDetails.designationId),
     };
-    
-    console.log("Final payload:", payload);
 
     try {
       const response = await fetch(
@@ -265,7 +255,7 @@ const EmployeeRegistration: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -273,7 +263,7 @@ const EmployeeRegistration: React.FC = () => {
         const errorText = await response.text();
         console.error(`HTTP ${response.status} Error:`, errorText);
         toast.error(
-          `Server error (${response.status}): Failed to save employee details. Please check with administrator.`
+          `Server error (${response.status}): Failed to save employee details. Please check with administrator.`,
         );
         return;
       }
@@ -296,7 +286,7 @@ const EmployeeRegistration: React.FC = () => {
         } else {
           console.error(
             "Employee saved but ID not found in response. Full response:",
-            JSON.stringify(data)
+            JSON.stringify(data),
           );
           // alert('Employee saved but there was an issue getting the ID. Please check console for details.');
         }
@@ -307,7 +297,7 @@ const EmployeeRegistration: React.FC = () => {
         });
         // alert(data.response?.resultDesc || 'Failed to save employee details');
         toast.error(
-          data.response?.resultDesc || "Failed to save employee details"
+          data.response?.resultDesc || "Failed to save employee details",
         );
       }
     } catch (error) {
@@ -324,7 +314,7 @@ const EmployeeRegistration: React.FC = () => {
 
     if (!token || !currentEmpId) {
       toast.error(
-        "Employee ID not found. Please ensure employee details are saved first."
+        "Employee ID not found. Please ensure employee details are saved first.",
       );
       return;
     }
@@ -345,12 +335,13 @@ const EmployeeRegistration: React.FC = () => {
 
     // Debug: Log current documents state
     console.log("Current documents state:", documents);
-    
+
     // Check if we have any files to upload
-    const hasFiles = documents && Object.values(documents).some((file) => file !== null);
-    
+    const hasFiles =
+      documents && Object.values(documents).some((file) => file !== null);
+
     console.log("Has files:", hasFiles);
-    
+
     if (!hasFiles) {
       toast.error("Please select at least one document to upload.");
       setSubmittingDocs(false);
@@ -384,16 +375,22 @@ const EmployeeRegistration: React.FC = () => {
               Authorization: `Bearer ${token}`,
             },
             body: otherDocsFormData,
-          }
+          },
         );
 
         if (!documentResponse.ok) {
           const errorData = await documentResponse.json();
-          throw new Error(errorData.resultDesc || `Failed to upload documents: ${documentResponse.status}`);
+          throw new Error(
+            errorData.resultDesc ||
+              `Failed to upload documents: ${documentResponse.status}`,
+          );
         }
       }
 
-      if ((hasOtherFiles && documentResponse?.status === 200) || !hasOtherFiles) {
+      if (
+        (hasOtherFiles && documentResponse?.status === 200) ||
+        !hasOtherFiles
+      ) {
         toast.success("Documents uploaded successfully!");
         localStorage.removeItem("currentEmpId");
         setStep(1);
@@ -425,7 +422,9 @@ const EmployeeRegistration: React.FC = () => {
           appointmentLetter: null,
         });
       } else {
-        toast.error(`Failed to upload documents: ${documentResponse?.status || 'Unknown error'}`);
+        toast.error(
+          `Failed to upload documents: ${documentResponse?.status || "Unknown error"}`,
+        );
       }
     } catch (error) {
       toast.error("Error uploading documents. Please try again.");
@@ -439,7 +438,7 @@ const EmployeeRegistration: React.FC = () => {
     const currentEmpId = empId || localStorage.getItem("currentEmpId");
     if (!token || !currentEmpId) {
       toast.error(
-        "Employee ID not found. Please ensure employee details are saved first."
+        "Employee ID not found. Please ensure employee details are saved first.",
       );
       return;
     }
@@ -455,7 +454,7 @@ const EmployeeRegistration: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           body: formData,
-        }
+        },
       );
       if (response.status === 200) {
         toast.success("Skipped document upload. Employee registered!");
@@ -490,7 +489,9 @@ const EmployeeRegistration: React.FC = () => {
         });
       } else {
         const text = await response.text();
-        toast.error(`Failed to skip document upload: ${response.status} - ${text}`);
+        toast.error(
+          `Failed to skip document upload: ${response.status} - ${text}`,
+        );
       }
     } catch (error) {
       toast.error("Error skipping document upload. Please try again.");
@@ -508,7 +509,11 @@ const EmployeeRegistration: React.FC = () => {
             <ProfileImageEditor
               employeeId={empId?.toString() || ""}
               token={token || ""}
-              gender={employeeDetails.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+              gender={
+                employeeDetails.gender?.toLowerCase() === "female"
+                  ? "female"
+                  : "male"
+              }
               firstName={employeeDetails.first_name}
             />
           </div>
@@ -667,7 +672,7 @@ const EmployeeRegistration: React.FC = () => {
                   name="DOB"
                   value={employeeDetails.DOB}
                   onChange={handleInputChange}
-                  max={new Date().toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   className="mt-1 px-3 pr-10 block w-full h-10 sm:h-11 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 text-sm sm:text-base transition-colors duration-200 hover:border-gray-400"
                   required
                 />
@@ -737,7 +742,7 @@ const EmployeeRegistration: React.FC = () => {
                   name="date_of_joining"
                   value={employeeDetails.date_of_joining}
                   onChange={handleInputChange}
-                  max={new Date().toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   className="mt-1 px-3 pr-10 block w-full h-10 sm:h-11 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 text-sm sm:text-base transition-colors duration-200 hover:border-gray-400"
                   required
                 />

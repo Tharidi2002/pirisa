@@ -1,11 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { TranslatableOption, TranslatableText } from "../../components/languages/TranslatableText";
+import {
+  TranslatableOption,
+  TranslatableText,
+} from "../../components/languages/TranslatableText";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileImageEditor from "../../components/ProfileImageEditor";
-import { isEmail, isNonEmpty, isNonNegativeNumber, isPhone } from "../../utils/validation";
+import {
+  isEmail,
+  isNonEmpty,
+  isNonNegativeNumber,
+  isPhone,
+} from "../../utils/validation";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -98,33 +106,37 @@ const EmployeeUpdate: React.FC = () => {
       const fetchData = async () => {
         setIsLoading(true);
         setError(null);
-        await fetchEmployeeDetails();
+        try {
+          await Promise.all([fetchEmployeeDetails(), fetchDepartments()]);
+        } catch (err) {
+          console.error("Error in fetchData:", err);
+        } finally {
+          setIsLoading(false);
+        }
       };
-      void fetchData().catch((err) => {
-        console.error("Error in fetchData:", err);
-      });
+      void fetchData();
     }
   }, [token, id]);
 
   useEffect(() => {
-    if (employeeDetails.dptId && token) {
-      void fetchDepartments().catch((err) => {
-        console.error("Error in fetchDepartments:", err);
-      });
+    if (employeeDetails.dptId && departments.length > 0) {
+      const selectedDept = departments.find(
+        (dept) => dept.id === employeeDetails.dptId,
+      );
+      if (selectedDept && selectedDept.designationList) {
+        setDesignations(selectedDept.designationList);
+      }
     }
-  }, [employeeDetails.dptId, token]);
+  }, [employeeDetails.dptId, departments]);
 
   const fetchEmployeeDetails = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/employee/emp/${id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`http://localhost:8080/employee/emp/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -142,7 +154,10 @@ const EmployeeUpdate: React.FC = () => {
             basic_salary: emp.basic_salary || 0,
             email: emp.email || "",
             gender: emp.gender || "",
-            DOB: (emp.DOB || emp.dob) ? String(emp.DOB || emp.dob).split("T")[0] : "",
+            DOB:
+              emp.DOB || emp.dob
+                ? String(emp.DOB || emp.dob).split("T")[0]
+                : "",
             phone: emp.phone || "",
             address: emp.address || "",
             NIC: emp.NIC || emp.nic || "",
@@ -156,7 +171,7 @@ const EmployeeUpdate: React.FC = () => {
         } else {
           setError(
             data.resultDesc ||
-              "Employee data not found in response. Please check the employee ID."
+              "Employee data not found in response. Please check the employee ID.",
           );
         }
       } else {
@@ -164,17 +179,15 @@ const EmployeeUpdate: React.FC = () => {
         console.error(
           "Failed to fetch employee details:",
           response.status,
-          errorText
+          errorText,
         );
         setError(
-          `Failed to fetch employee details: ${response.status} - ${errorText}`
+          `Failed to fetch employee details: ${response.status} - ${errorText}`,
         );
       }
     } catch (error) {
       console.error("Error fetching employee details:", error);
       setError("Error fetching employee details. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -194,22 +207,13 @@ const EmployeeUpdate: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        //("Departments API Response:", JSON.stringify(data, null, 2));
         if (data.DepartmentList && Array.isArray(data.DepartmentList)) {
           setDepartments(data.DepartmentList);
-          const selectedDept = data.DepartmentList.find(
-            (dept: Department) => dept.id === employeeDetails.dptId
-          );
-          if (selectedDept) {
-            setDesignations(selectedDept.designationList || []);
-          } else {
-            setDesignations([]);
-          }
         } else {
           setError("Invalid department data received.");
         }
@@ -218,10 +222,10 @@ const EmployeeUpdate: React.FC = () => {
         console.error(
           "Failed to fetch departments:",
           response.status,
-          errorText
+          errorText,
         );
         setError(
-          `Failed to fetch departments: ${response.status} - ${errorText}`
+          `Failed to fetch departments: ${response.status} - ${errorText}`,
         );
       }
     } catch (error) {
@@ -251,7 +255,7 @@ const EmployeeUpdate: React.FC = () => {
   const handleDesignationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const designationId = parseInt(e.target.value);
     const selectedDesignation = designations.find(
-      (desig) => desig.id === designationId
+      (desig) => desig.id === designationId,
     );
 
     if (selectedDesignation) {
@@ -264,7 +268,7 @@ const EmployeeUpdate: React.FC = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setEmployeeDetails((prev) => ({
@@ -371,11 +375,13 @@ const EmployeeUpdate: React.FC = () => {
       formattedDOB = formatDateOrThrow(employeeDetails.DOB, "Date of Birth");
       formattedJoiningDate = formatDateOrThrow(
         employeeDetails.date_of_joining,
-        "Date of Joining"
+        "Date of Joining",
       );
     } catch (err) {
       console.error("Date validation failed:", err);
-      toast.error("Please select valid dates for Date of Birth and Date of Joining");
+      toast.error(
+        "Please select valid dates for Date of Birth and Date of Joining",
+      );
       setIsUpdating(false);
       return;
     }
@@ -388,15 +394,17 @@ const EmployeeUpdate: React.FC = () => {
       basic_salary: Number(employeeDetails.basic_salary),
       email: employeeDetails.email.trim(),
       gender: employeeDetails.gender,
-      DOB: formattedDOB,
+      dob: formattedDOB,
       phone: employeeDetails.phone.trim(),
       address: employeeDetails.address.trim(),
-      NIC: employeeDetails.NIC.trim(),
+      nic: employeeDetails.NIC.trim(),
       date_of_joining: formattedJoiningDate,
       cmpId: Number(cmpId),
       dptId: Number(employeeDetails.dptId),
       designationId: Number(employeeDetails.designationId),
     };
+
+    console.log("Update payload:", payload);
 
     //console.log("Payload being sent:", payload); // Log the payload to verify
 
@@ -418,7 +426,9 @@ const EmployeeUpdate: React.FC = () => {
 
       const contentType = response.headers.get("content-type") || "";
       const isJson = contentType.includes("application/json");
-      const data: unknown = isJson ? await response.json() : await response.text();
+      const data: unknown = isJson
+        ? await response.json()
+        : await response.text();
 
       if (!response.ok) {
         console.error("Update request failed:", response.status, data);
@@ -430,7 +440,8 @@ const EmployeeUpdate: React.FC = () => {
         toast.error(
           typeof data === "string"
             ? `Failed to update employee details: ${response.status}`
-            : errDesc || `Failed to update employee details: ${response.status}`
+            : errDesc ||
+                `Failed to update employee details: ${response.status}`,
         );
         return;
       }
@@ -445,10 +456,10 @@ const EmployeeUpdate: React.FC = () => {
       if (resultCode === 100) {
         //console.log("Success! Showing toast and navigating...");
 
-        const message = hasProfileImage 
+        const message = hasProfileImage
           ? "Employee details and profile image updated successfully!"
           : "Employee details updated successfully!";
-        
+
         toast.success(message);
         navigate("/employee/all");
       } else {
@@ -456,9 +467,7 @@ const EmployeeUpdate: React.FC = () => {
           resultCode,
           resultDesc,
         });
-        toast.error(
-          resultDesc || "Failed to update employee details"
-        );
+        toast.error(resultDesc || "Failed to update employee details");
       }
     } catch (error) {
       console.error("Error updating employee details:", error);
@@ -494,7 +503,13 @@ const EmployeeUpdate: React.FC = () => {
           onClick={() => {
             setError(null);
             setIsLoading(true);
-            fetchEmployeeDetails();
+            Promise.all([fetchEmployeeDetails(), fetchDepartments()])
+              .catch((err) => {
+                console.error("Error in retry:", err);
+              })
+              .finally(() => {
+                setIsLoading(false);
+              });
           }}
         >
           Retry
@@ -516,7 +531,11 @@ const EmployeeUpdate: React.FC = () => {
             employeeId={id || ""}
             token={token || ""}
             onImageChange={(hasImage) => setHasProfileImage(hasImage)}
-            gender={employeeDetails.gender?.toLowerCase() === 'female' ? 'female' : 'male'}
+            gender={
+              employeeDetails.gender?.toLowerCase() === "female"
+                ? "female"
+                : "male"
+            }
             firstName={employeeDetails.first_name}
           />
         </div>
