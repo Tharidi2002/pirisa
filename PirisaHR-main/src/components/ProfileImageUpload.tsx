@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import ReactCrop, { Crop, PixelRatio } from 'react-image-crop';
+import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import ImageCompressor, { CompressedImage } from '../utils/ImageCompressor';
 
@@ -26,7 +26,6 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const [crop, setCrop] = useState<Crop>();
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     return () => {
@@ -120,8 +119,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   // Helper function to get cropped image
   const getCroppedImg = (
     image: HTMLImageElement,
-    crop: Crop,
-    fileName: string
+    crop: Crop
   ): Promise<Blob> => {
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
@@ -147,7 +145,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       crop.height || 0
     );
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (!blob) {
           reject(new Error('Canvas is empty'));
@@ -194,7 +192,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     if (!image || !crop) return;
 
     try {
-      const croppedBlob = await getCroppedImg(image, crop, 'cropped-image.jpg');
+      const croppedBlob = await getCroppedImg(image, crop);
       const croppedFile = new File([croppedBlob], 'cropped-image.jpg', { type: 'image/jpeg' });
 
       // Compress the cropped image

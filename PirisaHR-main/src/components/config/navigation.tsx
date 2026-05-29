@@ -66,6 +66,16 @@ export const navItems: NavItem[] = [
         path: "/attendance/mark", 
         label: "Mark Attendance",
       },
+      {
+        id: "bulk-attendance",
+        path: "/attendance/bulk",
+        label: "Bulk Attendance",
+      },
+      {
+        id: "attendance-report",
+        path: "/attendance/report",
+        label: "Attendance Report",
+      },
     ],
   },
   {

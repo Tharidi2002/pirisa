@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AttendanceContent from "./pages/Attendance/AttendanceContent";
 import DepartmentManager from "./pages/CMPProfile/DepartmentManager";
 import AttendanceMark from "./pages/Attendance/AttendanceMark";
+import BulkAttendancePage from "./pages/Attendance/BulkAttendancePage";
+import AttendanceReportPage from "./pages/Attendance/AttendanceReportPage";
 import SalaryStatus from "./pages/PayRole/SalaryStatus";
 import SalaryMakePage from "./pages/PayRole/SalaryMakePage";
 import Invoice from "./pages/PayRole/PayslipList";
@@ -59,6 +61,8 @@ function App() {
                   <Route path="list" element={<AttendanceContent />} />
                   <Route path="calendar" element={<MonthlyCalendarPage />} />
                   <Route path="mark" element={<AttendanceMark />} />
+                  <Route path="bulk" element={<BulkAttendancePage />} />
+                  <Route path="report" element={<AttendanceReportPage />} />
                 </Route>
                 <Route path="payrole">
                   <Route index element={<Navigate to="salaryList" replace />} />

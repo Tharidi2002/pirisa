@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.Locale;
@@ -18,7 +18,9 @@ import java.util.Locale;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "attendance")
+@Table(name = "attendance", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"emp_id", "attendance_date"})
+})
 public class Attendance implements Serializable {
 
     @Id
@@ -26,10 +28,15 @@ public class Attendance implements Serializable {
     @Column(name = "atdnc_id")
     private long id;
 
+    // Attendance date allows recording backdated entries from the employee's joining date.
+    @Column(name = "attendance_date")
+    private LocalDate attendanceDate;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime endedAt;
 
+    // Employee reference used for daily uniqueness and filtering.
     @Column(name = "emp_id")
     private long empId;
 
@@ -40,6 +47,13 @@ public class Attendance implements Serializable {
 
     private String attendance_status;
 
+    // Source of the attendance record for auditing: AUTO_CLOCK, MANUAL_HR, EXCEL_IMPORT, etc.
+    @Column(name = "entry_type")
+    private String entryType;
+
+    // User or system identifier that created/modified this attendance entry.
+    @Column(name = "created_by")
+    private String createdBy;
 
     @Column(name = "day_name")
     private String dayName;

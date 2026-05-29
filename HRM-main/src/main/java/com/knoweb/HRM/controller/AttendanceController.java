@@ -2,157 +2,159 @@ package com.knoweb.HRM.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.knoweb.HRM.model.Attendance;
-import com.knoweb.HRM.model.Employee;
 import com.knoweb.HRM.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/attendance")
+@RequestMapping("/api/attendance")
 public class AttendanceController {
 
     @Autowired
     private AttendanceService attendanceService;
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @PostMapping(value = "/add_attendance", produces = {"application/json"})
-    public ResponseEntity<?> addAttendance(@RequestBody Attendance attendance) {
+    @PostMapping(value = "/bulk-mark", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> bulkMarkAttendance(@RequestBody List<Attendance> attendanceList) {
         try {
-            Attendance createdAttendance = attendanceService.createAttendance(attendance);
-            if (createdAttendance != null) {
-                Map<String, Object> attendanceResponse = new HashMap<>();
-                attendanceResponse.put("resultCode", 100);
-                attendanceResponse.put("resultDesc", "Successfully Saved");
-
-                Map<String, Object> responseBody = new HashMap<>();
-                responseBody.put("Add_Att", createdAttendance);
-                responseBody.put("response", attendanceResponse);
-
-                return new ResponseEntity<>(responseBody, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return handleException(e);
-        }
-    }
-
-
-    @GetMapping(value = "/employee/{empId}", produces = "application/json")
-    public ResponseEntity<?> getAttendanceByEmployeeId(@PathVariable long empId) {
-        try {
-            List<Attendance> attendances = attendanceService.getAttendanceByEmployeeId(empId);
-            if (attendances.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No attendance found for this employee ID"));
-            }
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("resultCode", 100);
-            response.put("resultDesc", "Successful");
-            response.put("AttendanceList", attendances);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
+            List<Attendance> savedEntries = attendanceService.markBulkAttendance(attendanceList);
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("resultCode", 100);
+            responseBody.put("resultDesc", "Bulk attendance saved successfully");
+            responseBody.put("attendanceList", savedEntries);
+            return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", "An error occurred while fetching employees"));
+                    .body(Collections.singletonMap("error", "Failed to save bulk attendance"));
         }
     }
 
-
-// get attendance by employee id and month
-
-    @GetMapping(value = "/employee/{empId}/month/{month}", produces = "application/json")
-    public ResponseEntity<?> getAttendanceByEmployeeAndMonth(
-            @PathVariable long empId,
-            @PathVariable int month) {
-        List<Attendance> list = attendanceService.getAttendanceByEmployeeIdAndMonth(empId, month);
-
-        if (list.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.singletonMap(
-                            "message",
-                            "No attendance found for employee " + empId + " in month " + month
-                    ));
-        }
-        Map<String, Object> resp = new HashMap<>();
-        resp.put("resultCode", 100);
-        resp.put("resultDesc", "Successful");
-        resp.put("AttendanceList", list);
-        return ResponseEntity.ok(resp);
-    }
-
-
-
-
-//
-//    @GetMapping(value = "/company/{cmpId}", produces = "application/json")
-//    public ResponseEntity<?> getAttendanceByCompanyId(@PathVariable long cmpId) {
-//        try {
-//            List<Attendance> attendances = attendanceService.getAttendanceByCompanyId(cmpId);
-//            if (attendances.isEmpty()) {
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                        .body(Collections.singletonMap("message", "No attendance found for this Company ID"));
-//            }
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("resultCode", 100);
-//            response.put("resultDesc", "Successful");
-//            response.put("AttendanceList", attendances);
-//
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(Collections.singletonMap("error", "An error occurred while fetching employees"));
-//        }
-//    }
-
-
-    @DeleteMapping("/{atdnc_id}")
-    public ResponseEntity<?> deleteAttendance(@PathVariable Long atdnc_id) {
+    @PostMapping(value = "/import-excel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> importAttendanceFromExcel(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "createdBy", required = false) String createdBy) {
         try {
-            attendanceService.deleteAttendance(atdnc_id);
-
-            Map<String, Object> attendanceResponse = new HashMap<>();
-            attendanceResponse.put("resultCode", 100);
-            attendanceResponse.put("resultDesc", "Successfully Deleted");
-
+            List<Attendance> importedRecords = attendanceService.importAttendanceFromExcel(file, createdBy);
             Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("id", atdnc_id);
-            responseBody.put("response", attendanceResponse);
-
-            return new ResponseEntity<>(responseBody, HttpStatus.OK);
-        } catch (Exception e) {
-            return handleException(e);
+            responseBody.put("resultCode", 100);
+            responseBody.put("resultDesc", "Attendance imported successfully");
+            responseBody.put("importedCount", importedRecords.size());
+            responseBody.put("attendanceList", importedRecords);
+            return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", "Invalid Excel file format"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to import attendance from Excel"));
         }
     }
 
+    @GetMapping(value = "/download-excel")
+    public ResponseEntity<?> downloadAttendanceExcel(
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "department", required = false) Long departmentId,
+            @RequestParam(value = "empId", required = false) Long empId,
+            @RequestParam(value = "startDate", required = false) String startDateText,
+            @RequestParam(value = "endDate", required = false) String endDateText) {
+        try {
+            LocalDate startDate = parseDateOrNull(startDateText);
+            LocalDate endDate = parseDateOrNull(endDateText);
+            if (type != null && startDate != null) {
+                LocalDate[] dateRange = buildDateRange(type, startDate);
+                startDate = dateRange[0];
+                endDate = dateRange[1];
+            }
+            byte[] excelBytes = attendanceService.exportAttendanceToExcel(type, departmentId, empId, startDate, endDate);
+            String filename = buildExcelFilename(type, departmentId, empId, startDate, endDate);
+            ByteArrayResource resource = new ByteArrayResource(excelBytes);
 
-    @PutMapping(value = "/update/{atdnc_id}", produces = {"application/json"})
-    public ResponseEntity<?> updateAttendance(@PathVariable Long atdnc_id, @RequestBody Attendance updateAttendance) {
-
-        Attendance attendance = attendanceService.updateAttendance(atdnc_id, updateAttendance);
-        if (attendance != null) {
-            Map<String, Object> attendanceResponse = new HashMap<>();
-            attendanceResponse.put("resultCode", 100);
-            attendanceResponse.put("resultDesc", "Successfully Updated");
-
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("Attendance", attendance);
-            responseBody.put("response", attendanceResponse);
-
-            return new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentLength(excelBytes.length)
+                    .body(resource);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid date format. Use yyyy-MM-dd."));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Unable to generate Excel report"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Unexpected error while downloading attendance report"));
         }
+    }
+
+    private LocalDate parseDateOrNull(String dateText) {
+        if (dateText == null || dateText.isBlank()) {
+            return null;
+        }
+        return LocalDate.parse(dateText, DATE_FORMATTER);
+    }
+
+    private LocalDate[] buildDateRange(String type, LocalDate anchorDate) {
+        if (type == null) {
+            return new LocalDate[]{anchorDate, anchorDate};
+        }
+        switch (type.trim().toUpperCase()) {
+            case "DAILY":
+                return new LocalDate[]{anchorDate, anchorDate};
+            case "WEEKLY":
+                return new LocalDate[]{anchorDate, anchorDate.plusDays(6)};
+            case "MONTHLY":
+                return new LocalDate[]{anchorDate.withDayOfMonth(1), anchorDate.withDayOfMonth(anchorDate.lengthOfMonth())};
+            case "YEARLY":
+                return new LocalDate[]{anchorDate.withDayOfYear(1), anchorDate.withDayOfYear(anchorDate.lengthOfYear())};
+            default:
+                return new LocalDate[]{anchorDate, anchorDate};
+        }
+    }
+
+    private String buildExcelFilename(String type, Long departmentId, Long empId, LocalDate startDate, LocalDate endDate) {
+        StringBuilder name = new StringBuilder("attendance-report");
+        if (type != null && !type.isBlank()) {
+            name.append("-").append(type.toLowerCase());
+        }
+        if (departmentId != null) {
+            name.append("-dept-").append(departmentId);
+        }
+        if (empId != null) {
+            name.append("-emp-").append(empId);
+        }
+        if (startDate != null) {
+            name.append("-").append(startDate.format(DATE_FORMATTER));
+        }
+        if (endDate != null && !endDate.equals(startDate)) {
+            name.append("-to-").append(endDate.format(DATE_FORMATTER));
+        }
+        name.append(".xlsx");
+        return name.toString();
     }
 
     @ExceptionHandler(Exception.class)

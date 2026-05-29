@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Table from "../../components/table/Table";
 import { User } from "lucide-react";
+import { attendanceService } from "../../api/services/attendanceService";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -30,11 +31,14 @@ interface ApiResponse {
 }
 
 interface AttendanceRequest {
+  attendanceDate: string;
   startedAt: string;
   endedAt: string | null;
   empId: number;
   working_status: "On-Site" | "Online";
   attendance_status: string;
+  entryType: string;
+  createdBy: string;
 }
 
 interface EmployeeOnLeave {
@@ -250,7 +254,7 @@ const AttendanceMarkTable = () => {
   const handleAttendanceStatusChange = (
     empId: number,
     status: "On-Site" | "Online",
-    event: React.MouseEvent
+    event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     event.stopPropagation();
     setAttendanceStatus((prev) => ({
@@ -283,29 +287,17 @@ const AttendanceMarkTable = () => {
                 }
 
                 const attendanceData: AttendanceRequest = {
+                  attendanceDate: new Date().toISOString().split("T")[0],
                   startedAt: getLocalTimeISO(),
                   endedAt: null,
                   empId: empId,
                   working_status: status,
                   attendance_status: "ACTIVE",
+                  entryType: "MANUAL_HR",
+                  createdBy: localStorage.getItem("userName") || "HR Admin",
                 };
 
-                const response = await fetch(
-                  "http://localhost:8080/attendance/add_attendance",
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(attendanceData),
-                  }
-                );
-
-                if (!response.ok) {
-                  throw new Error("Failed to mark attendance");
-                }
-
+                await attendanceService.bulkMarkAttendance([attendanceData]);
                 toast.success("Attendance marked successfully!");
                 setLoading(true);
                 fetchEmployees();
@@ -335,74 +327,6 @@ const AttendanceMarkTable = () => {
     );
   };
 
-  const handleEndDate = async (
-    attendanceId: number,
-    event: React.MouseEvent
-  ) => {
-    event.stopPropagation();
-
-    toast.info(
-      <div>
-        <p>Are you sure you want to end the attendance?</p>
-        <div className="flex justify-end mt-2">
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mr-2"
-            onClick={async () => {
-              toast.dismiss();
-              try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                  throw new Error("No token found");
-                }
-
-                const updateData = {
-                  endedAt: getLocalTimeISO(),
-                };
-
-                const response = await fetch(
-                  `http://localhost:8080/attendance/update/${attendanceId}`,
-                  {
-                    method: "PUT",
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updateData),
-                  }
-                );
-
-                if (!response.ok) {
-                  throw new Error("Failed to update end time");
-                }
-
-                toast.success("End time recorded successfully!");
-                setLoading(true);
-                fetchEmployees();
-              } catch (err) {
-                toast.error(
-                  err instanceof Error
-                    ? err.message
-                    : "Failed to update end time"
-                );
-              }
-            }}
-          >
-            Confirm
-          </button>
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            onClick={() => toast.dismiss()}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      {
-        autoClose: false,
-        closeButton: false,
-      }
-    );
-  };
 
   const handleCancelLeaveAndMarkAttendance = async (
     employee: Employee,
@@ -835,7 +759,7 @@ const AttendanceMarkTable = () => {
               handleAttendanceStatusChange(
                 item.id,
                 e.target.value as "On-Site" | "Online",
-                e as unknown as React.MouseEvent
+                e
               )
             }
             onClick={(e) => e.stopPropagation()}
@@ -852,13 +776,7 @@ const AttendanceMarkTable = () => {
       render: (item: Employee) => {
         const activeAttendance = hasActiveAttendance(item);
         return activeAttendance ? (
-          <button
-            onClick={(e) => handleEndDate(activeAttendance.id, e)}
-            className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"
-            aria-label="End Date"
-          >
-            <span className="text-xs text-red-600">End Date</span>
-          </button>
+          <span className="text-xs font-medium text-emerald-600">Working On</span>
         ) : (
           <button
             onClick={(e) => handleMarkAttendance(item.id, e)}
