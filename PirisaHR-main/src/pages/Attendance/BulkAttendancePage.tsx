@@ -4,6 +4,25 @@ import { attendanceService, AttendanceRowPayload } from "../../api/services/atte
 
 const defaultStartTime = "09:00";
 const defaultEndTime = "17:00";
+const quickTimeOptions = [
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+];
 
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LEAVE";
 type WorkingStatus = "ON_SITE" | "ONLINE" | "REMOTE";
@@ -23,6 +42,32 @@ interface AttendanceRow {
   endedAt: string;
   entryType: string;
   createdBy: string;
+  photoUrl?: string;
+}
+
+interface AttendedRow {
+  empId: number;
+  firstName: string;
+  lastName: string;
+  epfNo?: string;
+  departmentId: number;
+  departmentName: string;
+  clockInTime: string;
+  status: string;
+  attendanceDate: string;
+  attendanceId: number;
+  photoUrl?: string;
+}
+
+interface ExcludedRow {
+  id: number;
+  firstName: string;
+  lastName: string;
+  epfNo?: string;
+  joinDate: string;
+  departmentId: number;
+  departmentName: string;
+  photoUrl?: string;
 }
 
 const getTodayDate = () => {
@@ -32,7 +77,9 @@ const getTodayDate = () => {
 
 const BulkAttendancePage = () => {
   const navigate = useNavigate();
-  const [rows, setRows] = useState<AttendanceRow[]>([]);
+  const [pendingRows, setPendingRows] = useState<AttendanceRow[]>([]);
+  const [attendedRows, setAttendedRows] = useState<AttendedRow[]>([]);
+  const [excludedRows, setExcludedRows] = useState<ExcludedRow[]>([]);
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
@@ -40,12 +87,17 @@ const BulkAttendancePage = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showAttended, setShowAttended] = useState<boolean>(false);
   const [showExcluded, setShowExcluded] = useState<boolean>(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
+  const [failedPhotoLoads, setFailedPhotoLoads] = useState<Record<number, boolean>>({});
 
   const currentUser = localStorage.getItem("userName") || "HR Admin";
   const companyId = localStorage.getItem("cmpnyId");
 
-  const loadEmployees = useCallback(async () => {
+  const isToday = selectedDate === getTodayDate();
+
+  const loadBulkAttendanceData = useCallback(async () => {
     if (!companyId) {
       navigate("/login");
       return;
@@ -54,15 +106,20 @@ const BulkAttendancePage = () => {
     setLoading(true);
     setError(null);
     try {
-      const employees = await attendanceService.fetchEmployeesByCompany(companyId);
-      const parsedRows: AttendanceRow[] = employees.map((employee) => ({
+      const data = await attendanceService.fetchBulkAttendanceData(
+        companyId,
+        selectedDate,
+        selectedDepartment === 0 ? undefined : selectedDepartment
+      );
+
+      const parsedPendingRows: AttendanceRow[] = data.pendingEmployees.map((employee) => ({
         id: employee.id,
         firstName: employee.firstName,
         lastName: employee.lastName,
         epfNo: employee.epfNo,
         joinDate: employee.dateOfJoining ?? selectedDate,
-        departmentId: employee.department?.id ?? 0,
-        departmentName: employee.department?.dpt_name ?? "Unassigned",
+        departmentId: employee.departmentId ?? 0,
+        departmentName: employee.departmentName ?? "Unassigned",
         attendanceDate: selectedDate,
         attendance_status: "PRESENT",
         working_status: "ON_SITE",
@@ -70,86 +127,134 @@ const BulkAttendancePage = () => {
         endedAt: defaultEndTime,
         entryType: "MANUAL_HR",
         createdBy: currentUser,
+        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${employee.id}`,
       }));
 
-      setRows(parsedRows);
+      const parsedAttendedRows: AttendedRow[] = data.attendedEmployees.map((record) => ({
+        empId: record.empId,
+        firstName: record.firstName,
+        lastName: record.lastName,
+        epfNo: record.epfNo,
+        departmentId: record.departmentId ?? 0,
+        departmentName: record.departmentName ?? "Unassigned",
+        clockInTime: record.clockInTime,
+        status: record.status,
+        attendanceDate: record.attendanceDate,
+        attendanceId: record.attendanceId,
+        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${record.empId}`,
+      }));
+
+      const parsedExcludedRows: ExcludedRow[] = data.excludedEmployees.map((employee) => ({
+        id: employee.id,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        epfNo: employee.epfNo,
+        joinDate: employee.dateOfJoining ?? selectedDate,
+        departmentId: employee.departmentId ?? 0,
+        departmentName: employee.departmentName ?? "Unassigned",
+        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${employee.id}`,
+      }));
+
+      setPendingRows(parsedPendingRows);
+      setAttendedRows(parsedAttendedRows);
+      setExcludedRows(parsedExcludedRows);
+      setSelectedRowIds(parsedPendingRows.map((row) => row.id));
+
       const uniqueDepartments = Array.from(
         new Map(
-          parsedRows.map((row) => [row.departmentId, row.departmentName])
+          [...parsedPendingRows, ...parsedAttendedRows, ...parsedExcludedRows].map((row) => [row.departmentId, row.departmentName])
         ).entries()
       ).map(([id, name]) => ({ id, name }));
+
       setDepartments(uniqueDepartments.filter((dept) => dept.id !== 0));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load employees");
+      setError(err instanceof Error ? err.message : "Failed to load attendance data");
     } finally {
       setLoading(false);
     }
-  }, [companyId, currentUser, navigate]);
+  }, [companyId, currentUser, navigate, selectedDate, selectedDepartment]);
 
   useEffect(() => {
-    loadEmployees();
-  }, [loadEmployees]);
+    loadBulkAttendanceData();
+  }, [loadBulkAttendanceData]);
 
-  useEffect(() => {
-    setRows((prevRows) =>
-      prevRows.map((row) => ({
-        ...row,
-        attendanceDate: selectedDate,
-        startedAt: row.startedAt || defaultStartTime,
-        endedAt: row.endedAt || defaultEndTime,
-      }))
-    );
-  }, [selectedDate]);
-
-  const filteredRows = useMemo(() => {
-    const selectedRows = rows.filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment);
-    return selectedRows.filter((row) => row.joinDate <= selectedDate);
-  }, [rows, selectedDepartment, selectedDate]);
-
-  const excludedRows = useMemo(
-    () =>
-      rows.filter(
-        (row) => (selectedDepartment === 0 || row.departmentId === selectedDepartment) && row.joinDate > selectedDate
-      ),
-    [rows, selectedDepartment, selectedDate]
+  const filteredRows = useMemo(
+    () => pendingRows.filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment),
+    [pendingRows, selectedDepartment]
   );
 
-  const excludedEmployeeCount = excludedRows.length;
+  const selectedRows = useMemo(
+    () => pendingRows.filter((row) => selectedRowIds.includes(row.id)),
+    [pendingRows, selectedRowIds]
+  );
+
+  const excludedEmployeeCount = useMemo(
+    () => excludedRows.filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment).length,
+    [excludedRows, selectedDepartment]
+  );
 
   const excludedByDepartment = useMemo(() => {
-    return excludedRows.reduce<Record<string, AttendanceRow[]>>((groups, row) => {
-      const key = row.departmentName || "Unassigned";
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(row);
-      return groups;
-    }, {});
-  }, [excludedRows]);
+    return excludedRows
+      .filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment)
+      .reduce<Record<string, ExcludedRow[]>>((groups, row) => {
+        const key = row.departmentName || "Unassigned";
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(row);
+        return groups;
+      }, {});
+  }, [excludedRows, selectedDepartment]);
+
+  const allFilteredSelected = useMemo(
+    () => filteredRows.length > 0 && filteredRows.every((row) => selectedRowIds.includes(row.id)),
+    [filteredRows, selectedRowIds]
+  );
 
   const minJoinDate = useMemo(() => {
-    const companyRows = rows.filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment);
+    const companyRows = [...pendingRows, ...excludedRows].filter((row) => selectedDepartment === 0 || row.departmentId === selectedDepartment);
     const dates = companyRows.map((row) => row.joinDate).filter(Boolean);
     return dates.length > 0 ? dates.reduce((min, current) => (current < min ? current : min)) : selectedDate;
-  }, [rows, selectedDepartment]);
+  }, [pendingRows, excludedRows, selectedDepartment, selectedDate]);
+
+  const todayAttendanceNote = isToday
+    ? "Today's attendance entry is intended for current arrivals only. Already marked attendees are shown below and cannot be duplicated here. If someone leaves early, record the actual attendance and time; no extra reason needs to be added in this form."
+    : "Select the date and department, then mark attendance for the chosen day.";
 
   const handleRowChange = (id: number, next: Partial<AttendanceRow>) => {
-    setRows((prevRows) => prevRows.map((row) => (row.id === id ? { ...row, ...next } : row)));
+    setPendingRows((prevRows) => prevRows.map((row) => (row.id === id ? { ...row, ...next } : row)));
+  };
+
+  const toggleRowSelection = (id: number) => {
+    setSelectedRowIds((prevIds) =>
+      prevIds.includes(id) ? prevIds.filter((rowId) => rowId !== id) : [...prevIds, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedRowIds((prevIds) => prevIds.filter((id) => !filteredRows.some((row) => row.id === id)));
+    } else {
+      setSelectedRowIds((prevIds) => [
+        ...new Set([...prevIds, ...filteredRows.map((row) => row.id)]),
+      ]);
+    }
+  };
+
+  const handlePhotoError = (id: number) => {
+    setFailedPhotoLoads((prev) => ({ ...prev, [id]: true }));
   };
 
   const buildPayload = (): AttendanceRowPayload[] => {
-    return filteredRows.map((row) => {
+    return selectedRows.map((row) => {
       const startedAt = row.attendance_status === "PRESENT" ? `${row.attendanceDate}T${row.startedAt}:00` : null;
-      const endedAt = row.attendance_status === "PRESENT" ? `${row.attendanceDate}T${row.endedAt}:00` : null;
+      const endedAt = !isToday && row.attendance_status === "PRESENT" ? `${row.attendanceDate}T${row.endedAt}:00` : null;
       return {
         empId: row.id,
         attendanceDate: row.attendanceDate,
         startedAt,
         endedAt,
-        working_status:
-          row.attendance_status === "PRESENT"
-            ? row.working_status
-            : row.attendance_status,
+        working_status: row.working_status,
         attendance_status: row.attendance_status,
         entryType: row.entryType,
         createdBy: row.createdBy,
@@ -170,12 +275,13 @@ const BulkAttendancePage = () => {
     try {
       const payload = buildPayload();
       if (payload.length === 0) {
-        setError("No employees selected for attendance.");
+        setError("No selected employees to save.");
         return;
       }
 
       await attendanceService.bulkMarkAttendance(payload);
       setSuccessMessage("Attendance saved successfully.");
+      await loadBulkAttendanceData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save attendance.");
     } finally {
@@ -281,10 +387,23 @@ const BulkAttendancePage = () => {
         )}
       </div>
 
+      <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sky-800">
+        <div className="font-semibold">{isToday ? "Today’s Attendance Guidance" : "Attendance Guidance"}</div>
+        <div className="mt-2 text-sm leading-6">{todayAttendanceNote}</div>
+      </div>
+
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                />
+              </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Employee
               </th>
@@ -300,17 +419,41 @@ const BulkAttendancePage = () => {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Start Time
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                End Time
-              </th>
+              {!isToday && (
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  End Time
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredRows.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm text-gray-700">
-                  <div className="font-medium">{`${row.firstName} ${row.lastName}`}</div>
-                  <div className="text-xs text-gray-500">{row.epfNo || "-"}</div>
+                  <input
+                    type="checkbox"
+                    checked={selectedRowIds.includes(row.id)}
+                    onChange={() => toggleRowSelection(row.id)}
+                    className="mr-3 h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <div className="inline-flex items-center gap-3">
+                    {row.photoUrl && !failedPhotoLoads[row.id] ? (
+                      <img
+                        src={row.photoUrl}
+                        alt={`${row.firstName} ${row.lastName}`}
+                        onError={() => handlePhotoError(row.id)}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                        {row.firstName?.charAt(0) || "?"}{row.lastName?.charAt(0) || ""}
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-medium">{`${row.firstName} ${row.lastName}`}</div>
+                      <div className="text-xs text-gray-500">{row.epfNo || "-"}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">{row.departmentName}</td>
                 <td className="px-4 py-3 text-sm text-gray-700">
@@ -345,38 +488,118 @@ const BulkAttendancePage = () => {
                   </select>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
-                  <input
-                    type="time"
-                    value={row.startedAt}
-                    onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
-                    disabled={row.attendance_status !== "PRESENT"}
-                    className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <input
+                      type="time"
+                      step="900"
+                      value={row.startedAt}
+                      onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
+                      disabled={row.attendance_status !== "PRESENT"}
+                      className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    />
+                    <select
+                      value={row.startedAt}
+                      onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
+                      disabled={row.attendance_status !== "PRESENT"}
+                      className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    >
+                      <option value="">Quick select</option>
+                      {quickTimeOptions.map((timeOption) => (
+                        <option key={timeOption} value={timeOption}>
+                          {timeOption}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  <input
-                    type="time"
-                    value={row.endedAt}
-                    onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
-                    disabled={row.attendance_status !== "PRESENT"}
-                    className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                  />
-                </td>
+                {!isToday && (
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    <input
+                      type="time"
+                      step="900"
+                      value={row.endedAt}
+                      onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
+                      disabled={row.attendance_status !== "PRESENT"}
+                      className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Already Attended Employees</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              These employees already have a record for {isToday ? "today" : selectedDate}.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAttended((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+          >
+            {showAttended ? "Hide attended" : "Show attended"}
+          </button>
+        </div>
+        {showAttended && (
+          <div className="mt-4 overflow-x-auto">
+            {attendedRows.length > 0 ? (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Employee ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Department
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Clock-In Time
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {attendedRows.map((record) => (
+                    <tr key={record.attendanceId} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-700">{record.empId}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{`${record.firstName} ${record.lastName}`}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{record.departmentName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{record.clockInTime || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{record.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                No already attended employees found for this date.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-gray-600">
-          {filteredRows.length} employee{filteredRows.length === 1 ? "" : "s"} ready for attendance.
+          {selectedRowIds.length} selected of {filteredRows.length} employee{filteredRows.length === 1 ? "" : "s"} shown.
         </div>
         <button
           type="button"
           onClick={handleSaveAttendance}
-          disabled={saving || loading}
+          disabled={saving || loading || selectedRowIds.length === 0}
           className="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+          title={selectedRowIds.length === 0 ? "Select at least one employee to save attendance" : "Save selected attendance records"}
         >
           {saving ? "Saving..." : "Save Attendance"}
         </button>

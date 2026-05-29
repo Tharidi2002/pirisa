@@ -24,6 +24,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import com.knoweb.HRM.dto.AttendanceAttendedEmployeeDTO;
+import com.knoweb.HRM.dto.AttendanceExcludedEmployeeDTO;
+import com.knoweb.HRM.dto.AttendancePendingEmployeeDTO;
+import com.knoweb.HRM.dto.BulkAttendanceDataDTO;
 
 @Service
 public class AttendanceService {
@@ -37,6 +43,7 @@ public class AttendanceService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter TIME_ONLY_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public Attendance createAttendance(Attendance attendance) {
         validateAttendanceJoinDate(attendance);
@@ -55,17 +62,104 @@ public class AttendanceService {
         return attendanceRepository.findByAttendanceDateAndDepartment(attendanceDate, departmentId);
     }
 
-    public List<Attendance> getAttendanceByEmpIdAndDateRange(long empId, LocalDate startDate, LocalDate endDate) {
-        return attendanceRepository.findByEmpIdAndDateRange(empId, startDate, endDate);
+    public BulkAttendanceDataDTO getBulkAttendanceData(LocalDate attendanceDate, long companyId, Long departmentId) {
+        List<Employee> employees = employeeRepository.findEmployeesByCompanyIdWithDetails(companyId);
+        if (departmentId != null && departmentId > 0) {
+            employees = employees.stream()
+                    .filter(e -> e.getDptId() == departmentId)
+                    .collect(Collectors.toList());
+        }
+
+        List<Attendance> attendedRecords = (departmentId != null && departmentId > 0)
+                ? attendanceRepository.findByAttendanceDateAndDepartment(attendanceDate, departmentId)
+                : attendanceRepository.findByAttendanceDate(attendanceDate);
+
+        Set<Long> attendedEmpIds = attendedRecords.stream()
+                .map(Attendance::getEmpId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Employee> employeeMap = employees.stream()
+                .collect(Collectors.toMap(Employee::getId, e -> e));
+
+        List<AttendancePendingEmployeeDTO> pendingEmployees = employees.stream()
+                .filter(employee -> !attendedEmpIds.contains(employee.getId()))
+                .filter(employee -> isEmployeeEligibleForAttendance(employee, attendanceDate))
+                .map(this::toPendingEmployeeDTO)
+                .collect(Collectors.toList());
+
+        List<AttendanceExcludedEmployeeDTO> excludedEmployees = employees.stream()
+                .filter(employee -> !isEmployeeEligibleForAttendance(employee, attendanceDate))
+                .map(this::toExcludedEmployeeDTO)
+                .collect(Collectors.toList());
+
+        List<AttendanceAttendedEmployeeDTO> attendedEmployees = attendedRecords.stream()
+                .map(attendance -> toAttendedEmployeeDTO(attendance, employeeMap.get(attendance.getEmpId())))
+                .collect(Collectors.toList());
+
+        return new BulkAttendanceDataDTO(pendingEmployees, attendedEmployees, excludedEmployees);
     }
 
-    public List<Attendance> markBulkAttendance(List<Attendance> attendances) {
-        if (attendances == null || attendances.isEmpty()) {
+    private boolean isEmployeeEligibleForAttendance(Employee employee, LocalDate attendanceDate) {
+        LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
+        return joinDate != null && !attendanceDate.isBefore(joinDate);
+    }
+
+    private AttendancePendingEmployeeDTO toPendingEmployeeDTO(Employee employee) {
+        return new AttendancePendingEmployeeDTO(
+                employee.getId(),
+                employee.getEpf_no(),
+                employee.getFirst_name(),
+                employee.getLast_name(),
+                employee.getDate_of_joining(),
+                employee.getDepartment() != null ? employee.getDepartment().getId() : null,
+                employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned"
+        );
+    }
+
+    private AttendanceExcludedEmployeeDTO toExcludedEmployeeDTO(Employee employee) {
+        return new AttendanceExcludedEmployeeDTO(
+                employee.getId(),
+                employee.getEpf_no(),
+                employee.getFirst_name(),
+                employee.getLast_name(),
+                employee.getDate_of_joining(),
+                employee.getDepartment() != null ? employee.getDepartment().getId() : null,
+                employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned"
+        );
+    }
+
+    private AttendanceAttendedEmployeeDTO toAttendedEmployeeDTO(Attendance attendance, Employee employee) {
+        String firstName = employee != null ? employee.getFirst_name() : "Unknown";
+        String lastName = employee != null ? employee.getLast_name() : "";
+        String epfNo = employee != null ? employee.getEpf_no() : null;
+        Long deptId = employee != null && employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        String deptName = employee != null && employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned";
+
+        return new AttendanceAttendedEmployeeDTO(
+                attendance.getEmpId(),
+                epfNo,
+                firstName,
+                lastName,
+                deptId,
+                deptName,
+                formatClockInTime(attendance.getStartedAt()),
+                Optional.ofNullable(attendance.getAttendance_status()).orElse(""),
+                attendance.getAttendanceDate() != null ? attendance.getAttendanceDate().format(DATE_FORMATTER) : "",
+                attendance.getId()
+        );
+    }
+
+    private String formatClockInTime(LocalDateTime startedAt) {
+        return startedAt != null ? startedAt.format(TIME_ONLY_FORMATTER) : "";
+    }
+
+    public List<Attendance> markBulkAttendance(List<Attendance> attendanceList) {
+        if (attendanceList == null || attendanceList.isEmpty()) {
             throw new IllegalArgumentException("Attendance list cannot be empty");
         }
 
         Map<String, Attendance> uniqueAttendanceByKey = new HashMap<>();
-        for (Attendance attendance : attendances) {
+        for (Attendance attendance : attendanceList) {
             if (attendance.getAttendanceDate() == null) {
                 throw new IllegalArgumentException("Each attendance record must include attendanceDate");
             }

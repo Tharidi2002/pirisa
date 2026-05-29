@@ -1,6 +1,7 @@
 package com.knoweb.HRM.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.knoweb.HRM.dto.BulkAttendanceDataDTO;
 import com.knoweb.HRM.model.Attendance;
 import com.knoweb.HRM.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,28 @@ public class AttendanceController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "Failed to save bulk attendance"));
+        }
+    }
+
+    @GetMapping(value = "/bulk-data", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getBulkAttendanceData(
+            @RequestParam(value = "attendanceDate") String attendanceDateText,
+            @RequestParam(value = "companyId") Long companyId,
+            @RequestParam(value = "departmentId", required = false) Long departmentId) {
+        try {
+            LocalDate attendanceDate = LocalDate.parse(attendanceDateText, DATE_FORMATTER);
+            BulkAttendanceDataDTO attendanceData = attendanceService.getBulkAttendanceData(attendanceDate, companyId, departmentId);
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("resultCode", 100);
+            responseBody.put("resultDesc", "Bulk attendance data fetched successfully");
+            responseBody.put("attendanceData", attendanceData);
+            return ResponseEntity.ok(responseBody);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid attendanceDate format. Use yyyy-MM-dd."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to fetch bulk attendance data"));
         }
     }
 

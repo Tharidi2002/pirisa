@@ -23,6 +23,7 @@ export const ENDPOINTS = {
     UPDATE_PROFILE: "/user/update",
   },  ATTENDANCE: {
     BULK_MARK: "/api/attendance/bulk-mark",
+    BULK_DATA: "/api/attendance/bulk-data",
     IMPORT_EXCEL: "/api/attendance/import-excel",
     DOWNLOAD_EXCEL: "/api/attendance/download-excel",
   },} as const;
