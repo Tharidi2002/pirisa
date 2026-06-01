@@ -111,4 +111,22 @@ export const attendanceService = {
     });
     return response.data;
   },
+
+  // Clock out an existing attendance record. Payload supports endedAt (datetime or time-only),
+  // departureReason and departureNotes. Returns the updated attendance object from backend.
+  clockOut: async (attendanceId: number, payload: { endedAt?: string; departureReason?: string; departureNotes?: string }) => {
+    const response = await axiosInstance.put(`${ENDPOINTS.ATTENDANCE.BASE}/clock-out/${attendanceId}`, payload);
+    return response.data;
+  },
+
+  // Check whether a profile image exists for the given employee id.
+  // Returns true when backend reports `hasProfileImage: true`.
+  profileImageExists: async (empId: number) => {
+    try {
+      const resp = await axiosInstance.get(`/api/profile-image/exists/${empId}`);
+      return resp?.data?.hasProfileImage === true;
+    } catch (e) {
+      return false;
+    }
+  },
 };

@@ -476,6 +476,61 @@ public class AttendanceService {
         return null;
     }
 
+    /**
+     * Clock out an existing attendance record by updating its end time and optional departure metadata.
+     * This supports early departures (endedAt earlier than scheduled end) and normal clock-outs.
+     * The method accepts a flexible `endedAtText` which can be a full datetime (ISO), a datetime
+     * in the service's DATE_TIME_FORMATTER, or a time-only string ("HH:mm"). When time-only is
+     * provided it is combined with the attendance record's attendanceDate to produce a LocalDateTime.
+     *
+     * @param attendanceId     the database id of the attendance record
+     * @param endedAtText      textual representation of the end time (datetime or time-only)
+     * @param departureReason  optional reason enum/value for departure
+     * @param departureNotes   optional free-text notes about the departure
+     * @return the updated Attendance entity
+     */
+    public Attendance clockOutAttendance(long attendanceId, String endedAtText, String departureReason, String departureNotes) {
+        Attendance attendance = getAttendanceById(attendanceId);
+        if (attendance == null) {
+            throw new IllegalArgumentException("Attendance record not found for id: " + attendanceId);
+        }
+
+        // Parse endedAt using several accepted formats. Prefer full datetime, fallback to service pattern, then time-only.
+        LocalDateTime parsedEndedAt = null;
+        if (endedAtText != null && !endedAtText.isBlank()) {
+            String text = endedAtText.trim();
+            try {
+                if (text.contains("T")) {
+                    // ISO_LOCAL_DATE_TIME format
+                    parsedEndedAt = LocalDateTime.parse(text);
+                } else if (text.contains(" ")) {
+                    parsedEndedAt = LocalDateTime.parse(text, DATE_TIME_FORMATTER);
+                } else {
+                    // assume time-only HH:mm -> combine with attendance date
+                    LocalTime time = LocalTime.parse(text, TIME_FORMATTER);
+                    if (attendance.getAttendanceDate() != null) {
+                        parsedEndedAt = LocalDateTime.of(attendance.getAttendanceDate(), time);
+                    } else {
+                        // fallback to today
+                        parsedEndedAt = LocalDateTime.of(LocalDate.now(), time);
+                    }
+                }
+            } catch (Exception ex) {
+                // bubble a helpful error
+                throw new IllegalArgumentException("Unable to parse endedAt value: " + endedAtText);
+            }
+        }
+
+        if (parsedEndedAt != null) {
+            attendance.setEndedAt(parsedEndedAt);
+        }
+        attendance.setDepartureReason(departureReason);
+        attendance.setDepartureNotes(departureNotes);
+
+        // Recalculate totals (PreUpdate will run) and save
+        return attendanceRepository.save(attendance);
+    }
+
     public Attendance getAttendanceById(long id) {
         return attendanceRepository.findById(id).orElse(null);
     }

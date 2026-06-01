@@ -194,4 +194,24 @@ public class AttendanceController {
         }
         return new ResponseEntity<>(jsonResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @PutMapping(value = "/clock-out/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> clockOutAttendance(@PathVariable("id") Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            String endedAt = payload.get("endedAt") != null ? String.valueOf(payload.get("endedAt")) : null;
+            String departureReason = payload.get("departureReason") != null ? String.valueOf(payload.get("departureReason")) : null;
+            String departureNotes = payload.get("departureNotes") != null ? String.valueOf(payload.get("departureNotes")) : null;
+
+            Attendance updated = attendanceService.clockOutAttendance(id, endedAt, departureReason, departureNotes);
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("resultCode", 100);
+            responseBody.put("resultDesc", "Clock-out updated successfully");
+            responseBody.put("attendance", updated);
+            return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", "Failed to clock out attendance"));
+        }
+    }
 }

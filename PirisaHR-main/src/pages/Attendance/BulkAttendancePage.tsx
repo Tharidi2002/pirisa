@@ -89,6 +89,20 @@ const BulkAttendancePage = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showAttended, setShowAttended] = useState<boolean>(false);
   const [showExcluded, setShowExcluded] = useState<boolean>(false);
+  const [attendedDepartmentFilter, setAttendedDepartmentFilter] = useState<number>(0);
+  
+  // Modal state for clock-out handling
+  interface ClockOutModalState {
+    open: boolean;
+    attendanceId?: number;
+    empId?: number;
+    name?: string;
+    attendanceDate?: string;
+    defaultEndedAt?: string; // time-only HH:mm
+    reason?: string;
+    notes?: string;
+  }
+  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({ open: false });
   const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
   const [failedPhotoLoads, setFailedPhotoLoads] = useState<Record<number, boolean>>({});
 
@@ -127,7 +141,8 @@ const BulkAttendancePage = () => {
         endedAt: defaultEndTime,
         entryType: "MANUAL_HR",
         createdBy: currentUser,
-        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${employee.id}`,
+        // Defer attaching the photo URL until we confirm an image exists to avoid 404 noise in the browser console.
+        photoUrl: undefined,
       }));
 
       const parsedAttendedRows: AttendedRow[] = data.attendedEmployees.map((record) => ({
@@ -141,7 +156,7 @@ const BulkAttendancePage = () => {
         status: record.status,
         attendanceDate: record.attendanceDate,
         attendanceId: record.attendanceId,
-        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${record.empId}`,
+        photoUrl: undefined,
       }));
 
       const parsedExcludedRows: ExcludedRow[] = data.excludedEmployees.map((employee) => ({
@@ -152,13 +167,43 @@ const BulkAttendancePage = () => {
         joinDate: employee.dateOfJoining ?? selectedDate,
         departmentId: employee.departmentId ?? 0,
         departmentName: employee.departmentName ?? "Unassigned",
-        photoUrl: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/profile-image/view/${employee.id}`,
+        photoUrl: undefined,
       }));
 
       setPendingRows(parsedPendingRows);
       setAttendedRows(parsedAttendedRows);
       setExcludedRows(parsedExcludedRows);
       setSelectedRowIds(parsedPendingRows.map((row) => row.id));
+
+      // Attach photo URLs only for records that actually have a profile image to avoid 404 errors in console.
+      const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+      const attachPhotos = async () => {
+        // Check pending rows
+        await Promise.all(parsedPendingRows.map(async (r) => {
+          const exists = await attendanceService.profileImageExists(r.id);
+          if (exists) {
+            setPendingRows((prev) => prev.map((p) => (p.id === r.id ? { ...p, photoUrl: `${base}/api/profile-image/view/${r.id}` } : p)));
+          }
+        }));
+        // Check attended rows
+        await Promise.all(parsedAttendedRows.map(async (r) => {
+          const exists = await attendanceService.profileImageExists(r.empId);
+          if (exists) {
+            setAttendedRows((prev) => prev.map((p) => (p.attendanceId === r.attendanceId ? { ...p, photoUrl: `${base}/api/profile-image/view/${r.empId}` } : p)));
+          }
+        }));
+        // Check excluded rows
+        await Promise.all(parsedExcludedRows.map(async (r) => {
+          const exists = await attendanceService.profileImageExists(r.id);
+          if (exists) {
+            setExcludedRows((prev) => prev.map((p) => (p.id === r.id ? { ...p, photoUrl: `${base}/api/profile-image/view/${r.id}` } : p)));
+          }
+        }));
+      };
+
+      attachPhotos().catch(() => {
+        // ignore photo attachment errors; they only reduce console noise
+      });
 
       const uniqueDepartments = Array.from(
         new Map(
@@ -205,6 +250,12 @@ const BulkAttendancePage = () => {
         return groups;
       }, {});
   }, [excludedRows, selectedDepartment]);
+
+  // Filter attended rows by an optional department filter selected in the attended panel.
+  // If attendedDepartmentFilter is 0, show all attended rows; otherwise only rows matching dept id.
+  const attendedFilteredRows = useMemo(() => {
+    return attendedRows.filter((r) => attendedDepartmentFilter === 0 || r.departmentId === attendedDepartmentFilter);
+  }, [attendedRows, attendedDepartmentFilter]);
 
   const allFilteredSelected = useMemo(
     () => filteredRows.length > 0 && filteredRows.every((row) => selectedRowIds.includes(row.id)),
@@ -288,6 +339,49 @@ const BulkAttendancePage = () => {
       setSaving(false);
     }
   };
+
+  // Handler to open the clock-out modal for a specific attended record.
+  // Pre-fills the modal with the employee name and a default end time (current time in HH:mm).
+  const openClockOutModal = (record: AttendedRow) => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    setClockOutModal({
+      open: true,
+      attendanceId: record.attendanceId,
+      empId: record.empId,
+      name: `${record.firstName} ${record.lastName}`,
+      attendanceDate: record.attendanceDate,
+      defaultEndedAt: `${hh}:${mm}`,
+      reason: "Standard Off-Time",
+      notes: "",
+    });
+  };
+
+  // Confirm clock-out: call backend endpoint and refresh bulk attendance data.
+  // This enforces that early departures are recorded with a reason and optional notes.
+  const confirmClockOut = async () => {
+    if (!clockOutModal.attendanceId) return;
+    setSaving(true);
+    try {
+      // Build payload: if only time provided, backend will combine with attendanceDate.
+      const payload = {
+        endedAt: clockOutModal.defaultEndedAt, // backend accepts HH:mm or full datetime
+        departureReason: clockOutModal.reason,
+        departureNotes: clockOutModal.notes,
+      };
+      await attendanceService.clockOut(clockOutModal.attendanceId, payload);
+      setSuccessMessage("Clock-out recorded successfully.");
+      setClockOutModal({ open: false });
+      await loadBulkAttendanceData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clock out employee.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const closeClockOutModal = () => setClockOutModal({ open: false });
 
   const statusOptions: { value: AttendanceStatus; label: string }[] = [
     { value: "PRESENT", label: "Present" },
@@ -386,6 +480,59 @@ const BulkAttendancePage = () => {
           </div>
         )}
       </div>
+
+      {/* Clock Out Modal - simple accessible modal overlay used to capture end time, reason and notes for early departures. */}
+      {clockOutModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <div className="flex items-start justify-between">
+              <h3 className="text-lg font-semibold">Clock Out - {clockOutModal.name}</h3>
+              <button onClick={closeClockOutModal} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div className="text-sm text-gray-600">Attendance Date: <span className="font-medium">{clockOutModal.attendanceDate}</span></div>
+              <label className="block text-sm">
+                End Time
+                <input
+                  type="time"
+                  value={clockOutModal.defaultEndedAt || ""}
+                  onChange={(e) => setClockOutModal((s) => ({ ...s, defaultEndedAt: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-sm">
+                Reason for Early/Standard Departure
+                <select
+                  value={clockOutModal.reason || ""}
+                  onChange={(e) => setClockOutModal((s) => ({ ...s, reason: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-sm"
+                >
+                  <option>Standard Off-Time</option>
+                  <option>Personal Reason</option>
+                  <option>Medical Emergency</option>
+                  <option>Official Field Work</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                Notes / Remarks (optional)
+                <textarea
+                  value={clockOutModal.notes || ""}
+                  onChange={(e) => setClockOutModal((s) => ({ ...s, notes: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-sm"
+                  rows={3}
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
+              <button onClick={closeClockOutModal} className="rounded-md bg-gray-100 px-4 py-2 text-sm">Cancel</button>
+              <button onClick={confirmClockOut} disabled={saving} className="rounded-md bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700 disabled:opacity-60">
+                {saving ? "Saving..." : "Confirm Clock Out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sky-800">
         <div className="font-semibold">{isToday ? "Today’s Attendance Guidance" : "Attendance Guidance"}</div>
@@ -534,17 +681,32 @@ const BulkAttendancePage = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Already Attended Employees</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              These employees already have a record for {isToday ? "today" : selectedDate}.
-            </p>
+            <p className="text-sm text-gray-600 mt-1">These employees already have a record for {isToday ? "today" : selectedDate}.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowAttended((prev) => !prev)}
-            className="inline-flex items-center justify-center rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-          >
-            {showAttended ? "Hide attended" : "Show attended"}
-          </button>
+          <div className="flex items-center gap-3">
+            <label className="text-sm">
+              Department
+              <select
+                value={attendedDepartmentFilter}
+                onChange={(e) => setAttendedDepartmentFilter(Number(e.target.value))}
+                className="ml-2 rounded-md border border-gray-300 px-2 py-1 text-sm"
+              >
+                <option value={0}>All Departments</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowAttended((prev) => !prev)}
+              className="inline-flex items-center justify-center rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            >
+              {showAttended ? "Hide attended" : "Show attended"}
+            </button>
+          </div>
         </div>
         {showAttended && (
           <div className="mt-4 overflow-x-auto">
@@ -567,16 +729,28 @@ const BulkAttendancePage = () => {
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Status
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {attendedRows.map((record) => (
+                  {attendedFilteredRows.map((record) => (
                     <tr key={record.attendanceId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-700">{record.empId}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{`${record.firstName} ${record.lastName}`}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{record.departmentName}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{record.clockInTime || "-"}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{record.status}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <button
+                          type="button"
+                          onClick={() => openClockOutModal(record)}
+                          className="rounded-md border border-amber-500 px-3 py-1 text-sm font-medium text-amber-700 hover:bg-amber-50"
+                        >
+                          Clock Out
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

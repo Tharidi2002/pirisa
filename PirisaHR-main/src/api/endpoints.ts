@@ -22,6 +22,7 @@ export const ENDPOINTS = {
     GET_PROFILE: "/user/profile",
     UPDATE_PROFILE: "/user/update",
   },  ATTENDANCE: {
+    BASE: "/api/attendance",
     BULK_MARK: "/api/attendance/bulk-mark",
     BULK_DATA: "/api/attendance/bulk-data",
     IMPORT_EXCEL: "/api/attendance/import-excel",

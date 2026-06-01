@@ -47,6 +47,13 @@ public class Attendance implements Serializable {
 
     private String attendance_status;
 
+    // Optional reason for an early or standard departure. Populated when an employee is clocked out.
+    @Column(name = "departure_reason")
+    private String departureReason;
+
+    // Optional free-text notes or remarks provided by HR about the departure.
+    @Column(name = "departure_notes", columnDefinition = "TEXT")
+    private String departureNotes;
     // Source of the attendance record for auditing: AUTO_CLOCK, MANUAL_HR, EXCEL_IMPORT, etc.
     @Column(name = "entry_type")
     private String entryType;
