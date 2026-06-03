@@ -47,5 +47,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     // Find employees by designation ID
     List<Employee> findByDesignationId(Long designationId);
 
-    Optional<Employee> findByEpfNo(String epfNo);
+    Optional<Employee> findByEpf_no(String epfNo);
 }

@@ -326,7 +326,7 @@ public class AttendanceService {
             return null; // Skip rows without an EPF number
         }
 
-        Employee employee = employeeRepository.findByEpfNo(epfNo.trim())
+        Employee employee = employeeRepository.findByEpf_no(epfNo.trim())
                 .orElseThrow(() -> new IllegalArgumentException("Row " + (row.getRowNum() + 1) + ": Employee not found for EPF No '" + epfNo + "'"));
 
         LocalDate attendanceDate = parseDateCell(row.getCell(headerIndex.getOrDefault("ATTENDANCE_DATE", -1)));
