@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
@@ -45,4 +46,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     
     // Find employees by designation ID
     List<Employee> findByDesignationId(Long designationId);
+
+    Optional<Employee> findByEpfNo(String epfNo);
 }
