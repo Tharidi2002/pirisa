@@ -43,7 +43,6 @@ public class AttendanceService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private static final DateTimeFormatter TIME_ONLY_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public Attendance createAttendance(Attendance attendance) {
         validateAttendanceJoinDate(attendance);
@@ -150,7 +149,7 @@ public class AttendanceService {
     }
 
     private String formatClockInTime(LocalDateTime startedAt) {
-        return startedAt != null ? startedAt.format(TIME_ONLY_FORMATTER) : "";
+        return startedAt != null ? startedAt.format(DateTimeFormatter.ofPattern("HH:mm")) : "";
     }
 
     public List<Attendance> markBulkAttendance(List<Attendance> attendanceList) {
@@ -158,68 +157,28 @@ public class AttendanceService {
             throw new IllegalArgumentException("Attendance list cannot be empty");
         }
 
-        Map<String, Attendance> uniqueAttendanceByKey = new HashMap<>();
-        for (Attendance attendance : attendanceList) {
-            if (attendance.getAttendanceDate() == null) {
-                throw new IllegalArgumentException("Each attendance record must include attendanceDate");
-            }
-            if (attendance.getEmpId() <= 0) {
-                throw new IllegalArgumentException("Each attendance record must include a valid empId");
-            }
+        List<Attendance> validatedList = attendanceList.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        for (Attendance attendance : validatedList) {
             validateAttendanceJoinDate(attendance);
-            String key = attendance.getEmpId() + "|" + attendance.getAttendanceDate();
-            uniqueAttendanceByKey.put(key, attendance);
         }
-
-        List<Attendance> recordsToSave = new ArrayList<>();
-        for (Attendance attendance : uniqueAttendanceByKey.values()) {
-            Optional<Attendance> existingAttendance = attendanceRepository.findByEmpIdAndAttendanceDate(
-                    attendance.getEmpId(), attendance.getAttendanceDate());
-
-            Attendance persistedAttendance = existingAttendance.orElseGet(Attendance::new);
-            persistedAttendance.setAttendanceDate(attendance.getAttendanceDate());
-            persistedAttendance.setEmpId(attendance.getEmpId());
-            persistedAttendance.setStartedAt(attendance.getStartedAt());
-            persistedAttendance.setEndedAt(attendance.getEndedAt());
-            persistedAttendance.setWorking_status(attendance.getWorking_status());
-            persistedAttendance.setAttendance_status(attendance.getAttendance_status());
-            persistedAttendance.setEntryType(Optional.ofNullable(attendance.getEntryType()).orElse("MANUAL_HR"));
-            persistedAttendance.setCreatedBy(Optional.ofNullable(attendance.getCreatedBy()).orElse("SYSTEM"));
-            persistedAttendance.setDayName(attendance.getDayName());
-
-            recordsToSave.add(persistedAttendance);
-        }
-
-        return attendanceRepository.saveAll(recordsToSave);
+        
+        return attendanceRepository.saveAll(validatedList);
     }
 
-    /**
-     * Validate the attendance entry against the employee's join date.
-     * Business rule: attendance cannot be marked before the employee joined.
-     */
     private void validateAttendanceJoinDate(Attendance attendance) {
-        if (attendance == null) {
-            throw new IllegalArgumentException("Attendance entry cannot be null");
-        }
-
-        if (attendance.getAttendanceDate() == null) {
-            throw new IllegalArgumentException("Attendance date is required");
-        }
-
-        if (attendance.getEmpId() <= 0) {
-            throw new IllegalArgumentException("Attendance must reference a valid employee ID");
+        if (attendance == null || attendance.getAttendanceDate() == null || attendance.getEmpId() <= 0) {
+            throw new IllegalArgumentException("Invalid attendance record provided");
         }
 
         Employee employee = employeeRepository.findById(attendance.getEmpId())
                 .orElseThrow(() -> new IllegalArgumentException("Cannot validate attendance: employee not found."));
 
         LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
-        if (joinDate == null) {
-            throw new IllegalArgumentException("Cannot validate attendance: employee join date is missing or invalid.");
-        }
-
-        if (attendance.getAttendanceDate().isBefore(joinDate)) {
-            throw new IllegalArgumentException("Cannot mark attendance prior to the employee's join date.");
+        if (joinDate != null && attendance.getAttendanceDate().isBefore(joinDate)) {
+            throw new IllegalArgumentException("Cannot mark attendance for employee " + employee.getEpf_no() + " prior to the join date.");
         }
     }
 
@@ -227,19 +186,10 @@ public class AttendanceService {
         if (dateOfJoining == null || dateOfJoining.isBlank()) {
             return null;
         }
-
         try {
             return LocalDate.parse(dateOfJoining, DATE_FORMATTER);
         } catch (DateTimeParseException e) {
-            try {
-                return LocalDate.parse(dateOfJoining);
-            } catch (DateTimeParseException ex) {
-                try {
-                    return LocalDate.parse(dateOfJoining, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                } catch (DateTimeParseException ignored) {
-                    return null;
-                }
-            }
+            return null;
         }
     }
 
@@ -261,8 +211,8 @@ public class AttendanceService {
 
             Row headerRow = sheet.createRow(0);
             String[] headers = {
-                    "Attendance ID", "Employee ID", "Attendance Date", "Start Time", "End Time",
-                    "Status", "Working Status", "Entry Type", "Created By", "Day Name", "Total Time (mins)"
+                    "Attendance ID", "Employee ID", "EPF No", "Employee Name", "Attendance Date", "Start Time", "End Time",
+                    "Status", "Working Status", "Notes", "Entry Type", "Created By", "Total Time (mins)"
             };
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -273,23 +223,27 @@ public class AttendanceService {
             int rowIndex = 1;
             for (Attendance attendance : attendanceList) {
                 Row row = sheet.createRow(rowIndex++);
+                Employee employee = employeeRepository.findById(attendance.getEmpId()).orElse(null);
+                
                 row.createCell(0).setCellValue(attendance.getId());
                 row.createCell(1).setCellValue(attendance.getEmpId());
+                row.createCell(2).setCellValue(employee != null ? employee.getEpf_no() : "");
+                row.createCell(3).setCellValue(employee != null ? employee.getFirst_name() + " " + employee.getLast_name() : "");
 
-                Cell dateCell = row.createCell(2);
+                Cell dateCell = row.createCell(4);
                 if (attendance.getAttendanceDate() != null) {
                     dateCell.setCellValue(java.sql.Date.valueOf(attendance.getAttendanceDate()));
                     dateCell.setCellStyle(dateStyle);
                 }
 
-                row.createCell(3).setCellValue(formatLocalDateTime(attendance.getStartedAt()));
-                row.createCell(4).setCellValue(formatLocalDateTime(attendance.getEndedAt()));
-                row.createCell(5).setCellValue(Optional.ofNullable(attendance.getAttendance_status()).orElse(""));
-                row.createCell(6).setCellValue(Optional.ofNullable(attendance.getWorking_status()).orElse(""));
-                row.createCell(7).setCellValue(Optional.ofNullable(attendance.getEntryType()).orElse(""));
-                row.createCell(8).setCellValue(Optional.ofNullable(attendance.getCreatedBy()).orElse(""));
-                row.createCell(9).setCellValue(Optional.ofNullable(attendance.getDayName()).orElse(""));
-                row.createCell(10).setCellValue(attendance.getTotalTime());
+                row.createCell(5).setCellValue(formatLocalDateTime(attendance.getStartedAt()));
+                row.createCell(6).setCellValue(formatLocalDateTime(attendance.getEndedAt()));
+                row.createCell(7).setCellValue(Optional.ofNullable(attendance.getAttendance_status()).orElse(""));
+                row.createCell(8).setCellValue(Optional.ofNullable(attendance.getWorking_status()).orElse(""));
+                row.createCell(9).setCellValue(Optional.ofNullable(attendance.getDepartureNotes()).orElse(""));
+                row.createCell(10).setCellValue(Optional.ofNullable(attendance.getEntryType()).orElse(""));
+                row.createCell(11).setCellValue(Optional.ofNullable(attendance.getCreatedBy()).orElse(""));
+                row.createCell(12).setCellValue(attendance.getTotalTime());
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -336,99 +290,119 @@ public class AttendanceService {
         return markBulkAttendance(attendanceRecords);
     }
 
-    private Attendance parseRowToAttendance(Row row, Map<String, Integer> headerIndex, String createdBy) {
-        String empIdText = getCellValue(row.getCell(headerIndex.getOrDefault("EMPLOYEE ID", -1)));
-        if (empIdText == null || empIdText.isBlank()) {
-            return null;
-        }
-
-        long empId = Long.parseLong(empIdText.trim());
-        LocalDate attendanceDate = parseDateCell(row.getCell(headerIndex.getOrDefault("ATTENDANCE DATE", -1)));
-        if (attendanceDate == null) {
-            throw new IllegalArgumentException("Attendance Date is required for row " + row.getRowNum());
-        }
-
-        Attendance attendance = new Attendance();
-        attendance.setEmpId(empId);
-        attendance.setAttendanceDate(attendanceDate);
-        attendance.setStartedAt(parseDateTimeCell(row.getCell(headerIndex.getOrDefault("START TIME", -1)), attendanceDate));
-        attendance.setEndedAt(parseDateTimeCell(row.getCell(headerIndex.getOrDefault("END TIME", -1)), attendanceDate));
-        attendance.setAttendance_status(getCellValue(row.getCell(headerIndex.getOrDefault("ATTENDANCE STATUS", -1))));
-        attendance.setWorking_status(getCellValue(row.getCell(headerIndex.getOrDefault("WORKING STATUS", -1))));
-        attendance.setEntryType(Optional.ofNullable(getCellValue(row.getCell(headerIndex.getOrDefault("ENTRY TYPE", -1)))).orElse("EXCEL_IMPORT"));
-        attendance.setCreatedBy(Optional.ofNullable(createdBy).orElse("EXCEL_IMPORT"));
-        attendance.setDayName(Optional.ofNullable(getCellValue(row.getCell(headerIndex.getOrDefault("DAY NAME", -1)))).orElse(null));
-
-        return attendance;
-    }
-
     private Map<String, Integer> getHeaderIndex(Row headerRow) {
         Map<String, Integer> headerIndex = new HashMap<>();
+        Map<String, String> headerAliases = new HashMap<>();
+        headerAliases.put("EPF NO", "EPF_NO");
+        headerAliases.put("EMPLOYEE ID", "EPF_NO");
+        headerAliases.put("ATTENDANCE DATE", "ATTENDANCE_DATE");
+        headerAliases.put("DATE", "ATTENDANCE_DATE");
+        headerAliases.put("STATUS", "STATUS");
+        headerAliases.put("ATTENDANCE STATUS", "STATUS");
+        headerAliases.put("START TIME", "START_TIME");
+        headerAliases.put("CLOCK IN", "START_TIME");
+        headerAliases.put("END TIME", "END_TIME");
+        headerAliases.put("CLOCK OUT", "END_TIME");
+        headerAliases.put("WORKING MODE", "WORKING_MODE");
+        headerAliases.put("MODE", "WORKING_MODE");
+        headerAliases.put("NOTES", "NOTES");
+        headerAliases.put("REASON", "NOTES");
+        headerAliases.put("WORK LOG", "NOTES");
+
         for (Cell cell : headerRow) {
             String headerValue = Optional.ofNullable(cell.getStringCellValue())
                     .map(String::trim)
                     .map(String::toUpperCase)
                     .orElse("");
-            headerIndex.put(headerValue, cell.getColumnIndex());
+            String standardHeader = headerAliases.getOrDefault(headerValue, headerValue);
+            headerIndex.put(standardHeader, cell.getColumnIndex());
         }
         return headerIndex;
     }
 
-    private LocalDate parseDateCell(Cell cell) {
-        if (cell == null) {
+    private Attendance parseRowToAttendance(Row row, Map<String, Integer> headerIndex, String createdBy) {
+        String epfNo = getCellValue(row.getCell(headerIndex.getOrDefault("EPF_NO", -1)));
+        if (epfNo == null || epfNo.isBlank()) {
+            return null; // Skip rows without an EPF number
+        }
+
+        Employee employee = employeeRepository.findByEpfNo(epfNo.trim())
+                .orElseThrow(() -> new IllegalArgumentException("Row " + (row.getRowNum() + 1) + ": Employee not found for EPF No '" + epfNo + "'"));
+
+        LocalDate attendanceDate = parseDateCell(row.getCell(headerIndex.getOrDefault("ATTENDANCE_DATE", -1)));
+        if (attendanceDate == null) {
+            throw new IllegalArgumentException("Row " + (row.getRowNum() + 1) + ": Attendance Date is required for EPF No " + epfNo);
+        }
+        
+        LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
+        if (joinDate != null && attendanceDate.isBefore(joinDate)) {
+            System.out.println("Skipping attendance for " + epfNo + " on " + attendanceDate + " (before join date " + joinDate + ")");
             return null;
         }
-        switch (cell.getCellType()) {
-            case STRING:
-                String dateText = cell.getStringCellValue().trim();
-                if (dateText.isEmpty()) {
+
+        Optional<Attendance> existingAttendance = attendanceRepository.findByEmpIdAndAttendanceDate(employee.getId(), attendanceDate);
+        Attendance attendance = existingAttendance.orElseGet(Attendance::new);
+
+        attendance.setEmpId(employee.getId());
+        attendance.setAttendanceDate(attendanceDate);
+
+        attendance.setStartedAt(parseTimeCell(row.getCell(headerIndex.getOrDefault("START_TIME", -1)), attendanceDate));
+        attendance.setEndedAt(parseTimeCell(row.getCell(headerIndex.getOrDefault("END_TIME", -1)), attendanceDate));
+        
+        attendance.setAttendance_status(getCellValue(row.getCell(headerIndex.getOrDefault("STATUS", -1))));
+        attendance.setWorking_status(getCellValue(row.getCell(headerIndex.getOrDefault("WORKING_MODE", -1))));
+        attendance.setDepartureNotes(getCellValue(row.getCell(headerIndex.getOrDefault("NOTES", -1))));
+
+        attendance.setEntryType("EXCEL_IMPORT");
+        attendance.setCreatedBy(Optional.ofNullable(createdBy).orElse("SYSTEM_IMPORT"));
+
+        return attendance;
+    }
+
+    private LocalDate parseDateCell(Cell cell) {
+        if (cell == null) return null;
+        try {
+            switch (cell.getCellType()) {
+                case STRING:
+                    String dateText = cell.getStringCellValue().trim();
+                    return dateText.isEmpty() ? null : LocalDate.parse(dateText, DATE_FORMATTER);
+                case NUMERIC:
+                    return cell.getLocalDateTimeCellValue().toLocalDate();
+                default:
                     return null;
-                }
-                return LocalDate.parse(dateText, DATE_FORMATTER);
-            case NUMERIC:
-                return cell.getLocalDateTimeCellValue().toLocalDate();
-            default:
-                return null;
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format in row " + cell.getRowIndex() + ". Please use yyyy-MM-dd.", e);
         }
     }
 
-    private LocalDateTime parseDateTimeCell(Cell cell, LocalDate attendanceDate) {
-        if (cell == null || attendanceDate == null) {
-            return null;
-        }
-
-        switch (cell.getCellType()) {
-            case STRING:
-                String value = cell.getStringCellValue().trim();
-                if (value.isEmpty()) {
+    private LocalDateTime parseTimeCell(Cell cell, LocalDate attendanceDate) {
+        if (cell == null || attendanceDate == null) return null;
+        try {
+            String value = null;
+             switch (cell.getCellType()) {
+                case STRING:
+                    value = cell.getStringCellValue().trim();
+                    break;
+                case NUMERIC:
+                    return LocalDateTime.of(attendanceDate, cell.getLocalDateTimeCellValue().toLocalTime());
+                default:
                     return null;
-                }
-                if (value.contains(" ")) {
-                    return LocalDateTime.parse(value, DATE_TIME_FORMATTER);
-                }
-                return LocalDateTime.of(attendanceDate, LocalTime.parse(value, TIME_FORMATTER));
-            case NUMERIC:
-                return cell.getLocalDateTimeCellValue();
-            default:
-                return null;
+            }
+            return (value == null || value.isBlank()) ? null : LocalDateTime.of(attendanceDate, LocalTime.parse(value, TIME_FORMATTER));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid time format in row " + cell.getRowIndex() + ". Please use HH:mm.", e);
         }
     }
 
     private String getCellValue(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
+        if (cell == null) return null;
         switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue().trim();
-            case NUMERIC:
-                return String.valueOf(cell.getNumericCellValue()).trim();
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue()).trim();
-            case FORMULA:
-                return Optional.ofNullable(cell.getCellFormula()).orElse("").trim();
-            default:
-                return null;
+            case STRING: return cell.getStringCellValue().trim();
+            case NUMERIC: return String.valueOf(cell.getNumericCellValue()).trim();
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue()).trim();
+            case FORMULA: return Optional.ofNullable(cell.getCellFormula()).orElse("").trim();
+            default: return null;
         }
     }
 
@@ -441,19 +415,15 @@ public class AttendanceService {
         if (empId != null && startDate != null && endDate != null) {
             return attendanceRepository.findByEmpIdAndDateRange(empId, startDate, endDate);
         }
-
         if (departmentId != null && startDate != null && endDate != null) {
             return attendanceRepository.findByAttendanceDateBetweenAndDepartment(startDate, endDate, departmentId);
         }
-
         if (departmentId != null && startDate != null && endDate == null) {
             return attendanceRepository.findByAttendanceDateAndDepartment(startDate, departmentId);
         }
-
         if (startDate != null && endDate == null) {
             return attendanceRepository.findByAttendanceDate(startDate);
         }
-
         return attendanceRepository.findAll();
     }
 
@@ -476,48 +446,19 @@ public class AttendanceService {
         return null;
     }
 
-    /**
-     * Clock out an existing attendance record by updating its end time and optional departure metadata.
-     * This supports early departures (endedAt earlier than scheduled end) and normal clock-outs.
-     * The method accepts a flexible `endedAtText` which can be a full datetime (ISO), a datetime
-     * in the service's DATE_TIME_FORMATTER, or a time-only string ("HH:mm"). When time-only is
-     * provided it is combined with the attendance record's attendanceDate to produce a LocalDateTime.
-     *
-     * @param attendanceId     the database id of the attendance record
-     * @param endedAtText      textual representation of the end time (datetime or time-only)
-     * @param departureReason  optional reason enum/value for departure
-     * @param departureNotes   optional free-text notes about the departure
-     * @return the updated Attendance entity
-     */
     public Attendance clockOutAttendance(long attendanceId, String endedAtText, String departureReason, String departureNotes) {
         Attendance attendance = getAttendanceById(attendanceId);
         if (attendance == null) {
             throw new IllegalArgumentException("Attendance record not found for id: " + attendanceId);
         }
 
-        // Parse endedAt using several accepted formats. Prefer full datetime, fallback to service pattern, then time-only.
         LocalDateTime parsedEndedAt = null;
         if (endedAtText != null && !endedAtText.isBlank()) {
-            String text = endedAtText.trim();
             try {
-                if (text.contains("T")) {
-                    // ISO_LOCAL_DATE_TIME format
-                    parsedEndedAt = LocalDateTime.parse(text);
-                } else if (text.contains(" ")) {
-                    parsedEndedAt = LocalDateTime.parse(text, DATE_TIME_FORMATTER);
-                } else {
-                    // assume time-only HH:mm -> combine with attendance date
-                    LocalTime time = LocalTime.parse(text, TIME_FORMATTER);
-                    if (attendance.getAttendanceDate() != null) {
-                        parsedEndedAt = LocalDateTime.of(attendance.getAttendanceDate(), time);
-                    } else {
-                        // fallback to today
-                        parsedEndedAt = LocalDateTime.of(LocalDate.now(), time);
-                    }
-                }
+                LocalTime time = LocalTime.parse(endedAtText.trim(), TIME_FORMATTER);
+                parsedEndedAt = LocalDateTime.of(attendance.getAttendanceDate(), time);
             } catch (Exception ex) {
-                // bubble a helpful error
-                throw new IllegalArgumentException("Unable to parse endedAt value: " + endedAtText);
+                throw new IllegalArgumentException("Unable to parse endedAt value: " + endedAtText + ". Use HH:mm format.");
             }
         }
 
@@ -527,7 +468,6 @@ public class AttendanceService {
         attendance.setDepartureReason(departureReason);
         attendance.setDepartureNotes(departureNotes);
 
-        // Recalculate totals (PreUpdate will run) and save
         return attendanceRepository.save(attendance);
     }
 

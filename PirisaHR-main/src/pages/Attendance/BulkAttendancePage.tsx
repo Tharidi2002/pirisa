@@ -24,8 +24,8 @@ const quickTimeOptions = [
   "16:00",
 ];
 
-type AttendanceStatus = "PRESENT" | "ABSENT" | "LEAVE";
-type WorkingStatus = "ON_SITE" | "ONLINE" | "REMOTE";
+type AttendanceStatus = "PRESENT" | "ABSENT" | "LEAVE" | "HALF_DAY";
+type WorkingStatus = "OFFICE" | "WFH" | "FIELD_VISIT";
 
 interface AttendanceRow {
   id: number;
@@ -43,6 +43,7 @@ interface AttendanceRow {
   entryType: string;
   createdBy: string;
   photoUrl?: string;
+  notes?: string;
 }
 
 interface AttendedRow {
@@ -83,6 +84,7 @@ const BulkAttendancePage = () => {
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,15 +92,17 @@ const BulkAttendancePage = () => {
   const [showAttended, setShowAttended] = useState<boolean>(false);
   const [showExcluded, setShowExcluded] = useState<boolean>(false);
   const [attendedDepartmentFilter, setAttendedDepartmentFilter] = useState<number>(0);
-  
-  // Modal state for clock-out handling
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+
+  const templateDownloadUrl = "/templates/attendance-template.csv";
+
   interface ClockOutModalState {
     open: boolean;
     attendanceId?: number;
     empId?: number;
     name?: string;
     attendanceDate?: string;
-    defaultEndedAt?: string; // time-only HH:mm
+    defaultEndedAt?: string;
     reason?: string;
     notes?: string;
   }
@@ -110,6 +114,18 @@ const BulkAttendancePage = () => {
   const companyId = localStorage.getItem("cmpnyId");
 
   const isToday = selectedDate === getTodayDate();
+
+  useEffect(() => {
+    const checkDate = new Date(selectedDate);
+    const day = checkDate.getDay();
+    if (day === 0) {
+      setDateWarning("The selected date is a Sunday.");
+    } else if (day === 6) {
+      setDateWarning("The selected date is a Saturday.");
+    } else {
+      setDateWarning(null);
+    }
+  }, [selectedDate]);
 
   const loadBulkAttendanceData = useCallback(async () => {
     if (!companyId) {
@@ -136,12 +152,12 @@ const BulkAttendancePage = () => {
         departmentName: employee.departmentName ?? "Unassigned",
         attendanceDate: selectedDate,
         attendance_status: "PRESENT",
-        working_status: "ON_SITE",
+        working_status: "OFFICE",
         startedAt: defaultStartTime,
         endedAt: defaultEndTime,
         entryType: "MANUAL_HR",
         createdBy: currentUser,
-        // Defer attaching the photo URL until we confirm an image exists to avoid 404 noise in the browser console.
+        notes: "",
         photoUrl: undefined,
       }));
 
@@ -175,24 +191,20 @@ const BulkAttendancePage = () => {
       setExcludedRows(parsedExcludedRows);
       setSelectedRowIds(parsedPendingRows.map((row) => row.id));
 
-      // Attach photo URLs only for records that actually have a profile image to avoid 404 errors in console.
       const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
       const attachPhotos = async () => {
-        // Check pending rows
         await Promise.all(parsedPendingRows.map(async (r) => {
           const exists = await attendanceService.profileImageExists(r.id);
           if (exists) {
             setPendingRows((prev) => prev.map((p) => (p.id === r.id ? { ...p, photoUrl: `${base}/api/profile-image/view/${r.id}` } : p)));
           }
         }));
-        // Check attended rows
         await Promise.all(parsedAttendedRows.map(async (r) => {
           const exists = await attendanceService.profileImageExists(r.empId);
           if (exists) {
             setAttendedRows((prev) => prev.map((p) => (p.attendanceId === r.attendanceId ? { ...p, photoUrl: `${base}/api/profile-image/view/${r.empId}` } : p)));
           }
         }));
-        // Check excluded rows
         await Promise.all(parsedExcludedRows.map(async (r) => {
           const exists = await attendanceService.profileImageExists(r.id);
           if (exists) {
@@ -201,9 +213,7 @@ const BulkAttendancePage = () => {
         }));
       };
 
-      attachPhotos().catch(() => {
-        // ignore photo attachment errors; they only reduce console noise
-      });
+      attachPhotos().catch(() => {});
 
       const uniqueDepartments = Array.from(
         new Map(
@@ -251,8 +261,6 @@ const BulkAttendancePage = () => {
       }, {});
   }, [excludedRows, selectedDepartment]);
 
-  // Filter attended rows by an optional department filter selected in the attended panel.
-  // If attendedDepartmentFilter is 0, show all attended rows; otherwise only rows matching dept id.
   const attendedFilteredRows = useMemo(() => {
     return attendedRows.filter((r) => attendedDepartmentFilter === 0 || r.departmentId === attendedDepartmentFilter);
   }, [attendedRows, attendedDepartmentFilter]);
@@ -268,9 +276,9 @@ const BulkAttendancePage = () => {
     return dates.length > 0 ? dates.reduce((min, current) => (current < min ? current : min)) : selectedDate;
   }, [pendingRows, excludedRows, selectedDepartment, selectedDate]);
 
-  const todayAttendanceNote = isToday
-    ? "Today's attendance entry is intended for current arrivals only. Already marked attendees are shown below and cannot be duplicated here. If someone leaves early, record the actual attendance and time; no extra reason needs to be added in this form."
-    : "Select the date and department, then mark attendance for the chosen day.";
+  const attendanceGuidance = isToday
+    ? "Today's attendance is for current arrivals. Already marked attendees are listed below. To mark an early departure, use the 'Clock Out' feature in the 'Already Attended' section."
+    : "You are marking attendance for a past date. Please ensure Start Time, End Time, and Status are correct. Add a note in the 'Reason / Work Log' field if necessary.";
 
   const handleRowChange = (id: number, next: Partial<AttendanceRow>) => {
     setPendingRows((prevRows) => prevRows.map((row) => (row.id === id ? { ...row, ...next } : row)));
@@ -296,10 +304,10 @@ const BulkAttendancePage = () => {
     setFailedPhotoLoads((prev) => ({ ...prev, [id]: true }));
   };
 
-  const buildPayload = (): AttendanceRowPayload[] => {
+  const buildPayload = (): (AttendanceRowPayload & { notes?: string })[] => {
     return selectedRows.map((row) => {
-      const startedAt = row.attendance_status === "PRESENT" ? `${row.attendanceDate}T${row.startedAt}:00` : null;
-      const endedAt = !isToday && row.attendance_status === "PRESENT" ? `${row.attendanceDate}T${row.endedAt}:00` : null;
+      const startedAt = row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY" ? `${row.attendanceDate}T${row.startedAt}:00` : null;
+      const endedAt = !isToday && (row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY") ? `${row.attendanceDate}T${row.endedAt}:00` : null;
       return {
         empId: row.id,
         attendanceDate: row.attendanceDate,
@@ -309,6 +317,7 @@ const BulkAttendancePage = () => {
         attendance_status: row.attendance_status,
         entryType: row.entryType,
         createdBy: row.createdBy,
+        notes: row.notes,
       };
     });
   };
@@ -340,8 +349,28 @@ const BulkAttendancePage = () => {
     }
   };
 
-  // Handler to open the clock-out modal for a specific attended record.
-  // Pre-fills the modal with the employee name and a default end time (current time in HH:mm).
+  const handleExcelImport = async () => {
+    if (!uploadFile) {
+      setError("Please select a file to import.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await attendanceService.importAttendanceExcel(uploadFile, currentUser);
+      setSuccessMessage("File imported successfully. Attendance data is being updated.");
+      setUploadFile(null);
+      await loadBulkAttendanceData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to import file. Please check format and content.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openClockOutModal = (record: AttendedRow) => {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, "0");
@@ -358,15 +387,12 @@ const BulkAttendancePage = () => {
     });
   };
 
-  // Confirm clock-out: call backend endpoint and refresh bulk attendance data.
-  // This enforces that early departures are recorded with a reason and optional notes.
   const confirmClockOut = async () => {
     if (!clockOutModal.attendanceId) return;
     setSaving(true);
     try {
-      // Build payload: if only time provided, backend will combine with attendanceDate.
       const payload = {
-        endedAt: clockOutModal.defaultEndedAt, // backend accepts HH:mm or full datetime
+        endedAt: clockOutModal.defaultEndedAt,
         departureReason: clockOutModal.reason,
         departureNotes: clockOutModal.notes,
       };
@@ -387,12 +413,13 @@ const BulkAttendancePage = () => {
     { value: "PRESENT", label: "Present" },
     { value: "ABSENT", label: "Absent" },
     { value: "LEAVE", label: "Leave" },
+    { value: "HALF_DAY", label: "Half Day" },
   ];
 
   const workingStatusOptions: { value: WorkingStatus; label: string }[] = [
-    { value: "ON_SITE", label: "On-site" },
-    { value: "ONLINE", label: "Online" },
-    { value: "REMOTE", label: "Remote" },
+    { value: "OFFICE", label: "Office" },
+    { value: "WFH", label: "Work From Home (WFH)" },
+    { value: "FIELD_VISIT", label: "Field Visit" },
   ];
 
   return (
@@ -411,6 +438,7 @@ const BulkAttendancePage = () => {
               <input
                 type="date"
                 min={minJoinDate}
+                max={getTodayDate()}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
@@ -434,6 +462,36 @@ const BulkAttendancePage = () => {
           </div>
         </div>
 
+        <div className="mt-6 border-t border-gray-200 pt-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-700">Import from File</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Upload an Excel (.xlsx) or CSV file to mark attendance in bulk.
+                <a href={templateDownloadUrl} download className="ml-2 font-medium text-sky-600 hover:underline">
+                  Download Template
+                </a>
+              </p>
+            </div>
+            <div className="flex w-full max-w-sm items-center gap-3">
+              <input
+                type="file"
+                accept=".xlsx, .csv"
+                onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-slate-50 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-100"
+              />
+              <button
+                type="button"
+                onClick={handleExcelImport}
+                disabled={!uploadFile || saving}
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {saving ? "Importing..." : "Import"}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {error && (
           <div className="mt-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {error}
@@ -443,6 +501,14 @@ const BulkAttendancePage = () => {
           <div className="mt-4 rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
             {successMessage}
           </div>
+        )}
+        {dateWarning && (
+            <div className="mt-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
+                <div className="flex items-center gap-2 font-medium">
+                    <span>⚠️</span>
+                    <span>{dateWarning}</span>
+                </div>
+            </div>
         )}
         {excludedEmployeeCount > 0 && (
           <div className="mt-4 rounded-md bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-700">
@@ -481,7 +547,6 @@ const BulkAttendancePage = () => {
         )}
       </div>
 
-      {/* Clock Out Modal - simple accessible modal overlay used to capture end time, reason and notes for early departures. */}
       {clockOutModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
@@ -535,8 +600,8 @@ const BulkAttendancePage = () => {
       )}
 
       <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sky-800">
-        <div className="font-semibold">{isToday ? "Today’s Attendance Guidance" : "Attendance Guidance"}</div>
-        <div className="mt-2 text-sm leading-6">{todayAttendanceNote}</div>
+        <div className="font-semibold">Attendance Guidance</div>
+        <div className="mt-2 text-sm leading-6">{attendanceGuidance}</div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -567,9 +632,14 @@ const BulkAttendancePage = () => {
                 Start Time
               </th>
               {!isToday && (
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  End Time
-                </th>
+                <>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    End Time
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Reason / Work Log
+                  </th>
+                </>
               )}
             </tr>
           </thead>
@@ -624,7 +694,7 @@ const BulkAttendancePage = () => {
                   <select
                     value={row.working_status}
                     onChange={(e) => handleRowChange(row.id, { working_status: e.target.value as WorkingStatus })}
-                    disabled={row.attendance_status !== "PRESENT"}
+                    disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
                     className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
                   >
                     {workingStatusOptions.map((option) => (
@@ -641,13 +711,13 @@ const BulkAttendancePage = () => {
                       step="900"
                       value={row.startedAt}
                       onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
-                      disabled={row.attendance_status !== "PRESENT"}
+                      disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
                       className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
                     />
                     <select
                       value={row.startedAt}
                       onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
-                      disabled={row.attendance_status !== "PRESENT"}
+                      disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
                       className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
                     >
                       <option value="">Quick select</option>
@@ -660,16 +730,28 @@ const BulkAttendancePage = () => {
                   </div>
                 </td>
                 {!isToday && (
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    <input
-                      type="time"
-                      step="900"
-                      value={row.endedAt}
-                      onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
-                      disabled={row.attendance_status !== "PRESENT"}
-                      className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                    />
-                  </td>
+                  <>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      <input
+                        type="time"
+                        step="900"
+                        value={row.endedAt}
+                        onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
+                        disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
+                        className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      <input
+                        type="text"
+                        value={row.notes || ''}
+                        onChange={(e) => handleRowChange(row.id, { notes: e.target.value })}
+                        disabled={row.attendance_status === "ABSENT"}
+                        className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                        placeholder="Log work done or reason"
+                      />
+                    </td>
+                  </>
                 )}
               </tr>
             ))}
