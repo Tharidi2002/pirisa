@@ -31,10 +31,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Employee findByEmail(String email);
 
     @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.department d LEFT JOIN FETCH e.designation des WHERE e.cmpId = :companyId AND " +
-           "(LOWER(e.emp_no) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(e.epf_no) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(e.first_name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(e.last_name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "(LOWER(e.empNo) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(e.epfNo) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(e.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(e.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(e.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Employee> searchEmployees(@Param("companyId") long companyId, @Param("query") String query);
 
@@ -47,5 +47,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     // Find employees by designation ID
     List<Employee> findByDesignationId(Long designationId);
 
-    Optional<Employee> findByEpf_no(String epfNo);
+    Optional<Employee> findByEpfNo(String epfNo);
 }

@@ -6,11 +6,9 @@
 
   # Use https://search.nixos.org/packages to find packages
   packages = [
-    # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
+    pkgs.maven          # Add this line
+    pkgs.jdk11          # Make sure JDK is also included
+    pkgs.mysql80        # If you need MySQL
   ];
 
   # Sets environment variables in the workspace
@@ -47,8 +45,7 @@
       };
       # Runs when the workspace is (re)started
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        mysql-init = "bash HRM-main/start_mysql.sh";
       };
     };
   };

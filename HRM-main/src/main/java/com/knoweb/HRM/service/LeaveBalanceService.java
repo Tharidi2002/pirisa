@@ -42,6 +42,9 @@ public class LeaveBalanceService {
     @Autowired
     private EmployeeLeaveRequestRepository employeeLeaveRequestRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     public LeaveBalanceResponseDTO getEmployeeLeaveBalances(long empId, AsOfMode asOfMode) {
         Optional<Employee> employeeOpt = employeeRepository.findById(empId);
         if (!employeeOpt.isPresent()) {
@@ -102,7 +105,7 @@ public class LeaveBalanceService {
                 })
                 .collect(Collectors.toList());
 
-        return new LeaveBalanceResponseDTO(
+        LeaveBalanceResponseDTO response = new LeaveBalanceResponseDTO(
                 100,
                 "Successful",
                 empId,
@@ -112,6 +115,10 @@ public class LeaveBalanceService {
                 lastCalcDate,
                 balances
         );
+
+        sendLeaveBalanceNotification(employee, response);
+
+        return response;
     }
 
     public LeaveBalanceResponseDTO runCompanyLeaveCalculation(long cmpId, LocalDate calculationDate) {
@@ -143,5 +150,40 @@ public class LeaveBalanceService {
                 calcDate,
                 null
         );
+    }
+
+    private void sendLeaveBalanceNotification(Employee employee, LeaveBalanceResponseDTO leaveBalance) {
+        if (employee.getEmail() == null || leaveBalance.getPlanBalances() == null) {
+            return;
+        }
+
+        String subject = "Your Leave Balance Report";
+        String content = buildLeaveBalanceEmail(employee, leaveBalance);
+        emailService.sendEmail(employee.getEmail(), subject, content);
+    }
+
+    private String buildLeaveBalanceEmail(Employee employee, LeaveBalanceResponseDTO leaveBalance) {
+        StringBuilder content = new StringBuilder();
+        content.append("<html><body>");
+        content.append("<h1>Leave Balance Report</h1>");
+        content.append("<p>Dear ").append(employee.getFirstName()).append(" ").append(employee.getLastName()).append(",</p>");
+        content.append("<p>Here is your leave balance as of ").append(leaveBalance.getAsOfDate()).append(":</p>");
+
+        content.append("<table border='1' style='width:100%; border-collapse: collapse;'>");
+        content.append("<tr><th>Leave Type</th><th>Available</th><th>Taken</th><th>Remaining</th></tr>");
+
+        for (LeavePlanBalanceDTO balance : leaveBalance.getPlanBalances()) {
+            content.append("<tr>");
+            content.append("<td>").append(balance.getLeaveType()).append("</td>");
+            content.append("<td>").append(balance.getAvailable()).append("</td>");
+            content.append("<td>").append(balance.getTaken()).append("</td>");
+            content.append("<td>").append(balance.getRemaining()).append("</td>");
+            content.append("</tr>");
+        }
+
+        content.append("</table>");
+        content.append("</body></html>");
+
+        return content.toString();
     }
 }

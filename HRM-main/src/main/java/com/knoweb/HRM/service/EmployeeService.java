@@ -60,7 +60,7 @@ public class EmployeeService {
                         "    %s\n\n" +
                         "For security, you will be prompted to choose a new password on first login.\n\n" +
                         "— The HRM Team",
-                emp.getFirst_name(), tempPwd
+                emp.getFirstName(), tempPwd
         );
         emailService.sendEmail(emp.getEmail(), subject, body);
 
@@ -93,15 +93,15 @@ public class EmployeeService {
 
         return employees.stream().map(employee -> new AttendanceEmployeeDTO(
                 employee.getId(),
-                employee.getEpf_no(),
-                employee.getFirst_name(),
-                employee.getLast_name(),
-                employee.getBasic_salary(),
+                employee.getEpfNo(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getBasicSalary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDate_of_joining(),
+                employee.getDateOfJoining(),
                 employee.getNic(),
                 employee.getDob(),
                 employee.getStatus(),
@@ -133,15 +133,15 @@ public class EmployeeService {
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
                 employee.getId(),
-                employee.getEpf_no(),
-                employee.getFirst_name(),
-                employee.getLast_name(),
-                employee.getBasic_salary(),
+                employee.getEpfNo(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getBasicSalary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDate_of_joining(),
+                employee.getDateOfJoining(),
                 employee.getNic(),
                 employee.getDob(),
                 employee.getStatus(),
@@ -150,16 +150,16 @@ public class EmployeeService {
                         payrole.getYear(),
                         payrole.getMonth(),
                         payrole.getAllowance(),
-                        payrole.getOvertime_pay(),
-                        payrole.getBonus_pay(),
+                        payrole.getOvertimePay(),
+                        payrole.getBonusPay(),
                         payrole.getAppit(),
                         payrole.getLoan(),
-                        payrole.getOther_deductions(),
-                        payrole.getEpf_8(),
-                        payrole.getTotal_earnings(),
-                        payrole.getTotal_deductions(),
-                        payrole.getNet_salary(),
-                        payrole.getBasic_salary()
+                        payrole.getOtherDeductions(),
+                        payrole.getEpf8(),
+                        payrole.getTotalEarnings(),
+                        payrole.getTotalDeductions(),
+                        payrole.getNetSalary(),
+                        payrole.getBasicSalary()
 
                 )).collect(Collectors.toList())
         )).collect(Collectors.toList());
@@ -172,15 +172,15 @@ public class EmployeeService {
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
                 employee.getId(),
-                employee.getEpf_no(),
-                employee.getFirst_name(),
-                employee.getLast_name(),
-                employee.getBasic_salary(),
+                employee.getEpfNo(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getBasicSalary(),
                 employee.getEmail(),
                 employee.getGender(),
                 employee.getPhone(),
                 employee.getAddress(),
-                employee.getDate_of_joining(),
+                employee.getDateOfJoining(),
                 employee.getNic(),
                 employee.getDob(),
                 employee.getStatus(),
@@ -189,16 +189,16 @@ public class EmployeeService {
                         payrole.getYear(),
                         payrole.getMonth(),
                         payrole.getAllowance(),
-                        payrole.getOvertime_pay(),
-                        payrole.getBonus_pay(),
+                        payrole.getOvertimePay(),
+                        payrole.getBonusPay(),
                         payrole.getAppit(),
                         payrole.getLoan(),
-                        payrole.getOther_deductions(),
-                        payrole.getEpf_8(),
-                        payrole.getTotal_earnings(),
-                        payrole.getTotal_deductions(),
-                        payrole.getNet_salary(),
-                        payrole.getBasic_salary()
+                        payrole.getOtherDeductions(),
+                        payrole.getEpf8(),
+                        payrole.getTotalEarnings(),
+                        payrole.getTotalDeductions(),
+                        payrole.getNetSalary(),
+                        payrole.getBasicSalary()
 
                 )).collect(Collectors.toList())
         )).collect(Collectors.toList());
@@ -225,15 +225,15 @@ public class EmployeeService {
 
             return new EmpDetailsDTO(
                     employee.getId(),
-                    employee.getEpf_no(),
-                    employee.getFirst_name(),
-                    employee.getLast_name(),
-                    employee.getBasic_salary(),
+                    employee.getEpfNo(),
+                    employee.getFirstName(),
+                    employee.getLastName(),
+                    employee.getBasicSalary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDate_of_joining(),
+                    employee.getDateOfJoining(),
                     employee.getNic(),
                     employee.getDob(),
                     employee.getStatus(),
@@ -279,15 +279,15 @@ public class EmployeeService {
 
             return new EmpDetailsDTO(
                     employee.getId(),
-                    employee.getEpf_no(),
-                    employee.getFirst_name(),
-                    employee.getLast_name(),
-                    employee.getBasic_salary(),
+                    employee.getEpfNo(),
+                    employee.getFirstName(),
+                    employee.getLastName(),
+                    employee.getBasicSalary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDate_of_joining(),
+                    employee.getDateOfJoining(),
                     employee.getNic(),
                     employee.getDob(),
                     employee.getStatus(),
@@ -338,15 +338,15 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpf_no(),
-                            employee.getFirst_name(),
-                            employee.getLast_name(),
-                            employee.getBasic_salary(),
+                            employee.getEpfNo(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            employee.getBasicSalary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDate_of_joining(),
+                            employee.getDateOfJoining(),
                             employee.getNic(),
                             employee.getDob(),
                             employee.getStatus(),
@@ -392,15 +392,15 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpf_no(),
-                            employee.getFirst_name(),
-                            employee.getLast_name(),
-                            employee.getBasic_salary(),
+                            employee.getEpfNo(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            employee.getBasicSalary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDate_of_joining(),
+                            employee.getDateOfJoining(),
                             employee.getNic(),
                             employee.getDob(),
                             employee.getStatus(),
@@ -447,15 +447,15 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpf_no(),
-                            employee.getFirst_name(),
-                            employee.getLast_name(),
-                            employee.getBasic_salary(),
+                            employee.getEpfNo(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            employee.getBasicSalary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDate_of_joining(),
+                            employee.getDateOfJoining(),
                             employee.getNic(),
                             employee.getDob(),
                             employee.getStatus(),
@@ -519,15 +519,15 @@ public class EmployeeService {
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),
-                    employee.getEpf_no(),
-                    employee.getFirst_name(),
-                    employee.getLast_name(),
-                    employee.getBasic_salary(),
+                    employee.getEpfNo(),
+                    employee.getFirstName(),
+                    employee.getLastName(),
+                    employee.getBasicSalary(),
                     employee.getEmail(),
                     employee.getGender(),
                     employee.getPhone(),
                     employee.getAddress(),
-                    employee.getDate_of_joining(),
+                    employee.getDateOfJoining(),
                     employee.getNic(),
                     employee.getDob(),
                     employee.getStatus(),
@@ -573,15 +573,15 @@ public class EmployeeService {
 
                     return new EmpDetailsDTO(
                             employee.getId(),
-                            employee.getEpf_no(),
-                            employee.getFirst_name(),
-                            employee.getLast_name(),
-                            employee.getBasic_salary(),
+                            employee.getEpfNo(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            employee.getBasicSalary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDate_of_joining(),
+                            employee.getDateOfJoining(),
                             employee.getNic(),
                             employee.getDob(),
                             employee.getStatus(),
@@ -609,11 +609,11 @@ public class EmployeeService {
     public Employee updateEmployee(Long emp_id, Employee updateEmployee) {
         Employee employee = getEmployeeById(emp_id);
         if (employee != null) {
-            employee.setEpf_no(updateEmployee.getEpf_no());
-            employee.setEmp_no(updateEmployee.getEmp_no());
-            employee.setFirst_name(updateEmployee.getFirst_name());
-            employee.setLast_name(updateEmployee.getLast_name());
-            employee.setBasic_salary(updateEmployee.getBasic_salary());
+            employee.setEpfNo(updateEmployee.getEpfNo());
+            employee.setEmpNo(updateEmployee.getEmpNo());
+            employee.setFirstName(updateEmployee.getFirstName());
+            employee.setLastName(updateEmployee.getLastName());
+            employee.setBasicSalary(updateEmployee.getBasicSalary());
             employee.setEmail(updateEmployee.getEmail());
             // Keep username in sync with email (login identifier)
             employee.setUsername(updateEmployee.getEmail());
@@ -621,7 +621,7 @@ public class EmployeeService {
             employee.setDob(updateEmployee.getDob());
             employee.setPhone(updateEmployee.getPhone());
             employee.setAddress(updateEmployee.getAddress());
-            employee.setDate_of_joining(updateEmployee.getDate_of_joining());
+            employee.setDateOfJoining(updateEmployee.getDateOfJoining());
             employee.setNic(updateEmployee.getNic());
             if (updateEmployee.getStatus() != null && !updateEmployee.getStatus().trim().isEmpty()) {
                 employee.setStatus(updateEmployee.getStatus());
@@ -654,15 +654,15 @@ public class EmployeeService {
 
                     return new AttendanceEmployeeDTO(
                             employee.getId(),
-                            employee.getEpf_no(),
-                            employee.getFirst_name(),
-                            employee.getLast_name(),
-                            employee.getBasic_salary(),
+                            employee.getEpfNo(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            employee.getBasicSalary(),
                             employee.getEmail(),
                             employee.getGender(),
                             employee.getPhone(),
                             employee.getAddress(),
-                            employee.getDate_of_joining(),
+                            employee.getDateOfJoining(),
                             employee.getNic(),
                             employee.getDob(),
                             employee.getStatus(),

@@ -42,9 +42,10 @@ public class EmployeeLeaveRequestService {
         LocalDateTime now = LocalDateTime.now();
         
         // Find active leave for the employee
-        EmployeeLeave activeLeave = employeeLeaveRequestRepository.findActiveLeaveForEmployee(empId, now);
+        List<EmployeeLeave> activeLeaves = employeeLeaveRequestRepository.findActiveLeaveForEmployee(empId, now);
         
-        if (activeLeave != null) {
+        if (activeLeaves != null && !activeLeaves.isEmpty()) {
+            EmployeeLeave activeLeave = activeLeaves.get(0);
             // Update leave status to cancelled
             activeLeave.setLeaveStatus("CANCELLED");
             activeLeave.setCancellationDate(now);

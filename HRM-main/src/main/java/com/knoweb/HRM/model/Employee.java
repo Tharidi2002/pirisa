@@ -23,15 +23,20 @@ public class Employee implements Serializable {
     @Column(name = "emp_id")
     private long id;
 
-    private String epf_no;
+    @Column(name = "epf_no")
+    private String epfNo;
 
-    private String emp_no;
+    @Column(name = "emp_no")
+    private String empNo;
 
-    private String first_name;
+    @Column(name = "first_name")
+    private String firstName;
 
-    private String last_name;
+    @Column(name = "last_name")
+    private String lastName;
 
-    private double basic_salary;
+    @Column(name = "basic_salary")
+    private double basicSalary;
 
     @Column(unique = true)
     private String email;
@@ -51,7 +56,8 @@ public class Employee implements Serializable {
     @Column(name = "nic", nullable = false)
     private String nic;
 
-    private String date_of_joining;
+    @Column(name = "date_of_joining")
+    private String dateOfJoining;
 
     private String status="ACTIVE";
 

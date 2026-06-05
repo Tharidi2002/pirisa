@@ -965,27 +965,27 @@ public class CalendarEventService {
             List<Employee> filteredEmployees = allEmployees.stream()
                 .filter(emp -> {
                     // Search by employee ID
-                    if (emp.getEmp_no() != null && emp.getEmp_no().toLowerCase().contains(normalizedQuery)) {
+                    if (emp.getEmpNo() != null && emp.getEmpNo().toLowerCase().contains(normalizedQuery)) {
                         return true;
                     }
                     
                     // Search by EPF number
-                    if (emp.getEpf_no() != null && emp.getEpf_no().toLowerCase().contains(normalizedQuery)) {
+                    if (emp.getEpfNo() != null && emp.getEpfNo().toLowerCase().contains(normalizedQuery)) {
                         return true;
                     }
                     
                     // Search by first name
-                    if (emp.getFirst_name() != null && emp.getFirst_name().toLowerCase().contains(normalizedQuery)) {
+                    if (emp.getFirstName() != null && emp.getFirstName().toLowerCase().contains(normalizedQuery)) {
                         return true;
                     }
                     
                     // Search by last name
-                    if (emp.getLast_name() != null && emp.getLast_name().toLowerCase().contains(normalizedQuery)) {
+                    if (emp.getLastName() != null && emp.getLastName().toLowerCase().contains(normalizedQuery)) {
                         return true;
                     }
                     
                     // Search by full name
-                    String fullName = (emp.getFirst_name() + " " + emp.getLast_name()).toLowerCase();
+                    String fullName = (emp.getFirstName() + " " + emp.getLastName()).toLowerCase();
                     if (fullName.contains(normalizedQuery)) {
                         return true;
                     }

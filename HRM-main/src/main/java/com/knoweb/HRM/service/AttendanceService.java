@@ -99,17 +99,17 @@ public class AttendanceService {
     }
 
     private boolean isEmployeeEligibleForAttendance(Employee employee, LocalDate attendanceDate) {
-        LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
+        LocalDate joinDate = parseEmployeeJoinDate(employee.getDateOfJoining());
         return joinDate != null && !attendanceDate.isBefore(joinDate);
     }
 
     private AttendancePendingEmployeeDTO toPendingEmployeeDTO(Employee employee) {
         return new AttendancePendingEmployeeDTO(
                 employee.getId(),
-                employee.getEpf_no(),
-                employee.getFirst_name(),
-                employee.getLast_name(),
-                employee.getDate_of_joining(),
+                employee.getEpfNo(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getDateOfJoining(),
                 employee.getDepartment() != null ? employee.getDepartment().getId() : null,
                 employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned"
         );
@@ -118,19 +118,19 @@ public class AttendanceService {
     private AttendanceExcludedEmployeeDTO toExcludedEmployeeDTO(Employee employee) {
         return new AttendanceExcludedEmployeeDTO(
                 employee.getId(),
-                employee.getEpf_no(),
-                employee.getFirst_name(),
-                employee.getLast_name(),
-                employee.getDate_of_joining(),
+                employee.getEpfNo(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getDateOfJoining(),
                 employee.getDepartment() != null ? employee.getDepartment().getId() : null,
                 employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned"
         );
     }
 
     private AttendanceAttendedEmployeeDTO toAttendedEmployeeDTO(Attendance attendance, Employee employee) {
-        String firstName = employee != null ? employee.getFirst_name() : "Unknown";
-        String lastName = employee != null ? employee.getLast_name() : "";
-        String epfNo = employee != null ? employee.getEpf_no() : null;
+        String firstName = employee != null ? employee.getFirstName() : "Unknown";
+        String lastName = employee != null ? employee.getLastName() : "";
+        String epfNo = employee != null ? employee.getEpfNo() : null;
         Long deptId = employee != null && employee.getDepartment() != null ? employee.getDepartment().getId() : null;
         String deptName = employee != null && employee.getDepartment() != null ? employee.getDepartment().getDptName() : "Unassigned";
 
@@ -176,9 +176,9 @@ public class AttendanceService {
         Employee employee = employeeRepository.findById(attendance.getEmpId())
                 .orElseThrow(() -> new IllegalArgumentException("Cannot validate attendance: employee not found."));
 
-        LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
+        LocalDate joinDate = parseEmployeeJoinDate(employee.getDateOfJoining());
         if (joinDate != null && attendance.getAttendanceDate().isBefore(joinDate)) {
-            throw new IllegalArgumentException("Cannot mark attendance for employee " + employee.getEpf_no() + " prior to the join date.");
+            throw new IllegalArgumentException("Cannot mark attendance for employee " + employee.getEpfNo() + " prior to the join date.");
         }
     }
 
@@ -227,8 +227,8 @@ public class AttendanceService {
                 
                 row.createCell(0).setCellValue(attendance.getId());
                 row.createCell(1).setCellValue(attendance.getEmpId());
-                row.createCell(2).setCellValue(employee != null ? employee.getEpf_no() : "");
-                row.createCell(3).setCellValue(employee != null ? employee.getFirst_name() + " " + employee.getLast_name() : "");
+                row.createCell(2).setCellValue(employee != null ? employee.getEpfNo() : "");
+                row.createCell(3).setCellValue(employee != null ? employee.getFirstName() + " " + employee.getLastName() : "");
 
                 Cell dateCell = row.createCell(4);
                 if (attendance.getAttendanceDate() != null) {
@@ -326,7 +326,7 @@ public class AttendanceService {
             return null; // Skip rows without an EPF number
         }
 
-        Employee employee = employeeRepository.findByEpf_no(epfNo.trim())
+        Employee employee = employeeRepository.findByEpfNo(epfNo.trim())
                 .orElseThrow(() -> new IllegalArgumentException("Row " + (row.getRowNum() + 1) + ": Employee not found for EPF No '" + epfNo + "'"));
 
         LocalDate attendanceDate = parseDateCell(row.getCell(headerIndex.getOrDefault("ATTENDANCE_DATE", -1)));
@@ -334,7 +334,7 @@ public class AttendanceService {
             throw new IllegalArgumentException("Row " + (row.getRowNum() + 1) + ": Attendance Date is required for EPF No " + epfNo);
         }
         
-        LocalDate joinDate = parseEmployeeJoinDate(employee.getDate_of_joining());
+        LocalDate joinDate = parseEmployeeJoinDate(employee.getDateOfJoining());
         if (joinDate != null && attendanceDate.isBefore(joinDate)) {
             System.out.println("Skipping attendance for " + epfNo + " on " + attendanceDate + " (before join date " + joinDate + ")");
             return null;
