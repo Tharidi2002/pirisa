@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/company")
-@CrossOrigin(origins = "http://localhost:5174")
 public class CompanyRegistrationController {
 
     @Autowired
     private CompanyRegistrationService companyRegistrationService;
 
+    @CrossOrigin(origins = "*") // Allow all origins
     @PostMapping("/register")
     public ResponseEntity<?> registerCompany(@RequestBody CompanyRegistrationRequest request) {
         try {
@@ -24,10 +24,10 @@ public class CompanyRegistrationController {
             System.out.println("  cmpAddress: " + request.getCmpAddress());
             System.out.println("  username: " + request.getUsername());
             System.out.println("  password: " + (request.getPassword() != null ? "[PRESENT]" : "[NULL]"));
-            
+
             String result = companyRegistrationService.registerCompany(request);
             System.out.println("DEBUG - Registration result: " + result);
-            
+
             if (result.equals("SUCCESS")) {
                 return ResponseEntity.ok().body("{\"message\": \"Company registered successfully\", \"status\": \"success\"}");
             } else {

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -68,6 +69,16 @@ public class DesignationController {
             errorResponse.put("resultCode", 101);
             errorResponse.put("resultDesc", e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @GetMapping("/by_department/{dptId}")
+    public ResponseEntity<?> getDesignationsByDepartment(@PathVariable long dptId) {
+        try {
+            List<Designation> designations = designationService.getDesignationsByDptId(dptId);
+            return new ResponseEntity<>(designations, HttpStatus.OK);
         } catch (Exception e) {
             return handleException(e);
         }

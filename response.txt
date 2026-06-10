@@ -1,0 +1,1 @@
+{"response":{"resultCode":100,"resultDesc":"Login Successfull"},"details":{"Role":"CMPNY","CMPNY_Id":1,"username":"testuser","token":"eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQ01QTlkiLCJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc4MTA4NjMxMywiaWF0IjoxNzgwOTk5OTEzfQ.lK7Id4_ikAhhp8gGB4aQbj3hiM77bvQ4451s6KC9Igc"}}

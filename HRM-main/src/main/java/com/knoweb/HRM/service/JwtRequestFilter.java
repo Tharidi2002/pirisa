@@ -1,6 +1,8 @@
 package com.knoweb.HRM.service;
 
 import com.knoweb.HRM.utility.JwtTokenUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +16,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
@@ -24,6 +29,33 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private JwtTokenUtil jwtTokenUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        List<String> pathsToSkip = Arrays.asList(
+            "/login",
+            "/api/company/register",
+            "/company/forgetPassword",
+            "/success",
+            "/cancel",
+            "/api/webhook/stripe",
+            "/password/forgotPassword",
+            "/actuator/health"
+        );
+        
+        List<String> prefixesToSkip = Arrays.asList(
+            "/api/company/check-username/",
+            "/api/company/check-email/",
+            "/ws/",
+            "/calendar/"
+        );
+
+        boolean shouldNotFilter = pathsToSkip.stream().anyMatch(p -> path.equals(p)) ||
+                                  prefixesToSkip.stream().anyMatch(p -> path.startsWith(p));
+
+        return shouldNotFilter;
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
@@ -32,11 +64,16 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String username = null;
         String jwtToken = null;
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-
             jwtToken = requestTokenHeader.substring(7);
-            username = jwtTokenUtil.extractUsername(jwtToken);
-
-            System.out.println(username);
+            try {
+                username = jwtTokenUtil.extractUsername(jwtToken);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Unable to get JWT Token");
+            } catch (ExpiredJwtException e) {
+                System.err.println("JWT Token has expired");
+            } catch (MalformedJwtException e) {
+                System.err.println("JWT token is malformed");
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -67,8 +104,4 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("HRM") || grantedAuthority.getAuthority().equals("USER") || grantedAuthority.getAuthority().equals("EMPLOYEE") ||
                         grantedAuthority.getAuthority().equals("CMPNY"));
     }
-
-
-
 }
-

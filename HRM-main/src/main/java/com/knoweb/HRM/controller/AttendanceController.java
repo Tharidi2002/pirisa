@@ -31,7 +31,7 @@ public class AttendanceController {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @PostMapping(value = "/bulk-mark", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/bulk-mark", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> bulkMarkAttendance(@RequestBody List<Attendance> attendanceList) {
         try {
             List<Attendance> savedEntries = attendanceService.markBulkAttendance(attendanceList);
@@ -44,6 +44,7 @@ public class AttendanceController {
             return ResponseEntity.badRequest()
                     .body(Collections.singletonMap("error", ex.getMessage()));
         } catch (Exception ex) {
+            ex.printStackTrace(); // Log the exception
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "Failed to save bulk attendance"));
         }
@@ -182,6 +183,7 @@ public class AttendanceController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        e.printStackTrace();
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("resultCode", 101);
         errorResponse.put("resultDesc", "ERROR");

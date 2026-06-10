@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -42,7 +43,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
+        config.addAllowedOriginPattern("*"); // Allow all origins
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         source.registerCorsConfiguration("/**", config);
@@ -53,11 +54,26 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors().and().csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/login", "/company/add_company", "/company/forgetPassword", "/api/**", "/success", "/cancel", "/api/webhook/stripe", "/password/forgotPassword", "/actuator/health", "/ws/**", "/calendar/**").permitAll()
+                .antMatchers(
+                        "/login",
+                        "/api/company/register",
+                        "/api/company/check-username/**",
+                        "/api/company/check-email/**",
+                        "/company/forgetPassword", 
+                        "/success", 
+                        "/cancel", 
+                        "/api/webhook/stripe", 
+                        "/password/forgotPassword", 
+                        "/actuator/health", 
+                        "/ws/**", 
+                        "/calendar/**",
+                        "/company/all",
+                        "/add/unit",
+                        "/department/**"
+                ).permitAll()
                 .antMatchers("/user/all").hasAnyAuthority("USER")
                 .antMatchers("/employee/all").hasAnyAuthority("HRM")
                 .antMatchers("/employee/emp/**", "/employee/payroleListEmp/**", "/employee/EmpDetailsListByEmp/**", "/emp_leave/add_leave", "/document/view/**", "/company_leave/company/**", "/employee/changePassword/**", "/document/update/**", "/employee/EmpDetailsList/**", "/logo/view/**", "/document/upload-all").hasAnyAuthority("EMPLOYEE", "CMPNY")
-                .antMatchers("/**").hasAnyAuthority("CMPNY")
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)

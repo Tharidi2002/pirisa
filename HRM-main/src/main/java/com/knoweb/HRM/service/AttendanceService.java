@@ -157,14 +157,14 @@ public class AttendanceService {
             throw new IllegalArgumentException("Attendance list cannot be empty");
         }
 
-        List<Attendance> validatedList = attendanceList.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        for (Attendance attendance : validatedList) {
-            validateAttendanceJoinDate(attendance);
+        List<Attendance> validatedList = new ArrayList<>();
+        for (Attendance attendance : attendanceList) {
+            if (attendance != null) {
+                validateAttendanceJoinDate(attendance);
+                validatedList.add(attendance);
+            }
         }
-        
+
         return attendanceRepository.saveAll(validatedList);
     }
 

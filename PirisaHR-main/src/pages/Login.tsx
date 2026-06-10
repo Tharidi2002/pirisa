@@ -64,7 +64,7 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/password/forgotPassword?email=${encodeURIComponent(
+        `/api/password/forgotPassword?email=${encodeURIComponent(
           resetEmail
         )}`,
         {

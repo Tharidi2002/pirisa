@@ -9,7 +9,15 @@ export default defineConfig({
   ],
   server: {
     port: 5174,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'https://8080-firebase-pirisagit-1780633820276.cluster-zkm2jrwbnbd4awuedc2alqxrpk.cloudworkstations.dev',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   },
   define: {
     global: 'globalThis'

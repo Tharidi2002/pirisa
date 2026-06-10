@@ -7,6 +7,8 @@ import com.knoweb.HRM.repository.DesignationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DesignationService {
 
@@ -26,5 +28,9 @@ public class DesignationService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete designation: " + e.getMessage(), e);
         }
+    }
+
+    public List<Designation> getDesignationsByDptId(long dptId) {
+        return designationRepository.findByDptId(dptId);
     }
 }

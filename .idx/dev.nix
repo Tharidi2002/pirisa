@@ -6,9 +6,9 @@
 
   # Use https://search.nixos.org/packages to find packages
   packages = [
-    pkgs.maven          # Add this line
-    pkgs.jdk11          # Make sure JDK is also included
-    pkgs.mysql80        # If you need MySQL
+    pkgs.maven
+    pkgs.jdk11
+    pkgs.mysql80
   ];
 
   # Sets environment variables in the workspace
@@ -23,16 +23,10 @@
     previews = {
       enable = true;
       previews = {
-        # web = {
-        #   # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-        #   # and show it in IDX's web preview panel
-        #   command = ["npm" "run" "dev"];
-        #   manager = "web";
-        #   env = {
-        #     # Environment variables to set for your server
-        #     PORT = "$PORT";
-        #   };
-        # };
+        backend = {
+          command = ["bash" "HRM-main/start_mysql.sh"];
+          manager = "web";
+        };
       };
     };
 
@@ -45,7 +39,7 @@
       };
       # Runs when the workspace is (re)started
       onStart = {
-        mysql-init = "bash HRM-main/start_mysql.sh";
+        # mysql-init = "bash HRM-main/start_mysql.sh";
       };
     };
   };

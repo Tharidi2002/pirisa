@@ -23,10 +23,10 @@ public class Employee implements Serializable {
     @Column(name = "emp_id")
     private long id;
 
-    @Column(name = "epf_no")
+    @Column(name = "epf_no", unique = true, updatable = false, nullable = false)
     private String epfNo;
 
-    @Column(name = "emp_no")
+    @Column(name = "emp_no", unique = true, nullable = false)
     private String empNo;
 
     @Column(name = "first_name")

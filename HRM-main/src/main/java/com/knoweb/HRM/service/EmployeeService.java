@@ -9,6 +9,7 @@ import com.knoweb.HRM.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -37,6 +38,15 @@ public class EmployeeService {
 
     public Employee createEmployee(Employee emp) {
         emp.setUsername(emp.getEmail());
+
+        if (emp.getEmpNo() == null || emp.getEmpNo().isEmpty()) {
+            String empNo = "EMP" + String.format("%04d", employeeRepository.count() + 1);
+            emp.setEmpNo(empNo);
+        }
+
+        String epfNo = "EPF" + String.format("%04d", employeeRepository.count() + 1);
+        emp.setEpfNo(epfNo);
+
         // 1) Generate a secure random temporary password (12 chars alphanumeric)
         String tempPwd = new SecureRandom()
                 .ints(12, 0, 36)
@@ -164,7 +174,6 @@ public class EmployeeService {
                 )).collect(Collectors.toList())
         )).collect(Collectors.toList());
     }
-
 
 
     public List<PayroleEmployeeDTO> getPayroleByEmployeeId(long empId) {
@@ -514,8 +523,9 @@ public class EmployeeService {
             EmpDetailsDocumentsDTO documentDTO = (employee.getDocuments() != null) ?
                     new EmpDetailsDocumentsDTO(
                             employee.getDocuments().getPhoto(),
-                            employee.getDocuments().getPhoto() != null ? 
-                                "http://localhost:8080/api/profile-image/view/" + employee.getId() : null) : null;
+                            employee.getDocuments().getPhoto() != null ?
+                                    ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/profile-image/view/").path(String.valueOf(employee.getId())).toUriString() : null
+                    ) : null;
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),
@@ -609,7 +619,6 @@ public class EmployeeService {
     public Employee updateEmployee(Long emp_id, Employee updateEmployee) {
         Employee employee = getEmployeeById(emp_id);
         if (employee != null) {
-            employee.setEpfNo(updateEmployee.getEpfNo());
             employee.setEmpNo(updateEmployee.getEmpNo());
             employee.setFirstName(updateEmployee.getFirstName());
             employee.setLastName(updateEmployee.getLastName());
