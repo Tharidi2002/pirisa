@@ -12,10 +12,9 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://8080-firebase-pirisagit-1780633820276.cluster-zkm2jrwbnbd4awuedc2alqxrpk.cloudworkstations.dev',
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false
       }
     }
   },

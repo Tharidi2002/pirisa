@@ -56,20 +56,23 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(
                         "/login",
+                        "/api/login",
                         "/api/company/register",
                         "/api/company/check-username/**",
                         "/api/company/check-email/**",
-                        "/company/forgetPassword", 
-                        "/success", 
-                        "/cancel", 
-                        "/api/webhook/stripe", 
-                        "/password/forgotPassword", 
-                        "/actuator/health", 
-                        "/ws/**", 
+                        "/company/forgetPassword",
+                        "/success",
+                        "/cancel",
+                        "/api/webhook/stripe",
+                        "/password/forgotPassword",
+                        "/actuator/health",
+                        "/ws/**",
                         "/calendar/**",
                         "/company/all",
                         "/add/unit",
-                        "/department/**"
+                        "/department/**",
+                        "/company_leave/**",
+                        "/companyOT/**"
                 ).permitAll()
                 .antMatchers("/user/all").hasAnyAuthority("USER")
                 .antMatchers("/employee/all").hasAnyAuthority("HRM")

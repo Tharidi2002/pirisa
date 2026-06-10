@@ -41,7 +41,7 @@ public class LoginController {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    @PostMapping("/login")
+    @PostMapping({"/login", "/api/login"})
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");

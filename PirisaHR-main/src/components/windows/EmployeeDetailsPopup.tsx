@@ -579,7 +579,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                         <div>
                           <p className="text-sm text-gray-500">Basic Salary</p>
                           <p className="font-semibold text-gray-900">
-                            LKR {employee.basic_salary.toLocaleString()}
+                            LKR {employee.basic_salary ? employee.basic_salary.toLocaleString() : 'N/A'}
                           </p>
                         </div>
                       </div>
