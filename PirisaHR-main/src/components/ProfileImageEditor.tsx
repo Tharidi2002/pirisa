@@ -7,6 +7,7 @@ interface ProfileImageEditorProps {
   employeeId: string;
   token: string;
   onImageChange?: (hasImage: boolean) => void;
+  onImageSelected?: (file: File | null) => void;
   gender?: 'male' | 'female';
   firstName?: string;
 }
@@ -15,6 +16,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
   employeeId,
   token,
   onImageChange,
+  onImageSelected,
   gender = 'male',
   firstName = ''
 }) => {
@@ -348,12 +350,11 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
 
         // Upload compressed image only if employeeId is available
         if (!employeeId || employeeId.trim() === '') {
-          toast.info('Employee will be assigned an ID after creation. Profile picture will be uploaded then.', {
-            position: 'top-center',
-            autoClose: 4000,
-            closeButton: true,
-            pauseOnHover: true,
-          });
+          // Set profile image preview locally
+          setProfileImage(URL.createObjectURL(compressed.file));
+          setHasProfileImage(true);
+          onImageChange?.(true);
+          onImageSelected?.(compressed.file);
           handleEditorClose();
           return;
         }
@@ -411,6 +412,23 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
 
   const handleImageDelete = async () => {
     if (!window.confirm('Are you sure you want to remove the profile image?')) {
+      return;
+    }
+
+    if (!employeeId || employeeId.trim() === '') {
+      setProfileImage((prev) => {
+        if (prev) {
+          try {
+            URL.revokeObjectURL(prev);
+          } catch {
+            // no-op
+          }
+        }
+        return null;
+      });
+      setHasProfileImage(false);
+      onImageChange?.(false);
+      onImageSelected?.(null);
       return;
     }
 

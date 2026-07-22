@@ -81,6 +81,7 @@ const EmployeeRegistration: React.FC = () => {
     appointmentLetter: null,
   });
 
+  const [selectedProfileImage, setSelectedProfileImage] = useState<File | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [token, setToken] = useState<string | null>(null);
@@ -280,6 +281,33 @@ const EmployeeRegistration: React.FC = () => {
           setEmpId(employeeId);
           localStorage.setItem("currentEmpId", employeeId.toString());
           //("Employee ID saved:", employeeId);
+
+          if (selectedProfileImage) {
+            try {
+              const imgFormData = new FormData();
+              imgFormData.append("profileImage", selectedProfileImage);
+              const imgResponse = await fetch(
+                `http://localhost:8080/api/profile-image/upload/${employeeId}`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: imgFormData,
+                }
+              );
+              const imgData = await imgResponse.json();
+              if (imgData.resultCode === 100) {
+                toast.success("Profile image uploaded successfully!");
+              } else {
+                toast.error(imgData.resultDesc || "Failed to upload profile image");
+              }
+            } catch (err) {
+              console.error("Error uploading profile image:", err);
+              toast.error("Error occurred while uploading profile image");
+            }
+          }
+
           toast.success("Employee details saved successfully!");
           // alert('Employee details saved successfully!');
           setStep(2);
@@ -515,6 +543,7 @@ const EmployeeRegistration: React.FC = () => {
                   : "male"
               }
               firstName={employeeDetails.first_name}
+              onImageSelected={setSelectedProfileImage}
             />
           </div>
 
@@ -526,10 +555,9 @@ const EmployeeRegistration: React.FC = () => {
               <input
                 type="text"
                 name="emp_no"
-                value={employeeDetails.emp_no}
-                onChange={handleInputChange}
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter EMP Number"
+                value={employeeDetails.emp_no || "(Auto-generated)"}
+                disabled
+                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-500"
               />
             </div>
             <div>
@@ -539,10 +567,9 @@ const EmployeeRegistration: React.FC = () => {
               <input
                 type="text"
                 name="epf_no"
-                value={employeeDetails.epf_no}
-                onChange={handleInputChange}
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter EPF Number"
+                value={employeeDetails.epf_no || "(Auto-generated)"}
+                disabled
+                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-500"
               />
             </div>
             <div>

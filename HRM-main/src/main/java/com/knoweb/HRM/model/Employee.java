@@ -1,6 +1,7 @@
 package com.knoweb.HRM.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,18 +24,23 @@ public class Employee implements Serializable {
     @Column(name = "emp_id")
     private long id;
 
+    @JsonProperty("epf_no")
     @Column(name = "epf_no", unique = true, updatable = false, nullable = false)
     private String epfNo;
 
+    @JsonProperty("emp_no")
     @Column(name = "emp_no", unique = true, nullable = false)
     private String empNo;
 
+    @JsonProperty("first_name")
     @Column(name = "first_name")
     private String firstName;
 
+    @JsonProperty("last_name")
     @Column(name = "last_name")
     private String lastName;
 
+    @JsonProperty("basic_salary")
     @Column(name = "basic_salary")
     private double basicSalary;
 
@@ -56,6 +62,7 @@ public class Employee implements Serializable {
     @Column(name = "nic", nullable = false)
     private String nic;
 
+    @JsonProperty("date_of_joining")
     @Column(name = "date_of_joining")
     private String dateOfJoining;
 
