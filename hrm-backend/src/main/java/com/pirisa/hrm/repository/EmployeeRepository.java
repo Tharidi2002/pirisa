@@ -5,11 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     List<Employee> findByCmpId(long cmpId);
@@ -48,4 +50,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findByDesignationId(Long designationId);
 
     Optional<Employee> findByEpfNo(String epfNo);
+
+    // Count employees by department ID
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.dptId = :departmentId")
+    long countByDepartmentId(@Param("departmentId") Long departmentId);
+
+    // Count employees by department ID and active status
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.dptId = :departmentId AND e.status = 'ACTIVE'")
+    long countActiveEmployeesByDepartmentId(@Param("departmentId") Long departmentId);
+
+    // Check if any employees are assigned to department
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Employee e WHERE e.dptId = :departmentId")
+    boolean existsEmployeesByDepartmentId(@Param("departmentId") Long departmentId);
 }

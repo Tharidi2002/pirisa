@@ -1,9 +1,12 @@
 package com.pirisa.hrm.service;
 
 import com.pirisa.hrm.model.Unit;
+import com.pirisa.hrm.repository.DesignationRepository;
+import com.pirisa.hrm.repository.EmployeeRepository;
 import com.pirisa.hrm.repository.UnitRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +16,12 @@ public class UnitService {
 
     @Autowired
     private UnitRepository unitRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private DesignationRepository designationRepository;
 
     public Unit createUnit(Unit unit) {
         return unitRepository.save(unit);
@@ -34,12 +43,26 @@ public class UnitService {
         return null;
     }
 
+    @Transactional
     public void deleteUnit(Long dpt_id) {
         try {
             if (!unitRepository.existsById(dpt_id)) {
                 throw new RuntimeException("Unit not found with id: " + dpt_id);
             }
+
+            long employeeCount = employeeRepository.countByDepartmentId(dpt_id);
+            if (employeeCount > 0) {
+                throw new RuntimeException("Cannot delete department because it has " + employeeCount + " employee(s) assigned to it.");
+            }
+
+            long designationCount = designationRepository.countByDepartmentId(dpt_id);
+            if (designationCount > 0) {
+                designationRepository.deleteByDepartmentId(dpt_id);
+            }
+
             unitRepository.deleteById(dpt_id);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete unit: " + e.getMessage(), e);
         }

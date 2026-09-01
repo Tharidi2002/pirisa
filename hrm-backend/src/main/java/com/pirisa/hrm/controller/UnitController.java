@@ -150,7 +150,7 @@ public class UnitController {
     }
 
 
-    @DeleteMapping("/{dpt_id}")
+    @DeleteMapping("/delete-unit/{dpt_id}")
     public ResponseEntity<?> deleteUnit(@PathVariable Long dpt_id) {
         try {
             unitService.deleteUnit(dpt_id);
