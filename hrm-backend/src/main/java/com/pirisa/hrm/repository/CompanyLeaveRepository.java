@@ -1,0 +1,12 @@
+package com.pirisa.hrm.repository;
+
+import com.pirisa.hrm.model.CompanyLeave;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface CompanyLeaveRepository extends JpaRepository<CompanyLeave, Long> {
+    List<CompanyLeave> findByCmpId(long cmpId);
+}
