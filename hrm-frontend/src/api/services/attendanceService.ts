@@ -129,4 +129,23 @@ export const attendanceService = {
       return false;
     }
   },
+
+  fetchCompanyOTDetails: async (companyId: string | number) => {
+    try {
+      const response = await axiosInstance.get<{
+        resultCode?: number;
+        resultDesc?: string;
+        "OT Details"?: {
+          company_start_time?: string;
+          company_end_time?: string;
+          normal_ot_rate?: number;
+          holiday_ot_rate?: number;
+          totalTime?: number;
+        };
+      }>(`/companyOT/${companyId}`);
+      return response.data["OT Details"] || null;
+    } catch (e) {
+      return null;
+    }
+  },
 };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, CheckCircle, XCircle, Clock, Coffee } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, XCircle } from "lucide-react";
 
 interface AttendanceRecord {
   id: number;
@@ -58,10 +58,15 @@ interface DayInfo {
 }
 
 interface DaySummary {
-  present: number;
+  presentOffice: number;
+  presentWFH: number;
+  presentField: number;
+  halfDay: number;
   leave: number;
   absent: number;
   pending: number;
+  totalPresent: number;
+  totalHours: number;
   total: number;
 }
 
@@ -106,15 +111,19 @@ const MonthlyAttendanceCalendar = () => {
 
   const getDailySummary = useCallback((dateKey: string): DaySummary => {
     const summary: DaySummary = {
-      present: 0,
+      presentOffice: 0,
+      presentWFH: 0,
+      presentField: 0,
+      halfDay: 0,
       leave: 0,
       absent: 0,
       pending: 0,
+      totalPresent: 0,
+      totalHours: 0,
       total: employees.length
     };
 
     employees.forEach(employee => {
-      // Check if on leave
       const leaves = leaveByEmpId[employee.id] || [];
       let isOnLeave = false;
       
@@ -136,7 +145,6 @@ const MonthlyAttendanceCalendar = () => {
         return;
       }
 
-      // Check attendance
       const attendanceRecords = employee.attendanceList.filter(att => {
         const attDate = parseDateSafe(att.startedAt);
         if (!attDate) return false;
@@ -144,11 +152,40 @@ const MonthlyAttendanceCalendar = () => {
       });
 
       if (attendanceRecords.length > 0) {
-        const hasEnded = attendanceRecords.some(att => isAttendanceEnded(att));
-        if (hasEnded) {
-          summary.present++;
-        } else {
+        const att = attendanceRecords[0];
+        const attStatus = (att.attendance_status ?? "").toUpperCase();
+        const workStatus = (att.working_status ?? "").toUpperCase();
+        const hasEnded = isAttendanceEnded(att);
+
+        if (attStatus === "LEAVE") {
+          summary.leave++;
+          return;
+        }
+
+        if (!hasEnded && (attStatus === "ACTIVE" || attStatus === "IN PROGRESS" || attStatus === "")) {
           summary.pending++;
+          return;
+        }
+
+        if (attStatus === "HALF_DAY") {
+          summary.halfDay++;
+          summary.totalPresent++;
+        } else if (workStatus === "WFH" || workStatus === "ONLINE") {
+          summary.presentWFH++;
+          summary.totalPresent++;
+        } else if (workStatus === "FIELD_VISIT") {
+          summary.presentField++;
+          summary.totalPresent++;
+        } else {
+          summary.presentOffice++;
+          summary.totalPresent++;
+        }
+
+        const start = parseDateSafe(att.startedAt);
+        const end = parseDateSafe(att.endedAt);
+        if (start && end) {
+          const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+          if (hours > 0) summary.totalHours += hours;
         }
       } else {
         summary.absent++;
@@ -339,10 +376,10 @@ const MonthlyAttendanceCalendar = () => {
     return dateKey > todayKey;
   };
 
-  const getSummaryColor = (summary: DayInfo): string => {
-    if (isFutureDate(summary.dateKey)) return "bg-gray-200";
-    const daySummary = getDailySummary(summary.dateKey);
-    const presentPercentage = daySummary.total > 0 ? (daySummary.present / daySummary.total) * 100 : 0;
+  const getSummaryColor = (day: DayInfo): string => {
+    if (isFutureDate(day.dateKey)) return "bg-gray-200";
+    const daySummary = getDailySummary(day.dateKey);
+    const presentPercentage = daySummary.total > 0 ? (daySummary.totalPresent / daySummary.total) * 100 : 0;
     
     if (presentPercentage >= 80) return "bg-green-500";
     if (presentPercentage >= 60) return "bg-yellow-500";
@@ -436,33 +473,47 @@ const MonthlyAttendanceCalendar = () => {
             </div>
 
             {/* Enhanced Legend */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
-                <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-8">
+              <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-sm"></div>
                 <div>
-                  <div className="font-medium text-green-800">Present</div>
-                  <div className="text-xs text-green-600">On time</div>
+                  <div className="text-xs font-semibold text-blue-900">🏢 Office</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
-                <div className="w-4 h-4 rounded-full bg-orange-400 shadow-sm"></div>
+              <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-sm"></div>
                 <div>
-                  <div className="font-medium text-orange-800">Leave</div>
-                  <div className="text-xs text-orange-600">Approved</div>
+                  <div className="text-xs font-semibold text-emerald-900">🏠 WFH</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
-                <div className="w-4 h-4 rounded-full bg-yellow-400 shadow-sm"></div>
+              <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-sm"></div>
                 <div>
-                  <div className="font-medium text-yellow-800">In Progress</div>
-                  <div className="text-xs text-yellow-600">Working</div>
+                  <div className="text-xs font-semibold text-amber-900">📍 Field Visit</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
-                <div className="w-4 h-4 rounded-full bg-red-400 shadow-sm"></div>
+              <div className="flex items-center gap-2 p-2 bg-indigo-50 rounded-xl border border-indigo-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-indigo-500 shadow-sm"></div>
                 <div>
-                  <div className="font-medium text-red-800">Absent</div>
-                  <div className="text-xs text-red-600">No record</div>
+                  <div className="text-xs font-semibold text-indigo-900">🌗 Half Day</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-xl border border-orange-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-orange-400 shadow-sm"></div>
+                <div>
+                  <div className="text-xs font-semibold text-orange-900">🏖️ Leave</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-red-50 rounded-xl border border-red-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-red-500 shadow-sm"></div>
+                <div>
+                  <div className="text-xs font-semibold text-red-900">❌ Absent</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-xl border border-purple-200">
+                <div className="w-3.5 h-3.5 rounded-full bg-purple-500 shadow-sm"></div>
+                <div>
+                  <div className="text-xs font-semibold text-purple-900">🟣 Pending</div>
                 </div>
               </div>
             </div>
@@ -498,7 +549,7 @@ const MonthlyAttendanceCalendar = () => {
                           ${!day.isCurrentMonth ? "opacity-40" : ""}
                         `}
                         onClick={() => !isFutureDate(day.dateKey) && setSelectedDate(day.dateKey)}
-                        title={`${day.dateKey}: ${isFutureDate(day.dateKey) ? 'Future date' : `${summary.present} present, ${summary.leave} leave, ${summary.absent} absent, ${summary.pending} pending`}`}
+                        title={`${day.dateKey}: ${isFutureDate(day.dateKey) ? 'Future date' : `${summary.totalPresent} present, ${summary.leave} leave, ${summary.absent} absent, ${summary.pending} pending`}`}
                       >
                         <span className={`text-sm font-bold ${day.isCurrentMonth ? "text-gray-800" : "text-gray-500"}`}>
                           {day.date}
@@ -507,7 +558,7 @@ const MonthlyAttendanceCalendar = () => {
                           <>
                             <div className={`w-full h-1 rounded-full mt-1 ${bgColor} shadow-sm`}></div>
                             <div className="text-xs text-gray-600 mt-1 font-medium hidden sm:block">
-                              {summary.present}/{summary.total}
+                              {summary.totalPresent}/{summary.total}
                             </div>
                           </>
                         )}
@@ -560,49 +611,34 @@ const MonthlyAttendanceCalendar = () => {
             <div className="p-6 overflow-auto max-h-[60vh]">
               {(() => {
                 const summary = getDailySummary(selectedDate);
-                const presentPercentage = summary.total > 0 ? Math.round((summary.present / summary.total) * 100) : 0;
                 
                 return (
                   <div className="space-y-6">
                     {/* Enhanced Summary Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                          <div className="text-2xl font-bold text-green-700">{summary.present}</div>
-                        </div>
-                        <div className="text-sm font-medium text-green-600">Present</div>
-                        <div className="text-xs text-green-500">{presentPercentage}% attendance</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-blue-700">{summary.presentOffice}</div>
+                        <div className="text-xs font-medium text-blue-600">🏢 Office</div>
                       </div>
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Coffee className="w-5 h-5 text-orange-600" />
-                          <div className="text-2xl font-bold text-orange-700">{summary.leave}</div>
-                        </div>
-                        <div className="text-sm font-medium text-orange-600">On Leave</div>
-                        <div className="text-xs text-orange-500">
-                          {summary.total > 0 ? Math.round((summary.leave / summary.total) * 100) : 0}% of team
-                        </div>
+                      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-emerald-700">{summary.presentWFH}</div>
+                        <div className="text-xs font-medium text-emerald-600">🏠 WFH</div>
                       </div>
-                      <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <XCircle className="w-5 h-5 text-red-600" />
-                          <div className="text-2xl font-bold text-red-700">{summary.absent}</div>
-                        </div>
-                        <div className="text-sm font-medium text-red-600">Absent</div>
-                        <div className="text-xs text-red-500">
-                          {summary.total > 0 ? Math.round((summary.absent / summary.total) * 100) : 0}% absent
-                        </div>
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-amber-700">{summary.presentField}</div>
+                        <div className="text-xs font-medium text-amber-600">📍 Field Visit</div>
                       </div>
-                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Clock className="w-5 h-5 text-yellow-600" />
-                          <div className="text-2xl font-bold text-yellow-700">{summary.pending}</div>
-                        </div>
-                        <div className="text-sm font-medium text-yellow-600">In Progress</div>
-                        <div className="text-xs text-yellow-500">
-                          {summary.total > 0 ? Math.round((summary.pending / summary.total) * 100) : 0}% working
-                        </div>
+                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-indigo-700">{summary.halfDay}</div>
+                        <div className="text-xs font-medium text-indigo-600">🌗 Half Day</div>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-orange-700">{summary.leave}</div>
+                        <div className="text-xs font-medium text-orange-600">🏖️ Leave</div>
+                      </div>
+                      <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-3">
+                        <div className="text-xl font-bold text-red-700">{summary.absent}</div>
+                        <div className="text-xs font-medium text-red-600">❌ Absent</div>
                       </div>
                     </div>
                     
@@ -640,23 +676,43 @@ const MonthlyAttendanceCalendar = () => {
                           });
 
                           let status = "Absent";
-                          let statusColor = "bg-red-400";
-                          let statusIcon = <XCircle className="w-3 h-3" />;
+                          let statusColor = "bg-red-500";
+                          let statusIcon = "❌";
                           
                           if (isOnLeave) {
                             status = "Leave";
-                            statusColor = "bg-orange-400";
-                            statusIcon = <Coffee className="w-3 h-3" />;
+                            statusColor = "bg-orange-500";
+                            statusIcon = "🏖️";
                           } else if (attendanceRecords.length > 0) {
-                            const hasEnded = attendanceRecords.some(att => isAttendanceEnded(att));
-                            if (hasEnded) {
-                              status = "Present";
-                              statusColor = "bg-green-400";
-                              statusIcon = <CheckCircle className="w-3 h-3" />;
-                            } else {
+                            const att = attendanceRecords[0];
+                            const attStatus = (att.attendance_status ?? "").toUpperCase();
+                            const workStatus = (att.working_status ?? "").toUpperCase();
+                            const hasEnded = isAttendanceEnded(att);
+
+                            if (attStatus === "LEAVE") {
+                              status = "Leave";
+                              statusColor = "bg-orange-500";
+                              statusIcon = "🏖️";
+                            } else if (!hasEnded && (attStatus === "ACTIVE" || attStatus === "IN PROGRESS" || attStatus === "")) {
                               status = "In Progress";
-                              statusColor = "bg-yellow-400";
-                              statusIcon = <Clock className="w-3 h-3" />;
+                              statusColor = "bg-purple-500";
+                              statusIcon = "🟣";
+                            } else if (attStatus === "HALF_DAY") {
+                              status = "Half Day";
+                              statusColor = "bg-indigo-500";
+                              statusIcon = "🌗";
+                            } else if (workStatus === "WFH" || workStatus === "ONLINE") {
+                              status = "Present (WFH)";
+                              statusColor = "bg-emerald-500";
+                              statusIcon = "🏠";
+                            } else if (workStatus === "FIELD_VISIT") {
+                              status = "Field Visit";
+                              statusColor = "bg-amber-500";
+                              statusIcon = "📍";
+                            } else {
+                              status = "Present (Office)";
+                              statusColor = "bg-blue-500";
+                              statusIcon = "🏢";
                             }
                           }
                           
@@ -678,10 +734,9 @@ const MonthlyAttendanceCalendar = () => {
                                 <p className="text-sm text-gray-500">{employee.epfNo}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1.5 rounded-full text-sm font-medium text-white flex items-center gap-1 ${statusColor}`}>
-                                  {statusIcon}
-                                  <span className="hidden sm:inline">{status}</span>
-                                  <span className="sm:hidden">{status.charAt(0)}</span>
+                                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold text-white flex items-center gap-1.5 ${statusColor}`}>
+                                  <span>{statusIcon}</span>
+                                  <span>{status}</span>
                                 </span>
                               </div>
                             </div>

@@ -186,6 +186,34 @@ const AttendanceReportPage = () => {
         )}
       </div>
 
+      {/* Report Summary Dashboard */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Employees</div>
+          <div className="text-2xl font-bold text-gray-800 mt-1">{filteredEmployees.length}</div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-blue-700 uppercase tracking-wide">🏢 Office</div>
+          <div className="text-xl font-bold text-blue-900 mt-1">Configured</div>
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">🏠 WFH</div>
+          <div className="text-xl font-bold text-emerald-900 mt-1">Configured</div>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-amber-700 uppercase tracking-wide">📍 Field Visit</div>
+          <div className="text-xl font-bold text-amber-900 mt-1">Configured</div>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-orange-700 uppercase tracking-wide">🏖️ Leave</div>
+          <div className="text-xl font-bold text-orange-900 mt-1">Tracked</div>
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 shadow-sm">
+          <div className="text-xs font-medium text-purple-700 uppercase tracking-wide">⏱️ OT Hours</div>
+          <div className="text-xl font-bold text-purple-900 mt-1">Auto-Calc</div>
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <label className="block rounded-lg border border-gray-200 bg-white p-4">
           <span className="text-sm font-medium text-gray-700">Report Type</span>

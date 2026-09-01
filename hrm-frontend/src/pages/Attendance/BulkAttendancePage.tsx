@@ -127,6 +127,24 @@ const BulkAttendancePage = () => {
     }
   }, [selectedDate]);
 
+  const [companyStartTime, setCompanyStartTime] = useState<string>(defaultStartTime);
+  const [companyEndTime, setCompanyEndTime] = useState<string>(defaultEndTime);
+  const [earliestCompanyJoinDate, setEarliestCompanyJoinDate] = useState<string>("");
+
+  useEffect(() => {
+    if (!companyId) return;
+    attendanceService
+      .fetchEmployeesByCompany(companyId)
+      .then((emps) => {
+        const dates = emps.map((e) => e.dateOfJoining).filter(Boolean) as string[];
+        if (dates.length > 0) {
+          const earliest = dates.reduce((min, cur) => (cur < min ? cur : min));
+          setEarliestCompanyJoinDate(earliest);
+        }
+      })
+      .catch(() => {});
+  }, [companyId]);
+
   const loadBulkAttendanceData = useCallback(async () => {
     if (!companyId) {
       navigate("/login");
@@ -136,6 +154,21 @@ const BulkAttendancePage = () => {
     setLoading(true);
     setError(null);
     try {
+      let fetchedStartTime = defaultStartTime;
+      let fetchedEndTime = defaultEndTime;
+
+      const otDetails = await attendanceService.fetchCompanyOTDetails(companyId);
+      if (otDetails) {
+        if (otDetails.company_start_time) {
+          fetchedStartTime = String(otDetails.company_start_time).substring(0, 5);
+        }
+        if (otDetails.company_end_time) {
+          fetchedEndTime = String(otDetails.company_end_time).substring(0, 5);
+        }
+        setCompanyStartTime(fetchedStartTime);
+        setCompanyEndTime(fetchedEndTime);
+      }
+
       const data = await attendanceService.fetchBulkAttendanceData(
         companyId,
         selectedDate,
@@ -153,8 +186,8 @@ const BulkAttendancePage = () => {
         attendanceDate: selectedDate,
         attendance_status: "PRESENT",
         working_status: "OFFICE",
-        startedAt: defaultStartTime,
-        endedAt: defaultEndTime,
+        startedAt: fetchedStartTime,
+        endedAt: fetchedEndTime,
         entryType: "MANUAL_HR",
         createdBy: currentUser,
         notes: "",
@@ -281,7 +314,43 @@ const BulkAttendancePage = () => {
     : "You are marking attendance for a past date. Please ensure Start Time, End Time, and Status are correct. Add a note in the 'Reason / Work Log' field if necessary.";
 
   const handleRowChange = (id: number, next: Partial<AttendanceRow>) => {
-    setPendingRows((prevRows) => prevRows.map((row) => (row.id === id ? { ...row, ...next } : row)));
+    setPendingRows((prevRows) =>
+      prevRows.map((row) => {
+        if (row.id !== id) return row;
+        const updated = { ...row, ...next };
+
+        if (next.attendance_status) {
+          if (next.attendance_status === "LEAVE") {
+            updated.startedAt = "";
+            updated.endedAt = "";
+            updated.notes = updated.notes || "Full Day Leave";
+          } else if (next.attendance_status === "ABSENT") {
+            updated.startedAt = "";
+            updated.endedAt = "";
+            updated.notes = "";
+          } else if (next.attendance_status === "HALF_DAY") {
+            const startTime = updated.startedAt || companyStartTime;
+            updated.startedAt = startTime;
+            if (startTime && startTime.includes(":")) {
+              const [h, m] = startTime.split(":").map(Number);
+              const endH = (h + 4) % 24;
+              updated.endedAt = `${String(endH).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
+            }
+          } else if (next.attendance_status === "PRESENT") {
+            if (!updated.startedAt) updated.startedAt = companyStartTime;
+            if (!updated.endedAt) updated.endedAt = companyEndTime;
+          }
+        }
+
+        if (next.startedAt && updated.attendance_status === "HALF_DAY" && next.startedAt.includes(":")) {
+          const [h, m] = next.startedAt.split(":").map(Number);
+          const endH = (h + 4) % 24;
+          updated.endedAt = `${String(endH).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
+        }
+
+        return updated;
+      })
+    );
   };
 
   const toggleRowSelection = (id: number) => {
@@ -306,8 +375,9 @@ const BulkAttendancePage = () => {
 
   const buildPayload = (): (AttendanceRowPayload & { notes?: string })[] => {
     return selectedRows.map((row) => {
-      const startedAt = row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY" ? `${row.attendanceDate}T${row.startedAt}:00` : null;
-      const endedAt = !isToday && (row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY") ? `${row.attendanceDate}T${row.endedAt}:00` : null;
+      const isPresentOrHalfDay = row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY";
+      const startedAt = isPresentOrHalfDay && row.startedAt ? `${row.attendanceDate}T${row.startedAt}:00` : null;
+      const endedAt = isPresentOrHalfDay && row.endedAt ? `${row.attendanceDate}T${row.endedAt}:00` : null;
       return {
         empId: row.id,
         attendanceDate: row.attendanceDate,
@@ -412,14 +482,14 @@ const BulkAttendancePage = () => {
   const statusOptions: { value: AttendanceStatus; label: string }[] = [
     { value: "PRESENT", label: "Present" },
     { value: "ABSENT", label: "Absent" },
-    { value: "LEAVE", label: "Leave" },
+    { value: "LEAVE", label: "Leave (Full Day)" },
     { value: "HALF_DAY", label: "Half Day" },
   ];
 
-  const workingStatusOptions: { value: WorkingStatus; label: string }[] = [
-    { value: "OFFICE", label: "Office" },
-    { value: "WFH", label: "Work From Home (WFH)" },
-    { value: "FIELD_VISIT", label: "Field Visit" },
+  const workingStatusOptions: { value: WorkingStatus; label: string; icon: string }[] = [
+    { value: "OFFICE", label: "Office", icon: "🏢" },
+    { value: "WFH", label: "Work From Home (WFH)", icon: "🏠" },
+    { value: "FIELD_VISIT", label: "Field Visit", icon: "📍" },
   ];
 
   return (
@@ -437,10 +507,21 @@ const BulkAttendancePage = () => {
               Attendance Date
               <input
                 type="date"
-                min={minJoinDate}
+                min={earliestCompanyJoinDate || minJoinDate}
                 max={getTodayDate()}
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const today = getTodayDate();
+                  const minDate = earliestCompanyJoinDate || minJoinDate;
+                  if (val > today) {
+                    setSelectedDate(today);
+                  } else if (minDate && val < minDate) {
+                    setSelectedDate(minDate);
+                  } else {
+                    setSelectedDate(val);
+                  }
+                }}
                 className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
               />
             </label>
@@ -699,47 +780,58 @@ const BulkAttendancePage = () => {
                   >
                     {workingStatusOptions.map((option) => (
                       <option key={option.value} value={option.value}>
-                        {option.label}
+                        {option.icon} {option.label}
                       </option>
                     ))}
                   </select>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <input
-                      type="time"
-                      step="900"
-                      value={row.startedAt}
-                      onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
-                      disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
-                      className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                    />
-                    <select
-                      value={row.startedAt}
-                      onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
-                      disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
-                      className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                    >
-                      <option value="">Quick select</option>
-                      {quickTimeOptions.map((timeOption) => (
-                        <option key={timeOption} value={timeOption}>
-                          {timeOption}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {row.attendance_status === "LEAVE" ? (
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                      🏝️ Full Day Leave (Time Disabled)
+                    </span>
+                  ) : row.attendance_status === "ABSENT" ? (
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                      ❌ Absent (Time Disabled)
+                    </span>
+                  ) : (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <input
+                        type="time"
+                        step="900"
+                        value={row.startedAt}
+                        onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
+                        className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      />
+                      <select
+                        value={row.startedAt}
+                        onChange={(e) => handleRowChange(row.id, { startedAt: e.target.value })}
+                        className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      >
+                        <option value="">Quick select</option>
+                        {quickTimeOptions.map((timeOption) => (
+                          <option key={timeOption} value={timeOption}>
+                            {timeOption}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </td>
                 {!isToday && (
                   <>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <input
-                        type="time"
-                        step="900"
-                        value={row.endedAt}
-                        onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
-                        disabled={row.attendance_status === "ABSENT" || row.attendance_status === "LEAVE"}
-                        className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                      />
+                      {row.attendance_status === "LEAVE" || row.attendance_status === "ABSENT" ? (
+                        <span className="text-xs text-gray-400 font-medium">N/A</span>
+                      ) : (
+                        <input
+                          type="time"
+                          step="900"
+                          value={row.endedAt}
+                          onChange={(e) => handleRowChange(row.id, { endedAt: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-700 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                        />
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <input

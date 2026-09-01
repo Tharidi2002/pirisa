@@ -35,7 +35,7 @@ interface AttendanceRequest {
   startedAt: string;
   endedAt: string | null;
   empId: number;
-  working_status: "On-Site" | "Online";
+  working_status: "OFFICE" | "WFH" | "FIELD_VISIT" | "On-Site" | "Online";
   attendance_status: string;
   entryType: string;
   createdBy: string;
@@ -62,7 +62,7 @@ const AttendanceMarkTable = () => {
   const [error, setError] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [attendanceStatus, setAttendanceStatus] = useState<{
-    [key: number]: "On-Site" | "Online";
+    [key: number]: "OFFICE" | "WFH" | "FIELD_VISIT";
   }>({});
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -253,7 +253,7 @@ const AttendanceMarkTable = () => {
 
   const handleAttendanceStatusChange = (
     empId: number,
-    status: "On-Site" | "Online",
+    status: "OFFICE" | "WFH" | "FIELD_VISIT",
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     event.stopPropagation();
@@ -268,7 +268,7 @@ const AttendanceMarkTable = () => {
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    const status = attendanceStatus[empId] || "On-Site";
+    const status = attendanceStatus[empId] || "OFFICE";
 
     toast.info(
       <div>
@@ -754,18 +754,19 @@ const AttendanceMarkTable = () => {
         ) : (
           <select
             className="p-1 border rounded-md text-xs"
-            value={attendanceStatus[item.id] || "On-Site"}
+            value={attendanceStatus[item.id] || "OFFICE"}
             onChange={(e) =>
               handleAttendanceStatusChange(
                 item.id,
-                e.target.value as "On-Site" | "Online",
+                e.target.value as "OFFICE" | "WFH" | "FIELD_VISIT",
                 e
               )
             }
             onClick={(e) => e.stopPropagation()}
           >
-            <option value="On-Site">On-Site</option>
-            <option value="Online">Online</option>
+            <option value="OFFICE">🏢 Office</option>
+            <option value="WFH">🏠 Work From Home (WFH)</option>
+            <option value="FIELD_VISIT">📍 Field Visit</option>
           </select>
         );
       },
