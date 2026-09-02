@@ -117,6 +117,7 @@ public class EmployeeService {
                 employee.getStatus(),
                 employee.getAttendanceList().stream().map(attendance -> new AttendanceDTO(
                         attendance.getId(),
+                        attendance.getAttendanceDate(),
                         attendance.getStartedAt(),
                         attendance.getEndedAt(),
                         attendance.getWorking_status(),
@@ -497,13 +498,14 @@ public class EmployeeService {
         return employees.stream().map(employee -> {
             // Get the latest attendance record
             Attendance latestAttendance = employee.getAttendanceList().stream()
-                    .max(Comparator.comparing(Attendance::getStartedAt))
+                    .max(Comparator.comparing(a -> a.getAttendanceDate() != null ? a.getAttendanceDate() : (a.getStartedAt() != null ? a.getStartedAt().toLocalDate() : java.time.LocalDate.MIN)))
                     .orElse(null);
 
             List<AttendanceDTO> latestAttendanceList = new ArrayList<>();
             if (latestAttendance != null) {
                 latestAttendanceList.add(new AttendanceDTO(
                         latestAttendance.getId(),
+                        latestAttendance.getAttendanceDate(),
                         latestAttendance.getStartedAt(),
                         latestAttendance.getEndedAt(),
                         latestAttendance.getWorking_status(),
@@ -649,9 +651,15 @@ public class EmployeeService {
                 .map(employee -> {
                     // Filter only this month's attendances
                     List<AttendanceDTO> filtered = employee.getAttendanceList().stream()
-                            .filter(atd -> atd.getStartedAt().getMonthValue() == month)
+                            .filter(atd -> {
+                                if (atd.getAttendanceDate() != null) {
+                                    return atd.getAttendanceDate().getMonthValue() == month;
+                                }
+                                return atd.getStartedAt() != null && atd.getStartedAt().getMonthValue() == month;
+                            })
                             .map(atd -> new AttendanceDTO(
                                     atd.getId(),
+                                    atd.getAttendanceDate(),
                                     atd.getStartedAt(),
                                     atd.getEndedAt(),
                                     atd.getWorking_status(),

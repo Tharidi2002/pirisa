@@ -1,5 +1,7 @@
 package com.pirisa.hrm.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,11 +51,34 @@ public class Attendance implements Serializable {
 
     // Optional reason for an early or standard departure. Populated when an employee is clocked out.
     @Column(name = "departure_reason")
+    @JsonAlias({"reason", "departureReason"})
     private String departureReason;
 
     // Optional free-text notes or remarks provided by HR about the departure.
     @Column(name = "departure_notes", columnDefinition = "TEXT")
+    @JsonAlias({"notes", "departureNotes"})
     private String departureNotes;
+
+    @JsonProperty("reason")
+    public String getReason() {
+        return this.departureReason;
+    }
+
+    @JsonProperty("reason")
+    public void setReason(String reason) {
+        this.departureReason = reason;
+    }
+
+    @JsonProperty("notes")
+    public String getNotes() {
+        return this.departureNotes;
+    }
+
+    @JsonProperty("notes")
+    public void setNotes(String notes) {
+        this.departureNotes = notes;
+    }
+
     // Source of the attendance record for auditing: AUTO_CLOCK, MANUAL_HR, EXCEL_IMPORT, etc.
     @Column(name = "entry_type")
     private String entryType;

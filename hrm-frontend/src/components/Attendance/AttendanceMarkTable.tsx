@@ -67,7 +67,27 @@ const AttendanceMarkTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
+  interface ClockOutModalState {
+    open: boolean;
+    attendanceId?: number;
+    empId?: number;
+    name?: string;
+    clockInTime?: string;
+    defaultEndedAt?: string;
+    reason?: string;
+    notes?: string;
+  }
+  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({ open: false });
+
   // Helper function to get local time in simple ISO format (no timezone)
+  const getLocalDateISO = (): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const getLocalTimeISO = (): string => {
     const now = new Date();
     const year = now.getFullYear();
@@ -287,12 +307,12 @@ const AttendanceMarkTable = () => {
                 }
 
                 const attendanceData: AttendanceRequest = {
-                  attendanceDate: new Date().toISOString().split("T")[0],
+                  attendanceDate: getLocalDateISO(),
                   startedAt: getLocalTimeISO(),
                   endedAt: null,
                   empId: empId,
                   working_status: status,
-                  attendance_status: "ACTIVE",
+                  attendance_status: "PRESENT",
                   entryType: "MANUAL_HR",
                   createdBy: localStorage.getItem("userName") || "HR Admin",
                 };
@@ -300,7 +320,7 @@ const AttendanceMarkTable = () => {
                 await attendanceService.bulkMarkAttendance([attendanceData]);
                 toast.success("Attendance marked successfully!");
                 setLoading(true);
-                fetchEmployees();
+                await fetchEmployees();
               } catch (err) {
                 toast.error(
                   err instanceof Error
@@ -325,6 +345,49 @@ const AttendanceMarkTable = () => {
         closeButton: false,
       }
     );
+  };
+
+  const handleOpenClockOutModal = (employee: Employee, attendance: Attendance, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    let formattedIn = "";
+    if (attendance.startedAt) {
+      if (attendance.startedAt.includes("T")) {
+        formattedIn = attendance.startedAt.split("T")[1].substring(0, 5);
+      } else {
+        formattedIn = attendance.startedAt.substring(0, 5);
+      }
+    }
+    setClockOutModal({
+      open: true,
+      attendanceId: attendance.id,
+      empId: employee.id,
+      name: `${employee.firstName} ${employee.lastName}`,
+      clockInTime: formattedIn,
+      defaultEndedAt: `${hh}:${mm}`,
+      reason: "Standard Off-Time",
+      notes: "",
+    });
+  };
+
+  const handleConfirmClockOut = async () => {
+    if (!clockOutModal.attendanceId) return;
+    try {
+      setLoading(true);
+      await attendanceService.clockOut(clockOutModal.attendanceId, {
+        endedAt: clockOutModal.defaultEndedAt,
+        departureReason: clockOutModal.reason,
+        departureNotes: clockOutModal.notes,
+      });
+      toast.success(`Clock Out (Off) marked for ${clockOutModal.name}`);
+      setClockOutModal({ open: false });
+      await fetchEmployees();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to mark clock out");
+      setLoading(false);
+    }
   };
 
 
@@ -414,7 +477,7 @@ const AttendanceMarkTable = () => {
                     </div>
                   );
                   
-                  // Refresh data to update both tables
+                  // Refresh both tables immediately after canceling leave
                   setLoading(true);
                   await fetchEmployees();
                 } else {
@@ -749,8 +812,17 @@ const AttendanceMarkTable = () => {
       title: "Attendance Status",
       render: (item: Employee) => {
         const activeAttendance = hasActiveAttendance(item);
+        let clockInDisplay = "";
+        if (activeAttendance && activeAttendance.startedAt) {
+          clockInDisplay = activeAttendance.startedAt.includes("T")
+            ? activeAttendance.startedAt.split("T")[1].substring(0, 5)
+            : activeAttendance.startedAt.substring(0, 5);
+        }
         return activeAttendance ? (
-          <span className="text-xs text-green-600">Working On</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span>🟢 Working</span>
+            {clockInDisplay && <span className="text-emerald-700 font-medium">({clockInDisplay})</span>}
+          </span>
         ) : (
           <select
             className="p-1 border rounded-md text-xs"
@@ -777,7 +849,14 @@ const AttendanceMarkTable = () => {
       render: (item: Employee) => {
         const activeAttendance = hasActiveAttendance(item);
         return activeAttendance ? (
-          <span className="text-xs font-medium text-emerald-600">Working On</span>
+          <button
+            onClick={(e) => handleOpenClockOutModal(item, activeAttendance, e)}
+            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+            aria-label="Clock Out"
+          >
+            <span>🚪</span>
+            <span>Clock Out (Off)</span>
+          </button>
         ) : (
           <button
             onClick={(e) => handleMarkAttendance(item.id, e)}
@@ -903,6 +982,86 @@ const AttendanceMarkTable = () => {
         </div>
       )}
       
+      {/* Clock Out / Off Modal */}
+      {clockOutModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-lg font-bold text-gray-800">
+                Clock Out (Off) - {clockOutModal.name}
+              </h3>
+              <button
+                onClick={() => setClockOutModal({ open: false })}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 space-y-4">
+              {clockOutModal.clockInTime && (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center justify-between">
+                  <span className="font-semibold">Clocked In Time:</span>
+                  <span className="font-bold text-sm">{clockOutModal.clockInTime}</span>
+                </div>
+              )}
+              <label className="block text-sm font-medium text-gray-700">
+                End / Off Time
+                <input
+                  type="time"
+                  value={clockOutModal.defaultEndedAt || ""}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, defaultEndedAt: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Departure Reason
+                <select
+                  value={clockOutModal.reason || "Standard Off-Time"}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, reason: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                >
+                  <option value="Standard Off-Time">Standard Off-Time</option>
+                  <option value="Personal Reason">Personal Reason</option>
+                  <option value="Medical Emergency">Medical Emergency</option>
+                  <option value="Official Field Work">Official Field Work</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Notes / Remarks (optional)
+                <textarea
+                  value={clockOutModal.notes || ""}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, notes: e.target.value }))
+                  }
+                  placeholder="Any departure notes or reason..."
+                  rows={2}
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setClockOutModal({ open: false })}
+                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmClockOut}
+                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700"
+              >
+                Confirm Clock Out (Off)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </div>
   );

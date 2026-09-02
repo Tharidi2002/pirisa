@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, XCircle } from "lucide-react";
+import { attendanceService } from "../../api/services/attendanceService";
 
 interface AttendanceRecord {
   id: number;
+  attendanceDate?: string | null;
   startedAt: string;
   endedAt: string | null;
   working_status: string;
@@ -95,6 +97,19 @@ const MonthlyAttendanceCalendar = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  interface ClockOutModalState {
+    open: boolean;
+    attendanceId?: number;
+    empName?: string;
+    dateKey?: string;
+    startedAt?: string;
+    endedAt?: string;
+    reason?: string;
+    notes?: string;
+  }
+  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({ open: false });
+  const [savingClockOut, setSavingClockOut] = useState(false);
+
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -146,6 +161,12 @@ const MonthlyAttendanceCalendar = () => {
       }
 
       const attendanceRecords = employee.attendanceList.filter(att => {
+        if (att.attendanceDate) {
+          const formatted = typeof att.attendanceDate === "string" && att.attendanceDate.includes("T")
+            ? att.attendanceDate.split("T")[0]
+            : String(att.attendanceDate);
+          if (formatted === dateKey) return true;
+        }
         const attDate = parseDateSafe(att.startedAt);
         if (!attDate) return false;
         return toDateKeyLocal(attDate) === dateKey;
@@ -159,6 +180,11 @@ const MonthlyAttendanceCalendar = () => {
 
         if (attStatus === "LEAVE") {
           summary.leave++;
+          return;
+        }
+
+        if (attStatus === "ABSENT") {
+          summary.absent++;
           return;
         }
 
@@ -345,6 +371,24 @@ const MonthlyAttendanceCalendar = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleConfirmClockOut = async () => {
+    if (!clockOutModal.attendanceId) return;
+    setSavingClockOut(true);
+    try {
+      await attendanceService.clockOut(clockOutModal.attendanceId, {
+        endedAt: clockOutModal.endedAt,
+        departureReason: clockOutModal.reason,
+        departureNotes: clockOutModal.notes,
+      });
+      setClockOutModal({ open: false });
+      await fetchData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to set off-time");
+    } finally {
+      setSavingClockOut(false);
+    }
+  };
 
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
@@ -670,6 +714,12 @@ const MonthlyAttendanceCalendar = () => {
                           }
 
                           const attendanceRecords = employee.attendanceList.filter(att => {
+                            if (att.attendanceDate) {
+                              const formatted = typeof att.attendanceDate === "string" && att.attendanceDate.includes("T")
+                                ? att.attendanceDate.split("T")[0]
+                                : String(att.attendanceDate);
+                              if (formatted === selectedDate) return true;
+                            }
                             const attDate = parseDateSafe(att.startedAt);
                             if (!attDate) return false;
                             return toDateKeyLocal(attDate) === selectedDate;
@@ -693,6 +743,10 @@ const MonthlyAttendanceCalendar = () => {
                               status = "Leave";
                               statusColor = "bg-orange-500";
                               statusIcon = "🏖️";
+                            } else if (attStatus === "ABSENT") {
+                              status = "Absent";
+                              statusColor = "bg-red-500";
+                              statusIcon = "❌";
                             } else if (!hasEnded && (attStatus === "ACTIVE" || attStatus === "IN PROGRESS" || attStatus === "")) {
                               status = "In Progress";
                               statusColor = "bg-purple-500";
@@ -738,6 +792,32 @@ const MonthlyAttendanceCalendar = () => {
                                   <span>{statusIcon}</span>
                                   <span>{status}</span>
                                 </span>
+                                {attendanceRecords.length > 0 && (
+                                  <button
+                                    onClick={() => {
+                                      const att = attendanceRecords[0];
+                                      let inTime = "";
+                                      if (att.startedAt) {
+                                        inTime = att.startedAt.includes("T") ? att.startedAt.split("T")[1].substring(0, 5) : att.startedAt.substring(0, 5);
+                                      }
+                                      setClockOutModal({
+                                        open: true,
+                                        attendanceId: att.id,
+                                        empName: `${employee.firstName} ${employee.lastName}`,
+                                        dateKey: selectedDate || "",
+                                        startedAt: inTime,
+                                        endedAt: att.endedAt ? (att.endedAt.includes("T") ? att.endedAt.split("T")[1].substring(0, 5) : att.endedAt.substring(0, 5)) : "17:00",
+                                        reason: !isAttendanceEnded(att) ? "Forgot Clock-Out / Late Entry" : "Standard Off-Time",
+                                        notes: "",
+                                      });
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1 shadow-sm transition-all"
+                                    title="Set or update off-time for forgotten clock-out"
+                                  >
+                                    <span>🚪</span>
+                                    <span>{!isAttendanceEnded(attendanceRecords[0]) ? "Set Off-Time" : "Edit Off-Time"}</span>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );
@@ -747,6 +827,88 @@ const MonthlyAttendanceCalendar = () => {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clock Out / Set Off-Time Modal Overlay */}
+      {clockOutModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-lg font-bold text-gray-800">
+                Set Off-Time - {clockOutModal.empName}
+              </h3>
+              <button
+                onClick={() => setClockOutModal({ open: false })}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900 space-y-1">
+                <div><span className="font-semibold">Date:</span> {clockOutModal.dateKey}</div>
+                {clockOutModal.startedAt && (
+                  <div><span className="font-semibold">Clocked In Time:</span> {clockOutModal.startedAt}</div>
+                )}
+              </div>
+              <label className="block text-sm font-medium text-gray-700">
+                End / Off Time
+                <input
+                  type="time"
+                  value={clockOutModal.endedAt || "17:00"}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, endedAt: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Departure Reason
+                <select
+                  value={clockOutModal.reason || "Forgot Clock-Out / Late Entry"}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, reason: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <option value="Forgot Clock-Out / Late Entry">Forgot Clock-Out / Late Entry</option>
+                  <option value="Standard Off-Time">Standard Off-Time</option>
+                  <option value="Personal Reason">Personal Reason</option>
+                  <option value="Medical Emergency">Medical Emergency</option>
+                  <option value="Official Field Work">Official Field Work</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Notes / Remarks (optional)
+                <textarea
+                  value={clockOutModal.notes || ""}
+                  onChange={(e) =>
+                    setClockOutModal((s) => ({ ...s, notes: e.target.value }))
+                  }
+                  placeholder="Reason for missing clock-out or notes..."
+                  rows={2}
+                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setClockOutModal({ open: false })}
+                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmClockOut}
+                disabled={savingClockOut}
+                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 disabled:opacity-60"
+              >
+                {savingClockOut ? "Saving..." : "Save Off-Time"}
+              </button>
             </div>
           </div>
         </div>

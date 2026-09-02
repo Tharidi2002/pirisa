@@ -159,13 +159,40 @@ public class AttendanceService {
 
         List<Attendance> validatedList = new ArrayList<>();
         for (Attendance attendance : attendanceList) {
-            if (attendance != null) {
-                validateAttendanceJoinDate(attendance);
-                validatedList.add(attendance);
+            if (attendance == null) {
+                continue;
             }
+
+            String normalizedReason = normalizeText(attendance.getReason(), attendance.getDepartureReason());
+            String normalizedNotes = normalizeText(attendance.getNotes(), attendance.getDepartureNotes());
+            attendance.setDepartureReason(normalizedReason);
+            attendance.setDepartureNotes(normalizedNotes);
+
+            if (attendance.getEntryType() == null || attendance.getEntryType().isBlank()) {
+                attendance.setEntryType("MANUAL_HR");
+            }
+            if (attendance.getCreatedBy() == null || attendance.getCreatedBy().isBlank()) {
+                attendance.setCreatedBy("HR Admin");
+            }
+
+            validateAttendanceJoinDate(attendance);
+            validatedList.add(attendance);
+        }
+
+        if (validatedList.isEmpty()) {
+            throw new IllegalArgumentException("No valid attendance records were provided");
         }
 
         return attendanceRepository.saveAll(validatedList);
+    }
+
+    private String normalizeText(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     private void validateAttendanceJoinDate(Attendance attendance) {
@@ -454,9 +481,15 @@ public class AttendanceService {
 
         LocalDateTime parsedEndedAt = null;
         if (endedAtText != null && !endedAtText.isBlank()) {
+            String trimmed = endedAtText.trim();
             try {
-                LocalTime time = LocalTime.parse(endedAtText.trim(), TIME_FORMATTER);
-                parsedEndedAt = LocalDateTime.of(attendance.getAttendanceDate(), time);
+                if (trimmed.contains("T")) {
+                    parsedEndedAt = LocalDateTime.parse(trimmed);
+                } else {
+                    String timeStr = trimmed.length() > 5 ? trimmed.substring(0, 5) : trimmed;
+                    LocalTime time = LocalTime.parse(timeStr, TIME_FORMATTER);
+                    parsedEndedAt = LocalDateTime.of(attendance.getAttendanceDate() != null ? attendance.getAttendanceDate() : LocalDate.now(), time);
+                }
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Unable to parse endedAt value: " + endedAtText + ". Use HH:mm format.");
             }

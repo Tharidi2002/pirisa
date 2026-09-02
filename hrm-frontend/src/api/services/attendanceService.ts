@@ -10,6 +10,8 @@ export type AttendanceRowPayload = {
   attendance_status: string;
   entryType: string;
   createdBy: string;
+  reason?: string | null;
+  notes?: string | null;
 };
 
 export type EmployeeDetailsDTO = {

@@ -44,6 +44,7 @@ interface AttendanceRow {
   createdBy: string;
   photoUrl?: string;
   notes?: string;
+  reason?: string;
 }
 
 interface AttendedRow {
@@ -378,16 +379,28 @@ const BulkAttendancePage = () => {
       const isPresentOrHalfDay = row.attendance_status === "PRESENT" || row.attendance_status === "HALF_DAY";
       const startedAt = isPresentOrHalfDay && row.startedAt ? `${row.attendanceDate}T${row.startedAt}:00` : null;
       const endedAt = isPresentOrHalfDay && row.endedAt ? `${row.attendanceDate}T${row.endedAt}:00` : null;
+      const working_status = (row.attendance_status === "LEAVE" || row.attendance_status === "ABSENT") ? "" : row.working_status;
+      const reason = row.reason && row.reason.trim()
+        ? row.reason.trim()
+        : row.attendance_status === "LEAVE"
+          ? "Leave (Full Day)"
+          : row.attendance_status === "ABSENT"
+            ? "Absent"
+            : row.notes && row.notes.trim()
+              ? "HR Work Log"
+              : "Standard Attendance Entry";
+
       return {
         empId: row.id,
         attendanceDate: row.attendanceDate,
         startedAt,
         endedAt,
-        working_status: row.working_status,
+        working_status,
         attendance_status: row.attendance_status,
         entryType: row.entryType,
         createdBy: row.createdBy,
-        notes: row.notes,
+        reason,
+        notes: row.notes || "",
       };
     });
   };
@@ -712,16 +725,12 @@ const BulkAttendancePage = () => {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Start Time
               </th>
-              {!isToday && (
-                <>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    End Time
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Reason / Work Log
-                  </th>
-                </>
-              )}
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                End Time
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Reason / Work Log
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">

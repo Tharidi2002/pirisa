@@ -17,6 +17,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     List<Attendance> findByAttendanceDate(LocalDate attendanceDate);
 
+    List<Attendance> findByAttendanceDateBetween(LocalDate startDate, LocalDate endDate);
+
     @Query("SELECT a FROM Attendance a, Employee e " +
             "WHERE a.empId = e.id " +
             "AND a.attendanceDate = :attendanceDate " +
@@ -46,7 +48,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     @Query("SELECT a FROM Attendance a " +
             "WHERE a.empId = :empId " +
-            "AND MONTH(a.startedAt) = :month")
+            "AND MONTH(a.attendanceDate) = :month")
     List<Attendance> findByEmpIdAndMonth(
             @Param("empId") long empId,
             @Param("month") int month);
