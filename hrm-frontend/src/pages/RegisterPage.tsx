@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
@@ -31,6 +31,8 @@ const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedPlanParam = searchParams.get("plan");
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CompanyRegistrationData> = {};
@@ -141,9 +143,15 @@ const RegisterPage: React.FC = () => {
             <p className="text-gray-400 text mb-2">HR Management Software</p>
           </div>
 
-          <h1 className="text-2xl font-semibold text-gray-700 mb-4 items-center text-center">
+          <h1 className="text-2xl font-semibold text-gray-700 mb-2 items-center text-center">
             Company Registration
           </h1>
+
+          {selectedPlanParam && (
+            <div className="mb-4 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold rounded-lg text-center uppercase tracking-wider">
+              Selected Subscription Plan: <span className="font-bold text-blue-800">{selectedPlanParam}</span>
+            </div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Company Name */}

@@ -2,6 +2,7 @@ import "./App.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
+import Landing from "./pages/Landing";
 import { MainLayout } from "./components/layout/MainLayout";
 import AllEmployee from "./pages/EmployeeManagement/AllEmployeePage";
 // import NewEmployee from "./pages/Employee/NewEmployeePage";
@@ -39,16 +40,18 @@ function App() {
       <BrowserRouter>
         <LanguageProvider>
           <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<RegisterPage />} />
+
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route element={<MainLayout />}>
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="pay-role-list" element={<PayroleList />} />
                 <Route path="emp-leave" element={<EmployeeLeave />} />
-
 
                 <Route path="employee">
                   <Route index element={<Navigate to="all" replace />} />
@@ -56,6 +59,7 @@ function App() {
                   <Route path="new" element={<EmployeeRegistration />} />
                   <Route path="edit/:id" element={<EmployeeUpdate />} />
                 </Route>
+
                 <Route path="attendance">
                   <Route index element={<Navigate to="list" replace />} />
                   <Route path="list" element={<AttendanceContent />} />
@@ -64,6 +68,7 @@ function App() {
                   <Route path="bulk" element={<BulkAttendancePage />} />
                   <Route path="report" element={<AttendanceReportPage />} />
                 </Route>
+
                 <Route path="payrole">
                   <Route index element={<Navigate to="salaryList" replace />} />
                   <Route path="salaryList" element={<SalaryStatus />} />
@@ -73,14 +78,12 @@ function App() {
                   />
                   <Route path="payslips/:employeeId" element={<Invoice />} />
                 </Route>
+
                 <Route path="leave">
                   <Route index element={<Navigate to="requests" replace />} />
                   <Route path="requests" element={<LeaveRequest />} />
-                  {/* <Route
-                    path="payslips/:employeeId"
-                    element={<SalaryMakePage />}
-                  /> */}
                 </Route>
+
                 <Route path="reports">
                   <Route index element={<Navigate to="payRoleReport" replace />} />
                   <Route path="payRoleReport" element={<PayroleReportPage />} />
@@ -89,6 +92,7 @@ function App() {
                     element={<DepartmentManager />}
                   />
                 </Route>
+
                 <Route path="performance">
                   <Route
                     index
@@ -100,8 +104,9 @@ function App() {
                   />
                   <Route path="newForm" element={<NewEvaluationForm />} />
                 </Route>
-                <Route path="/companyProfile" element={<CompanyProfile />} />
-                <Route path="/company-settings" element={<CompanySettings/>} />
+
+                <Route path="companyProfile" element={<CompanyProfile />} />
+                <Route path="company-settings" element={<CompanySettings />} />
               </Route>
             </Route>
           </Routes>
