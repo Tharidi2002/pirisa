@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
 import { ENDPOINTS } from "../api/endpoints";
+import { axiosInstance } from "../api/config/axios";
 
 interface CompanyRegistrationData {
   companyName: string;
@@ -96,28 +97,18 @@ const RegisterPage: React.FC = () => {
       
       console.log("DEBUG - Sending registration data:", requestData);
       
-      const response = await fetch(ENDPOINTS.AUTH.REGISTER, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = await axiosInstance.post(ENDPOINTS.AUTH.REGISTER, requestData);
 
-      const data = await response.json();
-      console.log("DEBUG - Registration response:", data);
+      console.log("DEBUG - Registration response:", response.data);
 
-      if (response.ok) {
-        toast.success("Registration successful! Please login with your credentials.");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      } else {
-        toast.error(data.message || "Registration failed. Please try again.");
-      }
-    } catch (error) {
+      toast.success("Registration successful! Please login with your credentials.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error("An error occurred. Please try again later.");
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

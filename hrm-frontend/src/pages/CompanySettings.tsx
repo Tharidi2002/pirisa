@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { notifyCompanyLogoUpdated } from "../utils/companyLogoSync";
 
 interface CompanyDetails {
   cmp_name?: string;
@@ -177,6 +178,8 @@ const CompanySettings = () => {
         if (!logoResponse.ok) {
           throw new Error("Failed to upload logo");
         }
+
+        notifyCompanyLogoUpdated(cmpId);
       }
 
       toast.success("Company details updated successfully");

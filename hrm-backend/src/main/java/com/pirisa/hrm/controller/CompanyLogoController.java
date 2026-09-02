@@ -4,10 +4,12 @@ import com.pirisa.hrm.service.CompanyLogoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/logo")
@@ -16,12 +18,20 @@ public class CompanyLogoController {
     @Autowired
     private CompanyLogoService companyLogoService;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     @PostMapping("/upload")
     public ResponseEntity<String> uploadLogo(
             @RequestParam("comId") long comId,
             @RequestParam("logo") MultipartFile logo) throws IOException {
 
         companyLogoService.uploadLogo(comId, logo);
+        messagingTemplate.convertAndSend("/topic/company/" + comId, Map.of(
+                "type", "COMPANY_LOGO_UPDATED",
+                "companyId", comId,
+                "timestamp", System.currentTimeMillis()
+        ));
         return ResponseEntity.ok("Company Logo uploaded successfully!");
     }
 

@@ -10,6 +10,7 @@ import { TranslatableText } from "../languages/TranslatableText";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageProvider";
 import DynamicAvatar from "../DynamicAvatar";
+import { subscribeCompanyLogoUpdates, subscribeCompanyLogoWebSocket } from "../../utils/companyLogoSync";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -107,6 +108,101 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const storedRole = localStorage.getItem("role");
     setRole(storedRole);
   }, []);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const token = localStorage.getItem("token");
+      const cmpId = localStorage.getItem("cmpnyId");
+      const empId = localStorage.getItem("empId");
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        if (role === "EMPLOYEE" && empId) {
+          try {
+            const existsResp = await fetch(
+              `http://localhost:8080/api/profile-image/exists/${empId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
+            if (existsResp.ok) {
+              const existsData: { hasProfileImage?: boolean; exists?: boolean } = await existsResp.json();
+              const hasImage = Boolean(existsData?.hasProfileImage ?? existsData?.exists);
+
+              if (hasImage) {
+                const response = await fetch(
+                  `http://localhost:8080/api/profile-image/view/${empId}`,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  }
+                );
+
+                if (response.ok) {
+                  const blob = await response.blob();
+                  if (blob && blob.size > 0) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    setLogoUrl((prev) => {
+                      if (prev) {
+                        try { URL.revokeObjectURL(prev); } catch {}
+                      }
+                      return imageUrl;
+                    });
+                    return;
+                  }
+                }
+              }
+            }
+          } catch {
+            // ignore employee image error, continue to company logo fallback
+          }
+        }
+
+        if (cmpId) {
+          const logoResponse = await fetch(
+            `http://localhost:8080/logo/view/${cmpId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (logoResponse.ok) {
+            const blob = await logoResponse.blob();
+            if (blob.size > 0) {
+              const imageUrl = URL.createObjectURL(blob);
+              setLogoUrl(imageUrl);
+              return;
+            }
+          }
+        }
+
+        setLogoUrl(null);
+      } catch (error) {
+        console.error("Error fetching logo:", error);
+        setLogoUrl(null);
+      }
+    };
+
+    if (!role) return;
+
+    void fetchLogo();
+
+    const stopSync = subscribeCompanyLogoUpdates(localStorage.getItem("cmpnyId"), () => {
+      void fetchLogo();
+    });
+
+    const stopSocket = subscribeCompanyLogoWebSocket(localStorage.getItem("cmpnyId"), () => {
+      void fetchLogo();
+    });
+
+    return () => {
+      stopSync();
+      stopSocket();
+    };
+  }, [role]);
 
   const currentLanguage =
     LANGUAGE_OPTIONS.find((opt) => opt.code === language) ||
@@ -401,10 +497,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       }
 
       try {
-        // If employee, try to fetch employee photo first
         if (role === "EMPLOYEE" && empId) {
           try {
-            // Fetch employee details for dynamic avatar
             const empResponse = await fetch(
               `http://localhost:8080/employee/EmpDetailsListByEmp/${empId}`,
               {
@@ -485,7 +579,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           if (logoResponse.ok) {
             const blob = await logoResponse.blob();
             if (blob.size > 0) {
-              // Check if logo exists
               const imageUrl = URL.createObjectURL(blob);
               setLogoUrl(imageUrl);
               return;
@@ -497,7 +590,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           }
         }
 
-        // If no logo found, use default icon based on role
         setLogoUrl(null);
       } catch (error) {
         console.error("Error fetching logo:", error);
@@ -506,6 +598,19 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     };
 
     void fetchLogo();
+
+    const stopSync = subscribeCompanyLogoUpdates(localStorage.getItem("cmpnyId"), () => {
+      void fetchLogo();
+    });
+
+    const stopSocket = subscribeCompanyLogoWebSocket(localStorage.getItem("cmpnyId"), () => {
+      void fetchLogo();
+    });
+
+    return () => {
+      stopSync();
+      stopSocket();
+    };
   }, [role]);
 
   useEffect(() => {

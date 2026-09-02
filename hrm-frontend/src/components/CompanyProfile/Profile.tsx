@@ -10,6 +10,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { subscribeCompanyLogoUpdates, subscribeCompanyLogoWebSocket } from "../../utils/companyLogoSync";
 
 function Profile() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -42,7 +43,6 @@ function Profile() {
       }
 
       try {
-        // Fetch company details
         const companyResponse = await fetch(
           `http://localhost:8080/company/companyDetails/${cmpId}`,
           {
@@ -64,7 +64,6 @@ function Profile() {
           setCompanyData(companyData.CompanyDetails[0]);
         }
 
-        // Fetch logo
         const logoResponse = await fetch(
           `http://localhost:8080/logo/view/${cmpId}`,
           {
@@ -76,8 +75,17 @@ function Profile() {
 
         if (logoResponse.ok) {
           const blob = await logoResponse.blob();
-          const imageUrl = URL.createObjectURL(blob);
-          setLogoUrl(imageUrl);
+          if (blob && blob.size > 0) {
+            const imageUrl = URL.createObjectURL(blob);
+            setLogoUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              return imageUrl;
+            });
+          } else {
+            setLogoUrl(null);
+          }
+        } else {
+          setLogoUrl(null);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -87,6 +95,19 @@ function Profile() {
     };
 
     fetchCompanyData();
+
+    const stopSync = subscribeCompanyLogoUpdates(localStorage.getItem("cmpnyId"), () => {
+      fetchCompanyData();
+    });
+
+    const stopSocket = subscribeCompanyLogoWebSocket(localStorage.getItem("cmpnyId"), () => {
+      fetchCompanyData();
+    });
+
+    return () => {
+      stopSync();
+      stopSocket();
+    };
   }, []);
 
   const handleSettingsClick = () => {
