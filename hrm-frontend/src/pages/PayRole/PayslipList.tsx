@@ -47,7 +47,7 @@ const PayslipList: React.FC = () => {
       if (!token) throw new Error("No token found");
 
       const response = await fetch(
-        `http://167.172.95.86/employee/payroleListEmp/${employeeId}`,
+        `http://167.172.95.86:8080/employee/payroleListEmp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

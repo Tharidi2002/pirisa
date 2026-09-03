@@ -210,7 +210,7 @@ const SalaryForm: React.FC = () => {
 
         // Fetch employee details
         const employeeResponse = await fetch(
-          `http://167.172.95.86/employee/EmpDetailsList/${companyId}`,
+          `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -263,7 +263,7 @@ const SalaryForm: React.FC = () => {
         }
 
         const response = await fetch(
-          `http://167.172.95.86/allowance/company/${companyId}`,
+          `http://167.172.95.86:8080/allowance/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -302,7 +302,7 @@ const SalaryForm: React.FC = () => {
         }
 
         const response = await fetch(
-          `http://167.172.95.86/bonus/company/${companyId}`,
+          `http://167.172.95.86:8080/bonus/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -339,7 +339,7 @@ const SalaryForm: React.FC = () => {
         if (!token || !companyId) return;
 
         const response = await fetch(
-          `http://167.172.95.86/companyOT/${companyId}`,
+          `http://167.172.95.86:8080/companyOT/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -372,7 +372,7 @@ const SalaryForm: React.FC = () => {
         if (!token || !companyId || !selectedEmployeeForOvertime) return;
 
         const response = await fetch(
-          `http://167.172.95.86/employee/attendanceList/${companyId}`,
+          `http://167.172.95.86:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -494,7 +494,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://167.172.95.86/allowance/add_allowance",
+        "http://167.172.95.86:8080/allowance/add_allowance",
         {
           method: "POST",
           headers: {
@@ -538,7 +538,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://167.172.95.86/bonus/add_bonus",
+        "http://167.172.95.86:8080/bonus/add_bonus",
         {
           method: "POST",
           headers: {
@@ -579,7 +579,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/regular?amount=${amount}`,
+        `http://167.172.95.86:8080/apit/regular?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -616,7 +616,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/nonresident/regular?amount=${amount}`,
+        `http://167.172.95.86:8080/apit/nonresident/regular?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -660,7 +660,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
+        `http://167.172.95.86:8080/apit/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
         {
           method: "GET",
           headers: {
@@ -708,7 +708,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/nonresident/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
+        `http://167.172.95.86:8080/apit/nonresident/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&monthlyTax=${monthlyTax}&prevLumpTax=${prevLumpTax}`,
         {
           method: "GET",
           headers: {
@@ -754,7 +754,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/cumulative?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
+        `http://167.172.95.86:8080/apit/cumulative?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
         {
           method: "GET",
           headers: {
@@ -798,7 +798,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/tax-on-tax/monthly?amount=${amount}`,
+        `http://167.172.95.86:8080/apit/tax-on-tax/monthly?amount=${amount}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -842,7 +842,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/tax-on-tax/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&taxOnTaxMonthly=${taxOnTaxMonthly}&prevLumpTaxOnTax=${prevLumpTaxOnTax}`,
+        `http://167.172.95.86:8080/apit/tax-on-tax/lump-sum?paid=${paid}&payable=${payable}&lumpSum=${lumpSum}&taxOnTaxMonthly=${taxOnTaxMonthly}&prevLumpTaxOnTax=${prevLumpTaxOnTax}`,
         {
           method: "GET",
           headers: {
@@ -885,7 +885,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/secondary/resident?primary=${primary}&secondary=${secondary}`,
+        `http://167.172.95.86:8080/apit/secondary/resident?primary=${primary}&secondary=${secondary}`,
         {
           method: "GET",
           headers: {
@@ -927,7 +927,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/secondary/nonresident?primary=${primary}&secondary=${secondary}`,
+        `http://167.172.95.86:8080/apit/secondary/nonresident?primary=${primary}&secondary=${secondary}`,
         {
           method: "GET",
           headers: {
@@ -973,7 +973,7 @@ const SalaryForm: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/apit/foreign?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
+        `http://167.172.95.86:8080/apit/foreign?cumulativeIncome=${cumulativeIncome}&prevTax=${prevTax}`,
         {
           method: "GET",
           headers: {
@@ -1086,7 +1086,7 @@ const SalaryForm: React.FC = () => {
       //console.log("Request Body:", requestBody); // Log to verify values
 
       const response = await fetch(
-        "http://167.172.95.86/payrole/add_payrole",
+        "http://167.172.95.86:8080/payrole/add_payrole",
         {
           method: "POST",
           headers: {

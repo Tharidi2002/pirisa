@@ -123,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const existsResp = await fetch(
-              `http://167.172.95.86/api/profile-image/exists/${empId}`,
+              `http://167.172.95.86:8080/api/profile-image/exists/${empId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -135,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
               if (hasImage) {
                 const response = await fetch(
-                  `http://167.172.95.86/api/profile-image/view/${empId}`,
+                  `http://167.172.95.86:8080/api/profile-image/view/${empId}`,
                   {
                     headers: { Authorization: `Bearer ${token}` },
                   }
@@ -163,7 +163,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://167.172.95.86/logo/view/${cmpId}`,
+            `http://167.172.95.86:8080/logo/view/${cmpId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -258,7 +258,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86/employee/EmpDetailsListByEmp/${empId}`,
+        `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -309,7 +309,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86/employee/payroleListEmp/${empId}`,
+        `http://167.172.95.86:8080/employee/payroleListEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -353,7 +353,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86/employee/PendingEmpDetailsList/${cmpnyId}`,
+        `http://167.172.95.86:8080/employee/PendingEmpDetailsList/${cmpnyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -500,7 +500,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const empResponse = await fetch(
-              `http://167.172.95.86/employee/EmpDetailsListByEmp/${empId}`,
+              `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -517,7 +517,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             }
 
             const existsResp = await fetch(
-              `http://167.172.95.86/api/profile-image/exists/${empId}`,
+              `http://167.172.95.86:8080/api/profile-image/exists/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -534,7 +534,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
               if (hasImage) {
                 const response = await fetch(
-                  `http://167.172.95.86/api/profile-image/view/${empId}`,
+                  `http://167.172.95.86:8080/api/profile-image/view/${empId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -568,7 +568,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://167.172.95.86/logo/view/${cmpId}`,
+            `http://167.172.95.86:8080/logo/view/${cmpId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

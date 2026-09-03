@@ -66,7 +66,7 @@ const Unit = () => {
             setLoading(true);
             const cmpId = getCompanyId();
             const response = await axios.get<ApiResponse>(
-                `http://167.172.95.86/department/company/${cmpId}`,
+                `http://167.172.95.86:8080/department/company/${cmpId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -104,7 +104,7 @@ const Unit = () => {
         try {
             setIsDeleting(id);
             const response = await axios.delete(
-                `http://167.172.95.86/department/delete/${id}`,
+                `http://167.172.95.86:8080/department/delete/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -277,7 +277,7 @@ const Unit = () => {
             };
 
             const response = await axios.post(
-                "http://167.172.95.86/department/add_department",
+                "http://167.172.95.86:8080/department/add_department",
                 payload,
                 {
                     headers: {
@@ -321,7 +321,7 @@ const Unit = () => {
             };
 
             const response = await axios.put(
-                "http://167.172.95.86/department/update_department",
+                "http://167.172.95.86:8080/department/update_department",
                 payload,
                 {
                     headers: {
@@ -358,7 +358,7 @@ const Unit = () => {
     }) => {
         try {
             const response = await axios.post(
-                "http://167.172.95.86/designation/add_designation",
+                "http://167.172.95.86:8080/designation/add_designation",
                 designationData,
                 {
                     headers: {
@@ -386,7 +386,7 @@ const Unit = () => {
     const deleteDesignation = async (id: number) => {
         try {
             const response = await axios.delete(
-                `http://167.172.95.86/designation/${id}`,
+                `http://167.172.95.86:8080/designation/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -531,7 +531,7 @@ const Unit = () => {
         try {
             const cmpId = getCompanyId();
             const response = await axios.get<ApiResponse>(
-                `http://167.172.95.86/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
+                `http://167.172.95.86:8080/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,

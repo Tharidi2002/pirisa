@@ -56,7 +56,7 @@ const CompanySettings = () => {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86/company/companyDetails/${cmpId}`,
+          `http://167.172.95.86:8080/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ const CompanySettings = () => {
 
         // Fetch existing logo
         const logoResponse = await fetch(
-          `http://167.172.95.86/logo/view/${cmpId}`,
+          `http://167.172.95.86:8080/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -143,7 +143,7 @@ const CompanySettings = () => {
     try {
       // Update company details
       const response = await fetch(
-        `http://167.172.95.86/company/${cmpId}`,
+        `http://167.172.95.86:8080/company/${cmpId}`,
         {
           method: "PUT",
           headers: {
@@ -165,7 +165,7 @@ const CompanySettings = () => {
         logoFormData.append("logo", logoFile);
 
         const logoResponse = await fetch(
-          "http://167.172.95.86/logo/upload",
+          "http://167.172.95.86:8080/logo/upload",
           {
             method: "POST",
             headers: {

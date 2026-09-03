@@ -44,7 +44,7 @@ function Profile() {
 
       try {
         const companyResponse = await fetch(
-          `http://167.172.95.86/company/companyDetails/${cmpId}`,
+          `http://167.172.95.86:8080/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -65,7 +65,7 @@ function Profile() {
         }
 
         const logoResponse = await fetch(
-          `http://167.172.95.86/logo/view/${cmpId}`,
+          `http://167.172.95.86:8080/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

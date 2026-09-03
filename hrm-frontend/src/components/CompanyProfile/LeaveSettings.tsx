@@ -50,7 +50,7 @@ const LeaveSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://167.172.95.86/company_leave/company/${cmpId}`,
+        `http://167.172.95.86:8080/company_leave/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -118,7 +118,7 @@ const LeaveSettings: React.FC = () => {
     setSavingEdit(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86/company_leave/update_leave`,
+        `http://167.172.95.86:8080/company_leave/update_leave`,
         {
           method: "PUT",
           headers: {
@@ -191,7 +191,7 @@ const LeaveSettings: React.FC = () => {
     setSavingNew(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86/company_leave/add_leave`,
+        `http://167.172.95.86:8080/company_leave/add_leave`,
         {
           method: "POST",
           headers: {
@@ -251,7 +251,7 @@ const LeaveSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://167.172.95.86/company_leave/${id}`,
+        `http://167.172.95.86:8080/company_leave/${id}`,
         {
           method: "DELETE",
           headers: {

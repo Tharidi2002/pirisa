@@ -131,7 +131,7 @@ const EmployeeUpdate: React.FC = () => {
 
   const fetchEmployeeDetails = async () => {
     try {
-      const response = await fetch(`http://167.172.95.86/employee/emp/${id}`, {
+      const response = await fetch(`http://167.172.95.86:8080/employee/emp/${id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -202,7 +202,7 @@ const EmployeeUpdate: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://167.172.95.86/department/company/${cmpId}`,
+        `http://167.172.95.86:8080/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -421,7 +421,7 @@ const EmployeeUpdate: React.FC = () => {
     }, 15000);
 
     try {
-      const response = await fetch(`http://167.172.95.86/employee/${id}`, {
+      const response = await fetch(`http://167.172.95.86:8080/employee/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

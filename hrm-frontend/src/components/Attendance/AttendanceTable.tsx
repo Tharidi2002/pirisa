@@ -166,7 +166,7 @@ const AttendanceTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-            `http://167.172.95.86/api/profile-image/exists/${employee.id}`,
+            `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -183,7 +183,7 @@ const AttendanceTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-            `http://167.172.95.86/api/profile-image/view/${employee.id}`,
+            `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -231,7 +231,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `http://167.172.95.86/employee/attendanceList/${companyId}`,
+          `http://167.172.95.86:8080/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -241,7 +241,7 @@ const AttendanceTable = () => {
       );
 
       const leaveResponse = await fetch(
-          `http://167.172.95.86/employee/EmpDetailsList/${companyId}`,
+          `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -505,7 +505,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `http://167.172.95.86/attendance/${id}`,
+          `http://167.172.95.86:8080/attendance/${id}`,
           {
             method: "DELETE",
             headers: {
@@ -692,7 +692,7 @@ const AttendanceTable = () => {
                     }
 
                     const response = await fetch(
-                        `http://167.172.95.86/employee/attendanceList/${companyId}`,
+                        `http://167.172.95.86:8080/employee/attendanceList/${companyId}`,
                         {
                           headers: {
                             Authorization: `Bearer ${token}`,

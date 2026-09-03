@@ -29,7 +29,7 @@ const DepartmentStats = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86/employee/EmpDetailsList/${cmpnyId}`,
+          `http://167.172.95.86:8080/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

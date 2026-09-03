@@ -75,7 +75,7 @@ const SalaryStatusTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-          `http://167.172.95.86/api/profile-image/exists/${employee.id}`,
+          `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -92,7 +92,7 @@ const SalaryStatusTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-          `http://167.172.95.86/api/profile-image/view/${employee.id}`,
+          `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -138,13 +138,13 @@ const SalaryStatusTable = () => {
       }
 
       const [payrollResponse, detailsResponse] = await Promise.all([
-        fetch(`http://167.172.95.86/employee/payroleList/${companyId}`, {
+        fetch(`http://167.172.95.86:8080/employee/payroleList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }),
-        fetch(`http://167.172.95.86/employee/EmpDetailsList/${companyId}`, {
+        fetch(`http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

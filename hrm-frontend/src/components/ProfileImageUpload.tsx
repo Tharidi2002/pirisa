@@ -46,7 +46,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const loadProfileImage = async () => {
     try {
       const resp = await fetch(
-        `http://167.172.95.86/api/profile-image/view/${employeeId}`,
+        `http://167.172.95.86:8080/api/profile-image/view/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const checkProfileImageExists = async () => {
     try {
       const response = await fetch(
-        `http://167.172.95.86/api/profile-image/exists/${employeeId}`,
+        `http://167.172.95.86:8080/api/profile-image/exists/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -221,7 +221,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       formData.append('profileImage', compressed.file);
 
       const response = await fetch(
-        `http://167.172.95.86/api/profile-image/upload/${employeeId}`,
+        `http://167.172.95.86:8080/api/profile-image/upload/${employeeId}`,
         {
           method: 'POST',
           headers: {
@@ -297,7 +297,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     setDeleting(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86/api/profile-image/delete/${employeeId}`,
+        `http://167.172.95.86:8080/api/profile-image/delete/${employeeId}`,
         {
           method: 'DELETE',
           headers: {

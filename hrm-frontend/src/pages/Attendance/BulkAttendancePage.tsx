@@ -225,7 +225,7 @@ const BulkAttendancePage = () => {
       setExcludedRows(parsedExcludedRows);
       setSelectedRowIds(parsedPendingRows.map((row) => row.id));
 
-      const base = import.meta.env.VITE_API_BASE_URL || "http://167.172.95.86";
+      const base = import.meta.env.VITE_API_BASE_URL || "http://167.172.95.86:8080";
       const attachPhotos = async () => {
         await Promise.all(parsedPendingRows.map(async (r) => {
           const exists = await attendanceService.profileImageExists(r.id);

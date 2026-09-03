@@ -72,7 +72,7 @@ const EmployeeTable = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86/employee/EmpDetailsList/${companyId}`,
+        `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -166,7 +166,7 @@ const EmployeeTable = () => {
       try {
         // First check if employee has a profile image
         const existsResponse = await fetch(
-          `http://167.172.95.86/api/profile-image/exists/${employee.id}`,
+          `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -184,7 +184,7 @@ const EmployeeTable = () => {
           if (hasImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
-              `http://167.172.95.86/api/profile-image/view/${employee.id}`,
+              `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -244,7 +244,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://167.172.95.86/employee/${id}`,
+                  `http://167.172.95.86:8080/employee/${id}`,
                   {
                     method: "DELETE",
                     headers: {
@@ -444,7 +444,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://167.172.95.86/employee/EmpDetailsList/${companyId}`,
+                  `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
