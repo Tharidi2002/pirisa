@@ -1020,7 +1020,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const client = new Client({
-        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+        webSocketFactory: () => new SockJS('http://167.172.95.86/ws'),
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         debug: (str) => console.log('STOMP Debug:', str),
         reconnectDelay: 5000,
