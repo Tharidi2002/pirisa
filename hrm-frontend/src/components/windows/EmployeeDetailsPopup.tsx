@@ -108,7 +108,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     for (const docType of documentTypes) {
       try {
         const response = await fetch(
-          `http://localhost:8080/document/view/emp/${empId}/${docType}`,
+          `http://167.172.95.86/document/view/emp/${empId}/${docType}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -137,7 +137,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch employee details
           const employeeResponse = await fetch(
-            `http://localhost:8080/employee/emp/${id}`,
+            `http://167.172.95.86/employee/emp/${id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -163,7 +163,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
               setCompanyLeaves([]);
             } else {
               const companyLeaveResponse = await fetch(
-                `http://localhost:8080/company_leave/company/${cmpnyId}`,
+                `http://167.172.95.86/company_leave/company/${cmpnyId}`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -199,7 +199,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           // Fetch employee photo
           try {
             const existsResp = await fetch(
-              `http://localhost:8080/api/profile-image/exists/${id}`,
+              `http://167.172.95.86/api/profile-image/exists/${id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -218,7 +218,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
               if (hasImage) {
                 const imgResp = await fetch(
-                  `http://localhost:8080/api/profile-image/view/${id}`,
+                  `http://167.172.95.86/api/profile-image/view/${id}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -324,7 +324,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         return;
       }
 
-      const url = `http://localhost:8080/document/view/emp/${id}/${documentType}`;
+      const url = `http://167.172.95.86/document/view/emp/${id}/${documentType}`;
 
       const response = await fetch(url, {
         headers: {

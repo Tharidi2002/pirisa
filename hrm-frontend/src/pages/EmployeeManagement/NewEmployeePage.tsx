@@ -116,7 +116,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/department/company/${cmpId}`,
+        `http://167.172.95.86/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -248,7 +248,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/employee/add_employee",
+        "http://167.172.95.86/employee/add_employee",
         {
           method: "POST",
           headers: {
@@ -287,7 +287,7 @@ const EmployeeRegistration: React.FC = () => {
               const imgFormData = new FormData();
               imgFormData.append("profileImage", selectedProfileImage);
               const imgResponse = await fetch(
-                `http://localhost:8080/api/profile-image/upload/${employeeId}`,
+                `http://167.172.95.86/api/profile-image/upload/${employeeId}`,
                 {
                   method: "POST",
                   headers: {
@@ -396,7 +396,7 @@ const EmployeeRegistration: React.FC = () => {
       let documentResponse = null;
       if (hasOtherFiles) {
         documentResponse = await fetch(
-          "http://localhost:8080/document/upload-all",
+          "http://167.172.95.86/document/upload-all",
           {
             method: "POST",
             headers: {
@@ -475,7 +475,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        "http://localhost:8080/document/upload-all",
+        "http://167.172.95.86/document/upload-all",
         {
           method: "POST",
           headers: {

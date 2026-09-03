@@ -351,7 +351,7 @@ const DashboardCalendar: React.FC = () => {
     try {
       setEmployeesLoading(true);
       const response = await fetch(
-          `http://localhost:8080/calendar/employees/company/${companyId}`,
+          `http://167.172.95.86/calendar/employees/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -383,7 +383,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://localhost:8080/api/employees/search?companyId=${companyId}&query=${encodeURIComponent(searchTerm)}`,
+          `http://167.172.95.86/api/employees/search?companyId=${companyId}&query=${encodeURIComponent(searchTerm)}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -473,7 +473,7 @@ const DashboardCalendar: React.FC = () => {
       console.log(`Fetching departments for company ID: ${companyId}`);
       
       const response = await fetch(
-          `http://localhost:8080/calendar/departments/company/${companyId}`,
+          `http://167.172.95.86/calendar/departments/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -514,9 +514,9 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       setDesignationsLoading(true);
-      let url = `http://localhost:8080/calendar/designations/company/${companyId}`;
+      let url = `http://167.172.95.86/calendar/designations/company/${companyId}`;
       if (departmentId) {
-        url = `http://localhost:8080/calendar/designations/department/${departmentId}`;
+        url = `http://167.172.95.86/calendar/designations/department/${departmentId}`;
       }
       
       console.log(`Fetching designations from: ${url}`);
@@ -559,7 +559,7 @@ const DashboardCalendar: React.FC = () => {
     try {
       console.log(`Updating event ${eventId} status to ${newStatus}`);
       
-      const response = await fetch(`http://localhost:8080/calendar/events/${eventId}/status`, {
+      const response = await fetch(`http://167.172.95.86/calendar/events/${eventId}/status`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -584,7 +584,7 @@ const DashboardCalendar: React.FC = () => {
 
   const testBackendConnectivity = async (): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8080/actuator/health', {
+      const response = await fetch('http://167.172.95.86/actuator/health', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -781,7 +781,7 @@ const DashboardCalendar: React.FC = () => {
       };
 
       const response = await fetch(
-          "http://localhost:8080/calendar/events",
+          "http://167.172.95.86/calendar/events",
           {
             method: "POST",
             headers: {
@@ -835,7 +835,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://localhost:8080/calendar/events/${selectedEvent.id}`,
+          `http://167.172.95.86/calendar/events/${selectedEvent.id}`,
           {
             method: "PUT",
             headers: {
@@ -893,7 +893,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://localhost:8080/calendar/events/${eventId}`,
+          `http://167.172.95.86/calendar/events/${eventId}`,
           {
             method: "DELETE",
             headers: {
@@ -1136,7 +1136,7 @@ const DashboardCalendar: React.FC = () => {
       if (userId && userId !== 'null') {
         try {
           const response = await fetch(
-              `http://localhost:8080/calendar/events/company/${companyId}/employee/${userId}/including-leaves`,
+              `http://167.172.95.86/calendar/events/company/${companyId}/employee/${userId}/including-leaves`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -1160,7 +1160,7 @@ const DashboardCalendar: React.FC = () => {
       if (allEvents.length === 0) {
         try {
           const response = await fetch(
-              `http://localhost:8080/calendar/events/company/${companyId}/month/${year}/${month}`,
+              `http://167.172.95.86/calendar/events/company/${companyId}/month/${year}/${month}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -1180,7 +1180,7 @@ const DashboardCalendar: React.FC = () => {
           
           // Final fallback - get all company events
           const response = await fetch(
-              `http://localhost:8080/calendar/events/company/${companyId}`,
+              `http://167.172.95.86/calendar/events/company/${companyId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,

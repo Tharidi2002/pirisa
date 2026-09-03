@@ -53,7 +53,7 @@ const EmployeeStatsSection: React.FC = () => {
         }
 
         const response = await axios.get<ApiResponse>(
-          `http://localhost:8080/employee/EmpDetailsList/${companyId}`,
+          `http://167.172.95.86/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

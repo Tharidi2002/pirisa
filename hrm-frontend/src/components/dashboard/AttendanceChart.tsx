@@ -58,14 +58,14 @@ const AttendanceChart = () => {
       }
 
       const [empRes, attRes] = await Promise.all([
-        fetch(`http://localhost:8080/employee/EmpDetailsList/${cmpnyId}`, {
+        fetch(`http://167.172.95.86/employee/EmpDetailsList/${cmpnyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           signal,
         }),
-        fetch(`http://localhost:8080/employee/attendanceList/${cmpnyId}/${month}`, {
+        fetch(`http://167.172.95.86/employee/attendanceList/${cmpnyId}/${month}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

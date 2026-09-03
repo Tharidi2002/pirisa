@@ -44,7 +44,7 @@ export const ProfileCard = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/profile-image/upload/${empId}`,
+        `http://167.172.95.86/api/profile-image/upload/${empId}`,
         {
           method: "POST",
           headers: {

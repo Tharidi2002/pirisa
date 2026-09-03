@@ -40,7 +40,7 @@ const ExecutiveOverview = () => {
     const loadMetrics = async () => {
       try {
         const [employeesRes, attendanceRes] = await Promise.all([
-          fetch(`http://localhost:8080/employee/EmpDetailsList/${companyId}`, {
+          fetch(`http://167.172.95.86/employee/EmpDetailsList/${companyId}`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -49,7 +49,7 @@ const ExecutiveOverview = () => {
             signal: controller.signal,
           }),
           fetch(
-            `http://localhost:8080/employee/attendanceList/${companyId}/${new Date().getMonth() + 1}`,
+            `http://167.172.95.86/employee/attendanceList/${companyId}/${new Date().getMonth() + 1}`,
             {
               method: "GET",
               headers: {

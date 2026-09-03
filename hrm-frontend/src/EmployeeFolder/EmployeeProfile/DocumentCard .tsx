@@ -68,7 +68,7 @@ export const DocumentCard = ({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/document/update/${empId}`,
+        `http://167.172.95.86/document/update/${empId}`,
         {
           method: "PUT",
           headers: {

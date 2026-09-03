@@ -18,7 +18,7 @@ const EmployeeGenderCard: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/employee/EmpDetailsList/${cmpId}`,
+          `http://167.172.95.86/employee/EmpDetailsList/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -64,7 +64,7 @@ const UnitDesignationManager = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://localhost:8080/department/company/${cmpId}`,
+        `http://167.172.95.86/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -106,7 +106,7 @@ const UnitDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/department/add_department",
+        "http://167.172.95.86/department/add_department",
         payload,
         {
           headers: {
@@ -141,7 +141,7 @@ const UnitDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/department/update_department",
+        "http://167.172.95.86/department/update_department",
         payload,
         {
           headers: {
@@ -166,7 +166,7 @@ const UnitDesignationManager = () => {
   const deleteUnit = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/department/delete/${id}`,
+        `http://167.172.95.86/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -193,7 +193,7 @@ const UnitDesignationManager = () => {
   }) => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/designation/add_designation",
+        "http://167.172.95.86/designation/add_designation",
         designationData,
         {
           headers: {
@@ -218,7 +218,7 @@ const UnitDesignationManager = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/designation/delete/${id}`,
+        `http://167.172.95.86/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
