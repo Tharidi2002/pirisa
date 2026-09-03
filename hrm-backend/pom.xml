@@ -13,7 +13,7 @@
 <groupId>com.knoweb</groupId>
 <artifactId>HRM</artifactId>
 <version>1</version>
-<packaging>war</packaging>
+<packaging>jar</packaging>
 <name>HRM</name>
 <description>Pirisa HR Management system</description>
 
