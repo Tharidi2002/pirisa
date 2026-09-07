@@ -6,6 +6,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
+import { API_BASE } from "../../api/endpoints";
 
 interface Unit {
   id: number;
@@ -64,7 +65,7 @@ const UnitDesignationManager = () => {
       setLoading(true);
       const cmpId = getCompanyId();
       const response = await axios.get<ApiResponse>(
-        `http://167.172.95.86:8080/department/company/${cmpId}`,
+        `${API_BASE}/department/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -106,7 +107,7 @@ const UnitDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://167.172.95.86:8080/department/add_department",
+        `${API_BASE}/department/add_department`,
         payload,
         {
           headers: {
@@ -141,7 +142,7 @@ const UnitDesignationManager = () => {
       };
 
       const response = await axios.post(
-        "http://167.172.95.86:8080/department/update_department",
+        `${API_BASE}/department/update_department`,
         payload,
         {
           headers: {
@@ -166,7 +167,7 @@ const UnitDesignationManager = () => {
   const deleteUnit = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://167.172.95.86:8080/department/delete/${id}`,
+        `${API_BASE}/department/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -193,7 +194,7 @@ const UnitDesignationManager = () => {
   }) => {
     try {
       const response = await axios.post(
-        "http://167.172.95.86:8080/designation/add_designation",
+        `${API_BASE}/designation/add_designation`,
         designationData,
         {
           headers: {
@@ -218,7 +219,7 @@ const UnitDesignationManager = () => {
   const deleteDesignation = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://167.172.95.86:8080/designation/delete/${id}`,
+        `${API_BASE}/designation/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Search, Loader, Building2, MapPin } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 // ==================== Types & Interfaces ====================
 
@@ -138,7 +139,7 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
     try {
       setDepartmentsLoading(true);
       const response = await fetch(
-        `http://167.172.95.86:8080/calendar/departments/company/${companyId}`,
+        `${API_BASE}/calendar/departments/company/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -175,7 +176,7 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
     try {
       setSearchLoading(true);
       const response = await fetch(
-        `http://167.172.95.86:8080/api/employees/search?query=${encodeURIComponent(query)}&companyId=${companyId}`,
+        `${API_BASE}/api/employees/search?query=${encodeURIComponent(query)}&companyId=${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { FaSave, FaClock, FaEdit, FaMoneyCheck } from "react-icons/fa";
+import { API_BASE } from "../../api/endpoints";
 
 interface OTDetails {
   id?: number;
@@ -60,8 +61,8 @@ const OTSetting: React.FC = () => {
     try {
       const method = otDetails?.id ? "PUT" : "POST";
       const url = otDetails?.id
-        ? `http://167.172.95.86:8080/companyOT/${cmpId}`
-        : "http://167.172.95.86:8080/companyOT/add_OTDetails";
+        ? `${API_BASE}/companyOT/${cmpId}`
+        : `${API_BASE}/companyOT/add_OTDetails`;
 
       const response = await fetch(url, {
         method,
@@ -116,7 +117,7 @@ const OTSetting: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/companyOT/${cmpId}`,
+          `${API_BASE}/companyOT/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

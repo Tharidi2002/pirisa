@@ -261,6 +261,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Table from "../table/Table";
+import { API_BASE } from "../../api/endpoints";
 
 interface Column<t>{
   key:string;
@@ -308,7 +309,7 @@ const CandidatesListTable = () => {
       (async () => {
         try {
           const res = await fetch(
-            `http://167.172.95.86:8080/employee/EmpDetailsList/${cmpnyId}`,
+            `${API_BASE}/employee/EmpDetailsList/${cmpnyId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, AlertCircle } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 interface AttendanceRecord {
   id: number;
@@ -79,7 +80,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
 
       // Fetch employee data
       const employeeResponse = await fetch(
-        `http://167.172.95.86:8080/employee/emp/${empId}`,
+        `${API_BASE}/employee/emp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,7 +91,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
 
       // Fetch leave data
       const leaveResponse = await fetch(
-        `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
+        `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

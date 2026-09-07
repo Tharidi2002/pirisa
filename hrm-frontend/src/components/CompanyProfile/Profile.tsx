@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { subscribeCompanyLogoUpdates, subscribeCompanyLogoWebSocket } from "../../utils/companyLogoSync";
+import { API_BASE } from "../../api/endpoints";
 
 function Profile() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -44,7 +45,7 @@ function Profile() {
 
       try {
         const companyResponse = await fetch(
-          `http://167.172.95.86:8080/company/companyDetails/${cmpId}`,
+          `${API_BASE}/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -65,7 +66,7 @@ function Profile() {
         }
 
         const logoResponse = await fetch(
-          `http://167.172.95.86:8080/logo/view/${cmpId}`,
+          `${API_BASE}/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

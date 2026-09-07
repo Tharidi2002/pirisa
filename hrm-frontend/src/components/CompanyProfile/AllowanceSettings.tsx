@@ -1,6 +1,7 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { FaEdit, FaSave, FaPlus, FaTrash, FaTag } from "react-icons/fa";
 import axios from "axios";
+import { API_BASE } from "../../api/endpoints";
 
 // Define types
 interface Allowance {
@@ -52,7 +53,7 @@ const AllowanceSettings: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `http://167.172.95.86:8080/allowance/company/${cmpId}`,
+        `${API_BASE}/allowance/company/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -126,7 +127,7 @@ const AllowanceSettings: React.FC = () => {
       };
 
       const response = await axios.put(
-        "http://167.172.95.86:8080/allowance/update_allowance",
+        `${API_BASE}/allowance/update_allowance`,
         payload,
         {
           headers: {
@@ -180,7 +181,7 @@ const AllowanceSettings: React.FC = () => {
 
       try {
         const response = await axios.post(
-          "http://167.172.95.86:8080/allowance/add_allowance",
+          `${API_BASE}/allowance/add_allowance`,
           payload,
           {
             headers: {
@@ -222,7 +223,7 @@ const AllowanceSettings: React.FC = () => {
 
       try {
         const response = await axios.delete(
-          `http://167.172.95.86:8080/allowance/${id}`,
+          `${API_BASE}/allowance/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
+import { API_BASE } from "../../api/endpoints";
 
 interface PayslipDetail {
   id: number;
@@ -68,7 +69,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch payslip details
       const payslipRes = await fetch(
-        `http://167.172.95.86:8080/employee/payroleListEmp/${employeeId}`,
+        `${API_BASE}/employee/payroleListEmp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,7 +100,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company details
       const companyRes = await fetch(
-        `http://167.172.95.86:8080/company/companyDetails/${companyId}`,
+        `${API_BASE}/company/companyDetails/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -117,7 +118,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch employee details
       const employeeRes = await fetch(
-        `http://167.172.95.86:8080/employee/emp/${employeeId}`,
+        `${API_BASE}/employee/emp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,7 +143,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
       // Fetch company logo
       const logoRes = await fetch(
-        `http://167.172.95.86:8080/logo/view/${companyId}`,
+        `${API_BASE}/logo/view/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

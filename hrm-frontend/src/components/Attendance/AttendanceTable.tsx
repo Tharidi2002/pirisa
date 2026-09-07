@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Table from "../table/Table";
 import { Trash2 } from "lucide-react";
 import DateFilter from "../Filters/DateFilter"; // Import the DateFilter component
+import { API_BASE } from "../../api/endpoints";
 
 interface Column<T> {
   key: string;
@@ -166,7 +167,7 @@ const AttendanceTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-            `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
+            `${API_BASE}/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -183,7 +184,7 @@ const AttendanceTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-            `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
+            `${API_BASE}/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -231,7 +232,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `http://167.172.95.86:8080/employee/attendanceList/${companyId}`,
+          `${API_BASE}/employee/attendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -241,7 +242,7 @@ const AttendanceTable = () => {
       );
 
       const leaveResponse = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
+          `${API_BASE}/employee/EmpDetailsList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -505,7 +506,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-          `http://167.172.95.86:8080/attendance/${id}`,
+          `${API_BASE}/attendance/${id}`,
           {
             method: "DELETE",
             headers: {
@@ -692,7 +693,7 @@ const AttendanceTable = () => {
                     }
 
                     const response = await fetch(
-                        `http://167.172.95.86:8080/employee/attendanceList/${companyId}`,
+                        `${API_BASE}/employee/attendanceList/${companyId}`,
                         {
                           headers: {
                             Authorization: `Bearer ${token}`,

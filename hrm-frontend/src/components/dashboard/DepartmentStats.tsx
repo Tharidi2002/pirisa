@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PieChart, Pie, Cell } from "recharts";
+import { API_BASE } from "../../api/endpoints";
 
 interface DepartmentData {
   name: string;
@@ -29,7 +30,7 @@ const DepartmentStats = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${cmpnyId}`,
+          `${API_BASE}/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Users,
 } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 interface OverviewMetrics {
   totalEmployees: number;
@@ -40,7 +41,7 @@ const ExecutiveOverview = () => {
     const loadMetrics = async () => {
       try {
         const [employeesRes, attendanceRes] = await Promise.all([
-          fetch(`http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`, {
+          fetch(`${API_BASE}/employee/EmpDetailsList/${companyId}`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -49,7 +50,7 @@ const ExecutiveOverview = () => {
             signal: controller.signal,
           }),
           fetch(
-            `http://167.172.95.86:8080/employee/attendanceList/${companyId}/${new Date().getMonth() + 1}`,
+            `${API_BASE}/employee/attendanceList/${companyId}/${new Date().getMonth() + 1}`,
             {
               method: "GET",
               headers: {

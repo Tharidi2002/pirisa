@@ -1,5 +1,6 @@
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { WS_BASE } from '../api/endpoints';
 
 export const COMPANY_LOGO_UPDATED_EVENT = 'company-logo-updated';
 
@@ -74,7 +75,7 @@ export const subscribeCompanyLogoWebSocket = (
   if (!token) return () => {};
 
   const client = new Client({
-    webSocketFactory: () => new SockJS('http://167.172.95.86:8080/ws'),
+    webSocketFactory: () => new SockJS(WS_BASE),
     connectHeaders: { Authorization: `Bearer ${token}` },
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,

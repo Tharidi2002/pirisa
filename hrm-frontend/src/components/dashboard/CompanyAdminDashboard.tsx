@@ -6,6 +6,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 interface CompanyMetrics {
   totalEmployees: number;
@@ -31,7 +32,7 @@ const CompanyAdminDashboard = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
+          `${API_BASE}/employee/EmpDetailsList/${companyId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
             signal: controller.signal,

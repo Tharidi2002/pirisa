@@ -7,6 +7,7 @@ import { Check, X } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import "./leaveTable.css";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/endpoints";
 
 interface Column<T> {
   key: string;
@@ -55,16 +56,13 @@ const LeaveTable = () => {
       }
 
       let endpoint = "";
-      switch (status) {
-        case "APPROVED":
-          endpoint = `http://167.172.95.86:8080/employee/ApprovedEmpDetailsList/${cmpId}`;
-          break;
-        case "REJECTED":
-          endpoint = `http://167.172.95.86:8080/employee/RejectedEmpDetailsList/${cmpId}`;
-          break;
-        case "PENDING":
-        default:
-          endpoint = `http://167.172.95.86:8080/employee/PendingEmpDetailsList/${cmpId}`;
+      if (status === "APPROVED") {
+        endpoint = `${API_BASE}/employee/ApprovedEmpDetailsList/${cmpId}`;
+      } else if (status === "REJECTED") {
+        endpoint = `${API_BASE}/employee/RejectedEmpDetailsList/${cmpId}`;
+      } else {
+        // Default to Pending
+        endpoint = `${API_BASE}/employee/PendingEmpDetailsList/${cmpId}`;
       }
 
       const response = await fetch(endpoint, {
@@ -142,7 +140,7 @@ const LeaveTable = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86:8080/emp_leave/${leaveId}`,
+        `${API_BASE}/emp_leave/${leaveId}`,
         {
           method: "PUT",
           headers: {

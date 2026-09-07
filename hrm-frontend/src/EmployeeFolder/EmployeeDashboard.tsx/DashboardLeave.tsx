@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import LeaveCard from "./LeaveCard";
+import { API_BASE } from "../../api/endpoints";
 
 interface CompanyLeave {
   id: number;
@@ -48,7 +49,7 @@ export const LeaveCards: React.FC = () => {
 
         // Set up axios instance with auth token
         const api = axios.create({
-          baseURL: "http://167.172.95.86:8080",
+          baseURL: API_BASE,
           headers: {
             Authorization: `Bearer ${token}`,
           },

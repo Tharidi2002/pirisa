@@ -4,6 +4,7 @@ import { User } from "lucide-react";
 import { attendanceService } from "../../api/services/attendanceService";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { API_BASE } from "../../api/endpoints";
 
 interface Attendance {
   id: number;
@@ -112,7 +113,7 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          `http://167.172.95.86:8080/employee/lastattendanceList/${companyId}`,
+          `${API_BASE}/employee/lastattendanceList/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -167,7 +168,7 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          "http://167.172.95.86:8080/emp_leave/employees-on-leave-today",
+          `${API_BASE}/emp_leave/employees-on-leave-today`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -233,7 +234,7 @@ const AttendanceMarkTable = () => {
       employeeList.map(async (employee) => {
         try {
           const existsResp = await fetch(
-            `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
+            `${API_BASE}/api/profile-image/exists/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -250,7 +251,7 @@ const AttendanceMarkTable = () => {
           if (!hasImage) return;
 
           const imgResp = await fetch(
-            `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
+            `${API_BASE}/api/profile-image/view/${employee.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -453,7 +454,7 @@ const AttendanceMarkTable = () => {
                 };
 
                 const response = await fetch(
-                  "http://167.172.95.86:8080/emp_leave/cancel-leave-and-mark-attendance",
+                  `${API_BASE}/emp_leave/cancel-leave-and-mark-attendance`,
                   {
                     method: "POST",
                     headers: {
@@ -519,7 +520,7 @@ const AttendanceMarkTable = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86:8080/employee/lastattendanceList/${companyId}`,
+        `${API_BASE}/employee/lastattendanceList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -570,7 +571,7 @@ const AttendanceMarkTable = () => {
       const token = localStorage.getItem("token");
       if (token) {
         const response = await fetch(
-          "http://167.172.95.86:8080/emp_leave/employees-on-leave-today",
+          `${API_BASE}/emp_leave/employees-on-leave-today`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

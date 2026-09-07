@@ -9,6 +9,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { SlidersHorizontal } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 // interface AttendanceData {
 //   date: string;
@@ -58,14 +59,14 @@ const AttendanceChart = () => {
       }
 
       const [empRes, attRes] = await Promise.all([
-        fetch(`http://167.172.95.86:8080/employee/EmpDetailsList/${cmpnyId}`, {
+        fetch(`${API_BASE}/employee/EmpDetailsList/${cmpnyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           signal,
         }),
-        fetch(`http://167.172.95.86:8080/employee/attendanceList/${cmpnyId}/${month}`, {
+        fetch(`${API_BASE}/employee/attendanceList/${cmpnyId}/${month}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

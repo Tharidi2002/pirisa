@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE } from "../../api/endpoints";
 
 const EmployeeGenderCard: React.FC = () => {
   const [total, setTotal] = useState(0);
@@ -18,7 +19,7 @@ const EmployeeGenderCard: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${cmpId}`,
+          `${API_BASE}/employee/EmpDetailsList/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

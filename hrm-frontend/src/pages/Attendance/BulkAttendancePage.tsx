@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { attendanceService, AttendanceRowPayload } from "../../api/services/attendanceService";
+import { API_BASE } from "../../api/endpoints";
 
 const defaultStartTime = "09:00";
 const defaultEndTime = "17:00";
@@ -225,7 +226,7 @@ const BulkAttendancePage = () => {
       setExcludedRows(parsedExcludedRows);
       setSelectedRowIds(parsedPendingRows.map((row) => row.id));
 
-      const base = import.meta.env.VITE_API_BASE_URL || "http://167.172.95.86:8080";
+      const base = API_BASE;
       const attachPhotos = async () => {
         await Promise.all(parsedPendingRows.map(async (r) => {
           const exists = await attendanceService.profileImageExists(r.id);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { API_BASE } from "../../api/endpoints";
 
 interface LeaveApproval {
   id: number;
@@ -30,7 +31,7 @@ const LeaveApprovalWorkflow = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
+          `${API_BASE}/employee/EmpDetailsList/${companyId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
             signal: controller.signal,

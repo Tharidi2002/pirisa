@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, XCircle } from "lucide-react";
 import { attendanceService } from "../../api/services/attendanceService";
+import { API_BASE } from "../../api/endpoints";
 
 interface AttendanceRecord {
   id: number;
@@ -275,7 +276,7 @@ const MonthlyAttendanceCalendar = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
+          `${API_BASE}/api/profile-image/exists/${employee.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -285,7 +286,7 @@ const MonthlyAttendanceCalendar = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
+          `${API_BASE}/api/profile-image/view/${employee.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -318,10 +319,10 @@ const MonthlyAttendanceCalendar = () => {
       }
 
       const [attendanceResponse, leaveResponse] = await Promise.all([
-        fetch(`http://167.172.95.86:8080/employee/attendanceList/${companyId}`, {
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+        fetch(`${API_BASE}/employee/attendanceList/${companyId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`, {
+        fetch(`${API_BASE}/employee/EmpDetailsList/${companyId}`, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
       ]);

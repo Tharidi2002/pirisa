@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import StatisticItem from "../StatisticItem";
+import { API_BASE } from "../../api/endpoints";
 
 interface AttendanceDTO {
   id: number;
@@ -32,7 +33,7 @@ const AttendanceStatsCard = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86:8080/employee/lastattendanceList/${cmpnyId}`,
+          `${API_BASE}/employee/lastattendanceList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

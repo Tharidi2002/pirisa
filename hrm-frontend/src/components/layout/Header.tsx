@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageProvider";
 import DynamicAvatar from "../DynamicAvatar";
 import { subscribeCompanyLogoUpdates, subscribeCompanyLogoWebSocket } from "../../utils/companyLogoSync";
+import { API_BASE } from "../../api/endpoints";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -123,7 +124,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const existsResp = await fetch(
-              `http://167.172.95.86:8080/api/profile-image/exists/${empId}`,
+              `${API_BASE}/api/profile-image/exists/${empId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -135,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
               if (hasImage) {
                 const response = await fetch(
-                  `http://167.172.95.86:8080/api/profile-image/view/${empId}`,
+                  `${API_BASE}/api/profile-image/view/${empId}`,
                   {
                     headers: { Authorization: `Bearer ${token}` },
                   }
@@ -163,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://167.172.95.86:8080/logo/view/${cmpId}`,
+            `${API_BASE}/logo/view/${cmpId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -258,7 +259,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
+        `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -309,7 +310,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86:8080/employee/payroleListEmp/${empId}`,
+        `${API_BASE}/employee/payroleListEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -353,7 +354,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     try {
       const res = await fetch(
-        `http://167.172.95.86:8080/employee/PendingEmpDetailsList/${cmpnyId}`,
+        `${API_BASE}/employee/PendingEmpDetailsList/${cmpnyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -500,7 +501,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         if (role === "EMPLOYEE" && empId) {
           try {
             const empResponse = await fetch(
-              `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
+              `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -517,7 +518,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             }
 
             const existsResp = await fetch(
-              `http://167.172.95.86:8080/api/profile-image/exists/${empId}`,
+              `${API_BASE}/api/profile-image/exists/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -534,7 +535,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
               if (hasImage) {
                 const response = await fetch(
-                  `http://167.172.95.86:8080/api/profile-image/view/${empId}`,
+                  `${API_BASE}/api/profile-image/view/${empId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -568,7 +569,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
         if (cmpId) {
           const logoResponse = await fetch(
-            `http://167.172.95.86:8080/logo/view/${cmpId}`,
+            `${API_BASE}/logo/view/${cmpId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

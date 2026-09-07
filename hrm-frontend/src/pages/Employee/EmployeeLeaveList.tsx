@@ -8,6 +8,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import Loading from "../../components/Loading/Loading";
+import { API_BASE } from "../../api/endpoints";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -51,7 +52,7 @@ const EmployeeLeaveList = () => {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
+          `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

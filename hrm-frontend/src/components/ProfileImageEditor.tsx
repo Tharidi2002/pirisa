@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { ZoomIn, ZoomOut, RotateCw, X, Check, Upload } from 'lucide-react';
 import ImageCompressor, { CompressedImage } from '../utils/ImageCompressor';
+import { API_BASE } from '../api/endpoints';
 
 interface ProfileImageEditorProps {
   employeeId: string;
@@ -51,7 +52,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
   const loadProfileImage = async () => {
     try {
       const resp = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/view/${employeeId}`,
+        `${API_BASE}/api/profile-image/view/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -82,7 +83,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
   const checkProfileImageExists = async () => {
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/exists/${employeeId}`,
+        `${API_BASE}/api/profile-image/exists/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -364,7 +365,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
         formData.append('profileImage', compressed.file);
 
         const response = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/upload/${employeeId}`,
+          `${API_BASE}/api/profile-image/upload/${employeeId}`,
           {
             method: 'POST',
             headers: {
@@ -435,7 +436,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
     setDeleting(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/delete/${employeeId}`,
+        `${API_BASE}/api/profile-image/delete/${employeeId}`,
         {
           method: 'DELETE',
           headers: {

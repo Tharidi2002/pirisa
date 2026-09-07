@@ -6,6 +6,7 @@ import {
     TrashIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
+import { API_BASE } from "../../api/endpoints";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -66,7 +67,7 @@ const Unit = () => {
             setLoading(true);
             const cmpId = getCompanyId();
             const response = await axios.get<ApiResponse>(
-                `http://167.172.95.86:8080/department/company/${cmpId}`,
+                `${API_BASE}/department/company/${cmpId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -104,7 +105,7 @@ const Unit = () => {
         try {
             setIsDeleting(id);
             const response = await axios.delete(
-                `http://167.172.95.86:8080/department/delete/${id}`,
+                `${API_BASE}/department/delete/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -277,7 +278,7 @@ const Unit = () => {
             };
 
             const response = await axios.post(
-                "http://167.172.95.86:8080/department/add_department",
+                `${API_BASE}/department/add_department`,
                 payload,
                 {
                     headers: {
@@ -321,7 +322,7 @@ const Unit = () => {
             };
 
             const response = await axios.put(
-                "http://167.172.95.86:8080/department/update_department",
+                `${API_BASE}/department/update_department`,
                 payload,
                 {
                     headers: {
@@ -358,7 +359,7 @@ const Unit = () => {
     }) => {
         try {
             const response = await axios.post(
-                "http://167.172.95.86:8080/designation/add_designation",
+                `${API_BASE}/designation/add_designation`,
                 designationData,
                 {
                     headers: {
@@ -386,7 +387,7 @@ const Unit = () => {
     const deleteDesignation = async (id: number) => {
         try {
             const response = await axios.delete(
-                `http://167.172.95.86:8080/designation/${id}`,
+                `${API_BASE}/designation/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,
@@ -531,7 +532,7 @@ const Unit = () => {
         try {
             const cmpId = getCompanyId();
             const response = await axios.get<ApiResponse>(
-                `http://167.172.95.86:8080/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
+                `${API_BASE}/department/search/${cmpId}?query=${encodeURIComponent(query)}`,
                 {
                     headers: {
                         Authorization: `Bearer ${getToken()}`,

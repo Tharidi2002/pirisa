@@ -8,6 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
 import ProfileImageEditor from "../../components/ProfileImageEditor";
+import { API_BASE } from "../../api/endpoints";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -116,7 +117,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/department/company/${cmpId}`,
+        `${API_BASE}/department/company/${cmpId}`,
         {
           method: "GET",
           headers: {
@@ -248,7 +249,7 @@ const EmployeeRegistration: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://167.172.95.86:8080/employee/add_employee",
+        `${API_BASE}/employee/add_employee`,
         {
           method: "POST",
           headers: {
@@ -287,7 +288,7 @@ const EmployeeRegistration: React.FC = () => {
               const imgFormData = new FormData();
               imgFormData.append("profileImage", selectedProfileImage);
               const imgResponse = await fetch(
-                `http://167.172.95.86:8080/api/profile-image/upload/${employeeId}`,
+                `${API_BASE}/api/profile-image/upload/${employeeId}`,
                 {
                   method: "POST",
                   headers: {
@@ -396,7 +397,7 @@ const EmployeeRegistration: React.FC = () => {
       let documentResponse = null;
       if (hasOtherFiles) {
         documentResponse = await fetch(
-          "http://167.172.95.86:8080/document/upload-all",
+          `${API_BASE}/document/upload-all`,
           {
             method: "POST",
             headers: {
@@ -475,7 +476,7 @@ const EmployeeRegistration: React.FC = () => {
     formData.append("empId", currentEmpId.toString());
     try {
       const response = await fetch(
-        "http://167.172.95.86:8080/document/upload-all",
+        `${API_BASE}/document/upload-all`,
         {
           method: "POST",
           headers: {

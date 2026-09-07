@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { API_BASE, WS_BASE } from '../../api/endpoints';
 import {
   format,
   startOfMonth,
@@ -351,7 +352,7 @@ const DashboardCalendar: React.FC = () => {
     try {
       setEmployeesLoading(true);
       const response = await fetch(
-          `http://167.172.95.86:8080/calendar/employees/company/${companyId}`,
+          `${API_BASE}/calendar/employees/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -383,7 +384,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://167.172.95.86:8080/api/employees/search?companyId=${companyId}&query=${encodeURIComponent(searchTerm)}`,
+          `${API_BASE}/api/employees/search?companyId=${companyId}&query=${encodeURIComponent(searchTerm)}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -473,7 +474,7 @@ const DashboardCalendar: React.FC = () => {
       console.log(`Fetching departments for company ID: ${companyId}`);
       
       const response = await fetch(
-          `http://167.172.95.86:8080/calendar/departments/company/${companyId}`,
+          `${API_BASE}/calendar/departments/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -514,9 +515,9 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       setDesignationsLoading(true);
-      let url = `http://167.172.95.86:8080/calendar/designations/company/${companyId}`;
+      let url = `${API_BASE}/calendar/designations/company/${companyId}`;
       if (departmentId) {
-        url = `http://167.172.95.86:8080/calendar/designations/department/${departmentId}`;
+        url = `${API_BASE}/calendar/designations/department/${departmentId}`;
       }
       
       console.log(`Fetching designations from: ${url}`);
@@ -559,7 +560,7 @@ const DashboardCalendar: React.FC = () => {
     try {
       console.log(`Updating event ${eventId} status to ${newStatus}`);
       
-      const response = await fetch(`http://167.172.95.86:8080/calendar/events/${eventId}/status`, {
+      const response = await fetch(`${API_BASE}/calendar/events/${eventId}/status`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -584,7 +585,7 @@ const DashboardCalendar: React.FC = () => {
 
   const testBackendConnectivity = async (): Promise<boolean> => {
     try {
-      const response = await fetch('http://167.172.95.86:8080/actuator/health', {
+      const response = await fetch(`${API_BASE}/actuator/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -781,7 +782,7 @@ const DashboardCalendar: React.FC = () => {
       };
 
       const response = await fetch(
-          "http://167.172.95.86:8080/calendar/events",
+          `${API_BASE}/calendar/events`,
           {
             method: "POST",
             headers: {
@@ -835,7 +836,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://167.172.95.86:8080/calendar/events/${selectedEvent.id}`,
+          `${API_BASE}/calendar/events/${selectedEvent.id}`,
           {
             method: "PUT",
             headers: {
@@ -893,7 +894,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const response = await fetch(
-          `http://167.172.95.86:8080/calendar/events/${eventId}`,
+          `${API_BASE}/calendar/events/${eventId}`,
           {
             method: "DELETE",
             headers: {
@@ -1020,7 +1021,7 @@ const DashboardCalendar: React.FC = () => {
 
     try {
       const client = new Client({
-        webSocketFactory: () => new SockJS('http://167.172.95.86:8080/ws'),
+              webSocketFactory: () => new SockJS(WS_BASE),
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         debug: (str) => console.log('STOMP Debug:', str),
         reconnectDelay: 5000,
@@ -1136,7 +1137,7 @@ const DashboardCalendar: React.FC = () => {
       if (userId && userId !== 'null') {
         try {
           const response = await fetch(
-              `http://167.172.95.86:8080/calendar/events/company/${companyId}/employee/${userId}/including-leaves`,
+              `${API_BASE}/calendar/events/company/${companyId}/employee/${userId}/including-leaves`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -1160,7 +1161,7 @@ const DashboardCalendar: React.FC = () => {
       if (allEvents.length === 0) {
         try {
           const response = await fetch(
-              `http://167.172.95.86:8080/calendar/events/company/${companyId}/month/${year}/${month}`,
+              `${API_BASE}/calendar/events/company/${companyId}/month/${year}/${month}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -1180,7 +1181,7 @@ const DashboardCalendar: React.FC = () => {
           
           // Final fallback - get all company events
           const response = await fetch(
-              `http://167.172.95.86:8080/calendar/events/company/${companyId}`,
+              `${API_BASE}/calendar/events/company/${companyId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,

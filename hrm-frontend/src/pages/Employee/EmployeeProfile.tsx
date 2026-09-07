@@ -17,6 +17,7 @@ import { DocumentCard } from "../../EmployeeFolder/EmployeeProfile/DocumentCard 
 import { InfoItem } from "../../EmployeeFolder/EmployeeProfile/InfoItem";
 import { LeaveBalanceCard } from "../../EmployeeFolder/EmployeeProfile/LeaveBalanceCard ";
 import { ProfileCard } from "../../EmployeeFolder/EmployeeProfile/ProfileCard";
+import { API_BASE } from "../../api/endpoints";
 
 interface EmployeeDetails {
   id: number;
@@ -74,7 +75,7 @@ const EmployeeProfile = () => {
     try {
       // Fetch employee details including leave history
       const employeeResponse = await fetch(
-        `http://167.172.95.86:8080/employee/EmpDetailsListByEmp/${empId}`,
+        `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -110,7 +111,7 @@ const EmployeeProfile = () => {
       // Fetch leave balances from backend (supports Balance As-of Date modes)
       try {
         const leaveBalanceResponse = await fetch(
-          `http://167.172.95.86:8080/leave_balance/employee/${empId}?asOfMode=${asOfMode}`,
+          `${API_BASE}/leave_balance/employee/${empId}?asOfMode=${asOfMode}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,7 +145,7 @@ const EmployeeProfile = () => {
 
       // Fetch employee photo
       const existsResponse = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/exists/${empId}`,
+        `${API_BASE}/api/profile-image/exists/${empId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -159,7 +160,7 @@ const EmployeeProfile = () => {
         );
         if (hasImage) {
           const imgResponse = await fetch(
-            `http://167.172.95.86:8080/api/profile-image/view/${empId}`,
+            `${API_BASE}/api/profile-image/view/${empId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -197,8 +198,8 @@ const EmployeeProfile = () => {
       try {
         // Use profile image API for photo, document API for others
         const url = docType === "photo" 
-          ? `http://167.172.95.86:8080/api/profile-image/exists/${empId}`
-          : `http://167.172.95.86:8080/document/view/emp/${empId}/${docType}`;
+          ? `${API_BASE}/api/profile-image/exists/${empId}`
+          : `${API_BASE}/document/view/emp/${empId}/${docType}`;
           
         const response = await fetch(url, {
           headers: {
@@ -236,8 +237,8 @@ const EmployeeProfile = () => {
 
       // Use profile image API for photo, document API for others
       const url = documentType === "photo" 
-        ? `http://167.172.95.86:8080/api/profile-image/view/${empId}`
-        : `http://167.172.95.86:8080/document/view/emp/${empId}/${documentType}`;
+        ? `${API_BASE}/api/profile-image/view/${empId}`
+        : `${API_BASE}/document/view/emp/${empId}/${documentType}`;
         
       const response = await fetch(url, {
         headers: {

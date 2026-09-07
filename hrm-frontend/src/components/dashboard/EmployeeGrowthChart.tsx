@@ -7,6 +7,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { API_BASE } from '../../api/endpoints';
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -38,7 +39,7 @@ const EmployeeGrowthChart = () => {
     (async () => {
       try {
         const res = await fetch(
-          `http://167.172.95.86:8080/employee/EmpDetailsList/${cmpnyId}`,
+          `${API_BASE}/employee/EmpDetailsList/${cmpnyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

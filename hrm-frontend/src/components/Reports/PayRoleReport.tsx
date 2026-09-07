@@ -3,6 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
 import * as XLSX from "xlsx";
+import { API_BASE } from "../../api/endpoints";
 
 interface Payroll {
   id: number;
@@ -91,7 +92,7 @@ const PayroleReport: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/employee/payroleList/${cmpId}`,
+        `${API_BASE}/employee/payroleList/${cmpId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

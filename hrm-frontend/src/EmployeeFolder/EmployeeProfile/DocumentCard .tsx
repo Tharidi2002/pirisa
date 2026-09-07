@@ -8,6 +8,7 @@ import {
   FaBirthdayCake,
   FaUpload,
 } from "react-icons/fa";
+import { API_BASE } from "../../api/endpoints";
 import { useRef } from "react";
 import { toast } from "react-toastify";
 
@@ -68,7 +69,7 @@ export const DocumentCard = ({
 
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/document/update/${empId}`,
+        `${API_BASE}/document/update/${empId}`,
         {
           method: "PUT",
           headers: {

@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { FaBriefcase } from "react-icons/fa";
 import { toast } from "react-toastify";
 import DynamicAvatar from "../../components/DynamicAvatar";
+import { API_BASE } from "../../api/endpoints";
 
 interface ProfileCardProps {
   photoUrl: string;
@@ -44,7 +45,7 @@ export const ProfileCard = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/upload/${empId}`,
+        `${API_BASE}/api/profile-image/upload/${empId}`,
         {
           method: "POST",
           headers: {

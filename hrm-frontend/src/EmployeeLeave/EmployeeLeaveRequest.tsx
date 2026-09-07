@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaCalendarAlt, FaPaperPlane } from "react-icons/fa";
 import Loading from "../components/Loading/Loading";
+import { API_BASE } from "../api/endpoints";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -45,7 +46,7 @@ function EmployeeLeaveRequest() {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/company_leave/company/${cmpId}`,
+          `${API_BASE}/company_leave/company/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -138,7 +139,7 @@ function EmployeeLeaveRequest() {
 
     try {
       const response = await fetch(
-        "http://167.172.95.86:8080/emp_leave/add_leave",
+        `${API_BASE}/emp_leave/add_leave`,
         {
           method: "POST",
           headers: {

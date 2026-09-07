@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Loading from "../Loading/Loading";
 import DynamicAvatar from "../DynamicAvatar";
+import { API_BASE } from "../../api/endpoints";
 //import profile from "../../../public/profile.jpg";
 
 interface EmployeeDetails {
@@ -108,7 +109,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     for (const docType of documentTypes) {
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/document/view/emp/${empId}/${docType}`,
+          `${API_BASE}/document/view/emp/${empId}/${docType}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -137,7 +138,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
           // Fetch employee details
           const employeeResponse = await fetch(
-            `http://167.172.95.86:8080/employee/emp/${id}`,
+            `${API_BASE}/employee/emp/${id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -163,7 +164,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
               setCompanyLeaves([]);
             } else {
               const companyLeaveResponse = await fetch(
-                `http://167.172.95.86:8080/company_leave/company/${cmpnyId}`,
+                `${API_BASE}/company_leave/company/${cmpnyId}`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -199,7 +200,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
           // Fetch employee photo
           try {
             const existsResp = await fetch(
-              `http://167.172.95.86:8080/api/profile-image/exists/${id}`,
+              `${API_BASE}/api/profile-image/exists/${id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -218,7 +219,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
 
               if (hasImage) {
                 const imgResp = await fetch(
-                  `http://167.172.95.86:8080/api/profile-image/view/${id}`,
+                  `${API_BASE}/api/profile-image/view/${id}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -324,7 +325,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         return;
       }
 
-      const url = `http://167.172.95.86:8080/document/view/emp/${id}/${documentType}`;
+      const url = `${API_BASE}/document/view/emp/${id}/${documentType}`;
 
       const response = await fetch(url, {
         headers: {

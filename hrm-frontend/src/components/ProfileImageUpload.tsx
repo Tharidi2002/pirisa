@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import ImageCompressor, { CompressedImage } from '../utils/ImageCompressor';
+import { API_BASE } from '../api/endpoints';
 
 interface ProfileImageUploadProps {
   employeeId: string;
@@ -46,7 +47,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const loadProfileImage = async () => {
     try {
       const resp = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/view/${employeeId}`,
+        `${API_BASE}/api/profile-image/view/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,7 +82,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const checkProfileImageExists = async () => {
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/exists/${employeeId}`,
+        `${API_BASE}/api/profile-image/exists/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -221,7 +222,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       formData.append('profileImage', compressed.file);
 
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/upload/${employeeId}`,
+        `${API_BASE}/api/profile-image/upload/${employeeId}`,
         {
           method: 'POST',
           headers: {
@@ -297,7 +298,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     setDeleting(true);
     try {
       const response = await fetch(
-        `http://167.172.95.86:8080/api/profile-image/delete/${employeeId}`,
+        `${API_BASE}/api/profile-image/delete/${employeeId}`,
         {
           method: 'DELETE',
           headers: {

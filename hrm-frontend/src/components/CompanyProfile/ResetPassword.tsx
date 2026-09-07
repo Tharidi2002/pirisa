@@ -3,6 +3,7 @@ import { FaEye, FaEyeSlash, FaArrowLeft, FaSave } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { API_BASE } from "../../api/endpoints";
 
 interface PasswordResetFormData {
   oldPassword: string;
@@ -91,9 +92,9 @@ const PasswordReset = () => {
       };
 
       if (role === "EMPLOYEE" && empId) {
-        apiUrl = `http://167.172.95.86:8080/employee/changePassword/${empId}`;
+        apiUrl = `${API_BASE}/employee/changePassword/${empId}`;
       } else if (role === "CMPNY" && cmpId) {
-        apiUrl = `http://167.172.95.86:8080/company/changePassword/${cmpId}`;
+        apiUrl = `${API_BASE}/company/changePassword/${cmpId}`;
       } else {
         throw new Error("Invalid user role or missing ID");
       }

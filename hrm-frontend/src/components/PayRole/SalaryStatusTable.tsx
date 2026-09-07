@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading/Loading";
+import { API_BASE } from "../../api/endpoints";
 
 interface PayrollEntry {
   id: number;
@@ -75,7 +76,7 @@ const SalaryStatusTable = () => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
+          `${API_BASE}/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -92,7 +93,7 @@ const SalaryStatusTable = () => {
         if (!hasImage) return { id: employee.id, url: null };
 
         const photoResponse = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
+          `${API_BASE}/api/profile-image/view/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -138,13 +139,13 @@ const SalaryStatusTable = () => {
       }
 
       const [payrollResponse, detailsResponse] = await Promise.all([
-        fetch(`http://167.172.95.86:8080/employee/payroleList/${companyId}`, {
+        fetch(`${API_BASE}/employee/payroleList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }),
-        fetch(`http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`, {
+        fetch(`${API_BASE}/employee/EmpDetailsList/${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

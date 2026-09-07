@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
 import PayslipModal from "../../components/PayRole/PayslipModal";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { API_BASE } from "../../api/endpoints";
 
 interface Payslip {
   id: number;
@@ -47,7 +48,7 @@ const PayslipList: React.FC = () => {
       if (!token) throw new Error("No token found");
 
       const response = await fetch(
-        `http://167.172.95.86:8080/employee/payroleListEmp/${employeeId}`,
+        `${API_BASE}/employee/payroleListEmp/${employeeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

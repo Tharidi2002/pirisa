@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { notifyCompanyLogoUpdated } from "../utils/companyLogoSync";
+import { API_BASE } from "../api/endpoints";
 
 interface CompanyDetails {
   cmp_name?: string;
@@ -56,7 +57,7 @@ const CompanySettings = () => {
 
       try {
         const response = await fetch(
-          `http://167.172.95.86:8080/company/companyDetails/${cmpId}`,
+          `${API_BASE}/company/companyDetails/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,7 +87,7 @@ const CompanySettings = () => {
 
         // Fetch existing logo
         const logoResponse = await fetch(
-          `http://167.172.95.86:8080/logo/view/${cmpId}`,
+          `${API_BASE}/logo/view/${cmpId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -143,7 +144,7 @@ const CompanySettings = () => {
     try {
       // Update company details
       const response = await fetch(
-        `http://167.172.95.86:8080/company/${cmpId}`,
+        `${API_BASE}/company/${cmpId}`,
         {
           method: "PUT",
           headers: {
@@ -165,7 +166,7 @@ const CompanySettings = () => {
         logoFormData.append("logo", logoFile);
 
         const logoResponse = await fetch(
-          "http://167.172.95.86:8080/logo/upload",
+          `${API_BASE}/logo/upload`,
           {
             method: "POST",
             headers: {

@@ -6,6 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
 import DynamicAvatar from "../components/DynamicAvatar";
+import { API_BASE } from "../api/endpoints";
 
 interface Column<T> {
   key: string;
@@ -72,7 +73,7 @@ const EmployeeTable = () => {
       }
 
       const response = await fetch(
-        `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
+        `${API_BASE}/employee/EmpDetailsList/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -166,7 +167,7 @@ const EmployeeTable = () => {
       try {
         // First check if employee has a profile image
         const existsResponse = await fetch(
-          `http://167.172.95.86:8080/api/profile-image/exists/${employee.id}`,
+          `${API_BASE}/api/profile-image/exists/${employee.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -184,7 +185,7 @@ const EmployeeTable = () => {
           if (hasImage) {
             // If image exists, fetch it
             const photoResponse = await fetch(
-              `http://167.172.95.86:8080/api/profile-image/view/${employee.id}`,
+              `${API_BASE}/api/profile-image/view/${employee.id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -244,7 +245,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://167.172.95.86:8080/employee/${id}`,
+                  `${API_BASE}/employee/${id}`,
                   {
                     method: "DELETE",
                     headers: {
@@ -444,7 +445,7 @@ const EmployeeTable = () => {
                 }
 
                 const response = await fetch(
-                  `http://167.172.95.86:8080/employee/EmpDetailsList/${companyId}`,
+                  `${API_BASE}/employee/EmpDetailsList/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
