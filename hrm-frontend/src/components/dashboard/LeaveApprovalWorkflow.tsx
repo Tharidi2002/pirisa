@@ -15,6 +15,16 @@ interface LeaveApproval {
   employeeId: number;
 }
 
+interface EmployeeLeaveRecord {
+  id: number;
+  leaveType?: string;
+  leaveReason?: string;
+  leaveStartDay?: string;
+  leaveEndDay?: string;
+  leaveDays?: number;
+  leaveStatus?: string;
+}
+
 const LeaveApprovalWorkflow = () => {
   const [leaves, setLeaves] = useState<LeaveApproval[]>([]);
   const [filter, setFilter] = useState<"PENDING" | "ALL">("PENDING");
@@ -40,28 +50,27 @@ const LeaveApprovalWorkflow = () => {
 
         if (res.ok) {
           const data = await res.json();
-          const mockLeaves: LeaveApproval[] =
-            data?.EmployeeList?.slice(0, 5).map(
-              (emp: { id: number; firstName: string; lastName: string }, idx: number) => ({
-                id: idx + 1,
-                employeeName: `${emp.firstName} ${emp.lastName}`,
-                leaveType: ["Annual", "Sick", "Personal", "Maternity"][idx % 4],
-                startDate: new Date(
-                  Date.now() + (idx + 1) * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                endDate: new Date(
-                  Date.now() + (idx + 3) * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                days: 2 + idx,
-                reason: "Personal reasons",
-                status: idx % 2 === 0 ? "PENDING" : "APPROVED",
-                submittedDate: new Date(
-                  Date.now() - (5 - idx) * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                employeeId: emp.id,
-              })
-            ) || [];
-          setLeaves(mockLeaves);
+          const records: LeaveApproval[] = (data?.EmployeeList ?? []).flatMap(
+            (employee: {
+              id: number;
+              firstName?: string;
+              lastName?: string;
+              leaveList?: EmployeeLeaveRecord[];
+            }) =>
+              (employee.leaveList ?? []).map((leave) => ({
+                id: leave.id,
+                employeeName: `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim(),
+                leaveType: leave.leaveType ?? "Unknown",
+                startDate: leave.leaveStartDay ?? "",
+                endDate: leave.leaveEndDay ?? "",
+                days: leave.leaveDays ?? 0,
+                reason: leave.leaveReason ?? "",
+                status: (leave.leaveStatus ?? "PENDING").toUpperCase() as LeaveApproval["status"],
+                submittedDate: leave.leaveStartDay ?? "",
+                employeeId: employee.id,
+              }))
+          );
+          setLeaves(records);
         }
       } catch {
         // Error loading
@@ -78,20 +87,35 @@ const LeaveApprovalWorkflow = () => {
     return leaves;
   }, [leaves, filter]);
 
+  const updateLeaveStatus = async (leaveId: number, status: "APPROVED" | "REJECTED") => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/emp_leave/${leaveId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ leaveStatus: status }),
+      });
+
+      if (response.ok) {
+        setLeaves((prev) =>
+          prev.map((leave) => (leave.id === leaveId ? { ...leave, status } : leave))
+        );
+      }
+    } catch {
+      // Keep the database state unchanged when the update fails.
+    }
+  };
+
   const handleApprove = (leaveId: number) => {
-    setLeaves((prev) =>
-      prev.map((l) =>
-        l.id === leaveId ? { ...l, status: "APPROVED" as const } : l
-      )
-    );
+    void updateLeaveStatus(leaveId, "APPROVED");
   };
 
   const handleReject = (leaveId: number) => {
-    setLeaves((prev) =>
-      prev.map((l) =>
-        l.id === leaveId ? { ...l, status: "REJECTED" as const } : l
-      )
-    );
+    void updateLeaveStatus(leaveId, "REJECTED");
   };
 
   const stats = {

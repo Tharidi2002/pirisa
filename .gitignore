@@ -1,0 +1,15 @@
+# Local and deployment secrets
+.env
+.env.*
+!.env.production.example
+
+# Build output
+hrm-backend/target/
+hrm-frontend/node_modules/
+hrm-frontend/dist/
+
+# IDE and logs
+.idea/
+.vscode/
+*.log
+deploy.tar

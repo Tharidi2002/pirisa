@@ -44,9 +44,9 @@ const CompanyAdminDashboard = () => {
           const empCount = data?.EmployeeList?.length || 0;
           setMetrics({
             totalEmployees: empCount,
-            activeContracts: Math.round(empCount * 0.92),
-            pendingApprovals: Math.max(3, Math.round(empCount * 0.08)),
-            compliance: Math.round(Math.random() * 15 + 85),
+            activeContracts: 0,
+            pendingApprovals: 0,
+            compliance: 0,
           });
         }
       } catch {
@@ -125,19 +125,11 @@ const CompanyAdminDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-900">Recent activity</h2>
             <BarChart3 className="h-5 w-5 text-gray-400" />
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
-              <span className="text-sm text-gray-600">New employee joined</span>
-              <span className="text-xs text-gray-400">2 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
-              <span className="text-sm text-gray-600">Leave approval submitted</span>
-              <span className="text-xs text-gray-400">4 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-gray-600">Payroll processed</span>
-              <span className="text-xs text-gray-400">Yesterday</span>
-            </div>
+          <div className="py-8 text-center">
+            <p className="text-sm text-gray-500">No recent activity recorded</p>
+            <p className="mt-1 text-xs text-gray-400">
+              Activity will appear here when it is available in the database.
+            </p>
           </div>
         </div>
 

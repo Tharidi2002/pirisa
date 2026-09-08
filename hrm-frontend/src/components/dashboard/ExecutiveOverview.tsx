@@ -64,13 +64,21 @@ const ExecutiveOverview = () => {
 
         let totalEmployees = 0;
         let presentToday = 0;
+        let pendingLeaves = 0;
 
         if (employeesRes.ok) {
           const employeeJson = await employeesRes.json();
-          totalEmployees =
-            employeeJson?.resultCode === 100 && Array.isArray(employeeJson?.EmployeeList)
-              ? employeeJson.EmployeeList.length
-              : 0;
+          if (employeeJson?.resultCode === 100 && Array.isArray(employeeJson?.EmployeeList)) {
+            totalEmployees = employeeJson.EmployeeList.length;
+            pendingLeaves = employeeJson.EmployeeList.reduce(
+              (count: number, employee: { leaveList?: Array<{ leaveStatus?: string }> }) =>
+                count +
+                (employee.leaveList ?? []).filter(
+                  (leave) => (leave.leaveStatus ?? "").toUpperCase() === "PENDING"
+                ).length,
+              0
+            );
+          }
         }
 
         if (attendanceRes.ok) {
@@ -89,8 +97,8 @@ const ExecutiveOverview = () => {
         setMetrics({
           totalEmployees,
           presentToday,
-          pendingLeaves: totalEmployees > 0 ? Math.max(2, Math.round(totalEmployees * 0.12)) : 0,
-          payrollThisMonth: totalEmployees > 0 ? Math.max(1, Math.round(totalEmployees * 0.64)) : 0,
+          pendingLeaves,
+          payrollThisMonth: 0,
         });
       } catch {
         setMetrics(defaultMetrics);
