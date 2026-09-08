@@ -89,30 +89,37 @@ public class Employee implements Serializable {
 
     @OneToMany(targetEntity = Attendance.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
+    @JsonIgnore
     private List<Attendance> attendanceList;
 
     @OneToMany(targetEntity = Payrole.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
+    @JsonIgnore
     private List<Payrole> payroleList;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Unit unit;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "dpt_id", referencedColumnName = "dpt_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Unit department;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "designation_id", referencedColumnName = "designation_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Designation designation;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Documents documents;
 
     @OneToMany(targetEntity = EmployeeLeave.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
+    @JsonIgnore
     private List<EmployeeLeave> employeeLeaves;
 
 }

@@ -9,6 +9,7 @@ import com.pirisa.hrm.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.security.SecureRandom;
@@ -98,7 +99,8 @@ public class EmployeeService {
         employeeRepository.deleteEmployee(emp_id);
     }
 
-    public List<AttendanceEmployeeDTO> getAttendanceByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<AttendanceEmployeeDTO> getAttendanceByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> new AttendanceEmployeeDTO(
@@ -139,7 +141,8 @@ public class EmployeeService {
     }
 
 
-    public List<PayroleEmployeeDTO> getPayroleByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<PayroleEmployeeDTO> getPayroleByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
@@ -177,7 +180,8 @@ public class EmployeeService {
     }
 
 
-    public List<PayroleEmployeeDTO> getPayroleByEmployeeId(long empId) {
+        @Transactional(readOnly = true)
+        public List<PayroleEmployeeDTO> getPayroleByEmployeeId(long empId) {
         List<Employee> employees = employeeRepository.findEmployeeById(empId);
 
         return employees.stream().map(employee -> new PayroleEmployeeDTO(
@@ -216,7 +220,8 @@ public class EmployeeService {
 
 
 
-    public List<EmpDetailsDTO> getEmpDetailsByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getEmpDetailsByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream().map(employee -> {
             // Map the leave list if available, else return an empty list
@@ -270,7 +275,8 @@ public class EmployeeService {
 
 
 
-    public List<EmpDetailsDTO> getEmpDetailsByEmpId(long empId) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getEmpDetailsByEmpId(long empId) {
         List<Employee> employees = employeeRepository.findEmployeeById(empId);
         return employees.stream().map(employee -> {
             // Map the leave list if available, else return an empty list
@@ -325,7 +331,8 @@ public class EmployeeService {
 
 
 
-    public List<EmpDetailsDTO> getPendingEmpDetailsByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getPendingEmpDetailsByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
                 // Filter to include only employees with at least one PENDING leave
@@ -379,7 +386,8 @@ public class EmployeeService {
     }
 
 
-    public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
                 // Filter to include only employees with at least one APPROVED leave
@@ -434,7 +442,8 @@ public class EmployeeService {
 
 
 
-    public List<EmpDetailsDTO> getRejectedEmpDetailsByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getRejectedEmpDetailsByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
         return employees.stream()
                 // Filter to include only employees with at least one REJECTED leave
@@ -553,7 +562,8 @@ public class EmployeeService {
 
 
 
-    public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyIdAndDate(long cmpId, LocalDate date) {
+        @Transactional(readOnly = true)
+        public List<EmpDetailsDTO> getApprovedEmpDetailsByCompanyIdAndDate(long cmpId, LocalDate date) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream()
@@ -646,7 +656,8 @@ public class EmployeeService {
     }
 
 
-    public List<AttendanceEmployeeDTO> getAttendanceByCompanyIdAndMonth(long cmpId, int month) {
+        @Transactional(readOnly = true)
+        public List<AttendanceEmployeeDTO> getAttendanceByCompanyIdAndMonth(long cmpId, int month) {
         return employeeRepository.findByCmpId(cmpId).stream()
                 .map(employee -> {
                     // Filter only this month's attendances
