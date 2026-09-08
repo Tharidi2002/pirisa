@@ -1,0 +1,15 @@
+[Unit]
+Description=HRM Spring Boot Backend
+After=syslog.target network.target mysql.service
+
+[Service]
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/bin/java -Xms64m -Xmx256m -XX:MaxMetaspaceSize=96m -XX:MaxDirectMemorySize=32m -Xss256k -XX:+ExitOnOutOfMemoryError -Dspring.config.location=/root/config/application.properties -jar /root/app.jar
+SuccessExitStatus=143
+TimeoutStopSec=20
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

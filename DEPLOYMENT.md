@@ -86,7 +86,61 @@ docker compose -f docker-compose.production.yml ps
 docker stats hrm-backend hrm-frontend
 ```
 
-Each application container is limited to 1 GB RAM and logs use rotation to prevent unbounded disk growth.
+The 1 GB production server is budgeted across services: backend is capped at 380 MB, frontend at 64 MB, and the host MySQL configuration below targets a 128 MB InnoDB buffer pool. Logs use rotation to prevent unbounded disk growth.
+
+## Production memory update for the current systemd deployment
+
+The current server runs `/root/app.jar` through `hrm-backend.service`, not the production Compose backend. Apply the memory-safe runtime settings without changing the database:
+
+```bash
+cd /root/hrm
+git pull origin main
+
+# Back up the active files first.
+cp /root/config/application.properties /root/config/application.properties.bak.$(date +%Y%m%d%H%M%S)
+cp /etc/systemd/system/hrm-backend.service /etc/systemd/system/hrm-backend.service.bak.$(date +%Y%m%d%H%M%S)
+
+# Preserve the existing production database credentials and add only the
+# memory/query-pool overrides from this repository.
+cat >> /root/config/application.properties <<'EOF'
+spring.jpa.show-sql=false
+spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.default_batch_fetch_size=16
+spring.datasource.hikari.maximum-pool-size=3
+spring.datasource.hikari.minimum-idle=1
+spring.datasource.hikari.connection-timeout=20000
+spring.datasource.hikari.idle-timeout=300000
+spring.datasource.hikari.max-lifetime=900000
+EOF
+
+# Install the bounded JVM service. It continues using the preserved external config.
+cp deploy/systemd/hrm-backend.service /etc/systemd/system/hrm-backend.service
+
+# Limit MySQL memory while preserving hrm_db data.
+cp deploy/mysql/99-hrm-memory.cnf /etc/mysql/mysql.conf.d/99-hrm-memory.cnf
+systemctl restart mysql
+
+# Rebuild and deploy the same repository version.
+mvn -f hrm-backend/pom.xml -DskipTests clean package
+cp hrm-backend/target/HRM-1.jar /root/app.jar
+
+systemctl daemon-reload
+systemctl restart hrm-backend
+systemctl restart nginx
+systemctl --no-pager --full status mysql hrm-backend nginx
+curl -fsS http://127.0.0.1:8080/actuator/health
+free -h
+```
+
+Watch logs and memory after the restart:
+
+```bash
+journalctl -u hrm-backend -f
+docker stats --no-stream
+top
+```
+
+The service uses `-Xmx256m`; this is a heap ceiling, not a promise that the process will always use that amount. Do not set a 1 GB limit for each service on a 1 GB host.
 
 ## Important hosting notes
 

@@ -15,4 +15,4 @@ RUN apt-get update \
 COPY --from=build /workspace/target/*.jar /app/app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_TOOL_OPTIONS:-} -XX:+ExitOnOutOfMemoryError -jar /app/app.jar"]

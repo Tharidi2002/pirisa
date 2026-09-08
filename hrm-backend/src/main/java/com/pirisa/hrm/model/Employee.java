@@ -107,7 +107,7 @@ public class Employee implements Serializable {
     @JoinColumn(name = "designation_id", referencedColumnName = "designation_id", insertable = false, updatable = false)
     private Designation designation;
 
-    @OneToOne(cascade = CascadeType.ALL , fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id", insertable = false, updatable = false)
     private Documents documents;
 
