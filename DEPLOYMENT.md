@@ -115,6 +115,11 @@ EOF
 
 # Install the bounded JVM service. It continues using the preserved external config.
 cp deploy/systemd/hrm-backend.service /etc/systemd/system/hrm-backend.service
+cp deploy/nginx/hrm.conf /etc/nginx/sites-available/hrm.conf
+rm -f /etc/nginx/sites-enabled/default
+ln -sfn /etc/nginx/sites-available/hrm.conf /etc/nginx/sites-enabled/hrm.conf
+nginx -t
+systemctl reload nginx
 
 # Limit MySQL memory while preserving hrm_db data.
 cp deploy/mysql/99-hrm-memory.cnf /etc/mysql/mysql.conf.d/99-hrm-memory.cnf
@@ -148,3 +153,4 @@ The service uses `-Xmx256m`; this is a heap ceiling, not a promise that the proc
 - The production backend uses host networking so `127.0.0.1:3306` refers to the server's MySQL service.
 - The production Compose file is intended for Linux Docker Engine. Use `docker-compose.yml` for local Windows/Docker Desktop testing.
 - The frontend API URL is embedded during the image build. Change `PUBLIC_API_BASE_URL` and `PUBLIC_WS_URL` before rebuilding if the public address changes.
+- Nginx must proxy the backend path prefixes used by the application (`/employee`, `/logo`, `/calendar`, `/actuator`, `/ws`, and the other API paths), not only `/api`.
