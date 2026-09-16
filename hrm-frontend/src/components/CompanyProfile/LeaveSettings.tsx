@@ -40,8 +40,8 @@ const LeaveSettings: React.FC = () => {
 
   // Fetch leave types from API
   const fetchLeaveTypes = async () => {
-    const cmpId = localStorage.getItem("cmpnyId"); // Get company ID from localStorage
-    const token = localStorage.getItem("token"); // Get token from localStorage
+    const cmpId = localStorage.getItem("cmpnyId");
+    const token = localStorage.getItem("token");
 
     if (!cmpId || !token) {
       toast.error("Missing company ID or token. Please log in again.");
@@ -59,9 +59,9 @@ const LeaveSettings: React.FC = () => {
         },
       );
 
-      // Handle 404 gracefully - leave types may not be configured yet
       if (response.status === 404) {
         setLeaveTypes([]);
+        setLoading(false);
         return;
       }
 
@@ -73,11 +73,11 @@ const LeaveSettings: React.FC = () => {
       if (data.resultCode === 100 && Array.isArray(data.LeavetList)) {
         setLeaveTypes(data.LeavetList);
       } else {
-        throw new Error("Unexpected response format or result code");
+        setLeaveTypes([]);
       }
     } catch (error) {
       console.error("Error fetching leave types:", error);
-      setLeaveTypes([]); // Ensure state is reset on error
+      setLeaveTypes([]);
     } finally {
       setLoading(false);
     }

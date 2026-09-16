@@ -9,14 +9,24 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = () => {
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const location = useLocation();
   const userRole = localStorage.getItem("role") || "EMPLOYEE";
+
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem("hrmSidebarCollapsed");
+    return saved ? saved === "true" : true;
+  });
+
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
+  const toggleSidebarMode = () => {
+    const next = !isSidebarCollapsed;
+    setIsSidebarCollapsed(next);
+    localStorage.setItem("hrmSidebarCollapsed", String(next));
+  };
 
   useEffect(() => {
     const syncWithViewport = () => {
-      // On large screens, keep sidebar open by default
       if (window.innerWidth >= 1024) {
         setIsSidebarVisible(true);
       }
@@ -29,7 +39,12 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Sidebar isVisible={isSidebarVisible} userRole={userRole} />
+      <Sidebar
+        isVisible={isSidebarVisible}
+        userRole={userRole}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarMode}
+      />
 
       {/* Mobile backdrop when sidebar open */}
       {isSidebarVisible && (
@@ -41,7 +56,7 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
         />
       )}
 
-      <div className="min-w-0 lg:pl-72">
+      <div className={`min-w-0 ${isSidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}`}>
         <div className="sticky top-0 z-30">
           <Header toggleSidebar={toggleSidebar} />
         </div>

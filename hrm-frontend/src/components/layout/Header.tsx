@@ -148,7 +148,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     const imageUrl = URL.createObjectURL(blob);
                     setLogoUrl((prev) => {
                       if (prev) {
-                        try { URL.revokeObjectURL(prev); } catch {}
+                        { URL.revokeObjectURL(prev); } 
                       }
                       return imageUrl;
                     });
@@ -177,6 +177,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               setLogoUrl(imageUrl);
               return;
             }
+          } else if (logoResponse.status === 404) {
+            console.log("No company logo found, using default");
+            setLogoUrl(null);
+            return;
+          } else {
+            console.warn(`Logo fetch failed with status: ${logoResponse.status}`);
+            setLogoUrl(null);
+            return;
           }
         }
 
@@ -799,7 +807,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               />
             ) : (
               <img
-                src={logoUrl || "https://via.placeholder.com/150"}
+                src={logoUrl || "/profile.jpg"} // placeholder වෙනුවට local asset
                 alt="User"
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full cursor-pointer"
               />

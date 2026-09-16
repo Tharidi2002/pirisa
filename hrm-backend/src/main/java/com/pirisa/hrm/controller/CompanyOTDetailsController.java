@@ -69,8 +69,11 @@ public class CompanyOTDetailsController {
         try {
             CompanyOTDetails companyOTDetails = companyOTDetailsService.getCompanyOTDetailsByCompanyId(cmp_Id);
             if (companyOTDetails == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No OT Details found for this Company ID"));
+                Map<String, Object> response = new HashMap<>();
+                response.put("resultCode", 404);
+                response.put("resultDesc", "No OT Details found for this Company ID");
+                response.put("data", null);
+                return ResponseEntity.status(HttpStatus.OK).body(response); // ✅ 200 return කරන්න
             }
 
             Map<String, Object> response = new HashMap<>();

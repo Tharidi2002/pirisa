@@ -125,8 +125,9 @@ const OTSetting: React.FC = () => {
           }
         );
 
-        // If 404, no data exists - we'll show the form
         if (response.status === 404) {
+          setOtDetails(null);
+          setEditedDetails(null);
           setIsLoading(false);
           return;
         }
@@ -148,13 +149,11 @@ const OTSetting: React.FC = () => {
           setOtDetails(details);
           setEditedDetails(details);
         } else {
-          throw new Error("No OT details in response");
+          setOtDetails(null);
         }
       } catch (error) {
         console.error("Error fetching OT settings:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to load settings"
-        );
+        setOtDetails(null);
       } finally {
         setIsLoading(false);
       }

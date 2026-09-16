@@ -80,21 +80,31 @@ public class CompanyController {
 
     @PutMapping(value = "/{cmp_id}", produces = {"application/json"})
     public ResponseEntity<?> updateCompany(@PathVariable Long cmp_id, @RequestBody Company updateCompany) {
+        try {
+            Company company = companyService.updateCompany(cmp_id, updateCompany);
+            if (company != null) {
+                Map<String, Object> companyResponse = new HashMap<>();
+                companyResponse.put("resultCode", 100);
+                companyResponse.put("resultDesc", "Successfully Updated");
 
-        Company company = companyService.updateCompany(cmp_id, updateCompany);
-        if (company != null) {
-            Map<String, Object> companyResponse = new HashMap<>();
-            companyResponse.put("resultCode", 100);
-            companyResponse.put("resultDesc", "Successfully Updated");
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("Company", company);
+                responseBody.put("response", companyResponse);
 
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("Company", company);
-            responseBody.put("response", companyResponse);
-
-            return new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(responseBody, HttpStatus.OK);
+            } else {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 404);
+                errorResponse.put("resultDesc", "Company not found");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 

@@ -51,8 +51,11 @@ public class CompanyLeaveController {
         try {
             List<CompanyLeave> companyLeaves = companyLeaveService.getLeaveByCompanyId(cmpId);
             if (companyLeaves.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No Leave found for this company ID"));
+                Map<String, Object> response = new HashMap<>();
+                response.put("resultCode", 404);
+                response.put("resultDesc", "No Leave found for this company ID");
+                response.put("LeavetList", Collections.emptyList());
+                return ResponseEntity.ok(response); // ✅ 200
             }
 
             Map<String, Object> response = new HashMap<>();

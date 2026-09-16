@@ -85,7 +85,9 @@ function Profile() {
           } else {
             setLogoUrl(null);
           }
-        } else {
+        } else if (logoResponse.status === 404) {
+          setLogoUrl(null);
+        }else{
           setLogoUrl(null);
         }
       } catch (error) {
@@ -136,7 +138,7 @@ function Profile() {
           <div className="relative mb-4">
             <img
               className="w-24 h-24 rounded-full border-4 border-gray-300 hover:border-gray-400 transition object-cover"
-              src={logoUrl || "https://via.placeholder.com/150"}
+              src={logoUrl || "/profile.jpg"}
               alt="Company Logo"
             />
             <button

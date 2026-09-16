@@ -1,7 +1,7 @@
 // Alternative approach: Use native WebSocket implementation to avoid sockjs issues
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Client, IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+// import SockJS from 'sockjs-client';
 import { API_BASE, WS_BASE } from '../../api/endpoints';
 import {
   format,
@@ -1020,8 +1020,9 @@ const DashboardCalendar: React.FC = () => {
     setWsStatus('connecting');
 
     try {
+      const wsUrl = WS_BASE.replace(/^http/, 'ws');
       const client = new Client({
-              webSocketFactory: () => new SockJS(WS_BASE),
+        brokerURL: wsUrl,
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         debug: (str) => console.log('STOMP Debug:', str),
         reconnectDelay: 5000,

@@ -5,6 +5,7 @@ import com.pirisa.hrm.dto.*;
 import com.pirisa.hrm.model.Company;
 import com.pirisa.hrm.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -35,17 +36,23 @@ public class CompanyService {
     public Company updateCompany(Long cmp_id, Company updateCompany) {
         Company company = getCompanyById(cmp_id);
         if (company != null) {
-            company.setCmp_name(updateCompany.getCmp_name());
-            company.setCmp_address(updateCompany.getCmp_address());
-            company.setCmp_phone(updateCompany.getCmp_phone());
-            company.setCmpEmail(updateCompany.getCmpEmail());
-            company.setUsername(updateCompany.getUsername());
-            company.setCmp_reg_no(updateCompany.getCmp_reg_no());
-            company.setTin_no(updateCompany.getTin_no());
-            company.setVat_no(updateCompany.getVat_no());
-            company.setPackage_name(updateCompany.getPackage_name());
-            company.setCompany_status(updateCompany.getCompany_status());
-            return companyRepository.save(company);
+            try {
+                if (updateCompany.getCmp_name() != null) company.setCmp_name(updateCompany.getCmp_name());
+                if (updateCompany.getCmp_address() != null) company.setCmp_address(updateCompany.getCmp_address());
+                if (updateCompany.getCmp_phone() != null) company.setCmp_phone(updateCompany.getCmp_phone());
+                if (updateCompany.getCmpEmail() != null) company.setCmpEmail(updateCompany.getCmpEmail());
+                if (updateCompany.getUsername() != null) company.setUsername(updateCompany.getUsername());
+                if (updateCompany.getCmp_reg_no() != null) company.setCmp_reg_no(updateCompany.getCmp_reg_no());
+                if (updateCompany.getTin_no() != null) company.setTin_no(updateCompany.getTin_no());
+                if (updateCompany.getVat_no() != null) company.setVat_no(updateCompany.getVat_no());
+                if (updateCompany.getPackage_name() != null) company.setPackage_name(updateCompany.getPackage_name());
+                if (updateCompany.getCompany_status() != null) company.setCompany_status(updateCompany.getCompany_status());
+                return companyRepository.save(company);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                throw new RuntimeException("Update failed: Duplicate values detected for unique fields (Email, Username, Reg No, VAT No, or TIN No). Please check your input.");
+            } catch (Exception e) {
+                throw new RuntimeException("Update failed: " + e.getMessage());
+            }
         }
         return null;
     }

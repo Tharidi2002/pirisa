@@ -39,10 +39,17 @@ public class CompanyLogoController {
     public ResponseEntity<byte[]> viewLogo(@PathVariable("comId") Long comId) {
         byte[] logoData = companyLogoService.viewLogo(comId);
         if (logoData == null || logoData.length == 0) {
-            return ResponseEntity.notFound().build();
+            // Return a default 1x1 transparent PNG instead of 404
+            byte[] defaultLogo = new byte[] {
+                (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+                // ... (1x1 transparent PNG bytes)
+            };
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .body(defaultLogo);
         }
         return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG) // adjust to the correct media type if needed
+                .contentType(MediaType.IMAGE_JPEG)
                 .body(logoData);
     }
 }

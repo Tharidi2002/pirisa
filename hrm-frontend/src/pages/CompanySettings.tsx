@@ -99,6 +99,8 @@ const CompanySettings = () => {
           const blob = await logoResponse.blob();
           const imageUrl = URL.createObjectURL(blob);
           setLogoPreview(imageUrl);
+        } else if (logoResponse.status === 404){
+          setLogoPreview(null);
         }
       } catch (err) {
         setError("Error fetching company data");
@@ -142,7 +144,14 @@ const CompanySettings = () => {
     }
 
     try {
-      // Update company details
+      const cleanedData: Record<string, string> = {};
+      Object.entries(formData).forEach(([key, value]) => {
+        const strValue = typeof value === "string" ? value.trim() : "";
+        if (strValue !== "") {
+          cleanedData[key] = strValue;
+        }
+      });
+
       const response = await fetch(
         `${API_BASE}/company/${cmpId}`,
         {
@@ -151,12 +160,19 @@ const CompanySettings = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(cleanedData), // ✅ cleanedData
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update company data");
+        let errorMsg = `Failed to update company data (Status: ${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.resultDesc || errorData.message || errorMsg;
+        } catch {
+          // Ignore JSON parsing errors
+        }
+        throw new Error(errorMsg);
       }
 
       // Upload logo if a new one is selected
@@ -185,8 +201,9 @@ const CompanySettings = () => {
 
       toast.success("Company details updated successfully");
     } catch (err) {
-      setError("Error updating company data");
-      console.error(err);
+      const errorMsg = err instanceof Error ? err.message : "Error updating company data";
+      setError(errorMsg);
+      console.error("Company update error:", err);
     }
   };
 
@@ -219,7 +236,7 @@ const CompanySettings = () => {
             <div className="relative">
               <img
                 className="w-32 h-32 rounded-full border-4 border-gray-300 object-cover"
-                src={logoPreview || "https://via.placeholder.com/150"}
+                src={logoPreview || "/profile.jpg"}
                 alt="Company Logo"
               />
               <label
