@@ -73,7 +73,6 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.deny())
                         .contentTypeOptions(contentTypeOptions -> {})
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
-                        // Relax permissions policy for development; restrict only dangerous features
                         .permissionsPolicy(policy -> policy.policy("geolocation=(), camera=(), microphone=(), payment=()")))
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -97,14 +96,37 @@ public class SecurityConfig {
                         "/company_leave/**",
                         "/companyOT/**"
                 ).permitAll()
+                // ============================================
+                // EMPLOYEE SELF-SERVICE (NEW - Part 2)
+                // ============================================
+                .antMatchers("/api/self-service/**")
+                    .hasAnyAuthority("EMPLOYEE", "CMPNY", "HRM")
+                .antMatchers("/api/admin/missing-punch/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                // ============================================
+                // EXISTING ENDPOINTS
+                // ============================================
                 .antMatchers("/user/all").hasAnyAuthority("USER")
                 .antMatchers("/employee/all").hasAnyAuthority("HRM")
-                .antMatchers("/employee/emp/**", "/employee/payroleListEmp/**", "/employee/EmpDetailsListByEmp/**", "/emp_leave/add_leave", "/document/view/**", "/company_leave/company/**", "/employee/changePassword/**", "/document/update/**", "/employee/EmpDetailsList/**", "/logo/view/**", "/document/upload-all").hasAnyAuthority("EMPLOYEE", "CMPNY")
+                .antMatchers(
+                        "/employee/emp/**",
+                        "/employee/payroleListEmp/**",
+                        "/employee/EmpDetailsListByEmp/**",
+                        "/emp_leave/add_leave",
+                        "/document/view/**",
+                        "/company_leave/company/**",
+                        "/employee/changePassword/**",
+                        "/document/update/**",
+                        "/employee/EmpDetailsList/**",
+                        "/logo/view/**",
+                        "/document/upload-all"
+                ).hasAnyAuthority("EMPLOYEE", "CMPNY")
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
         httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
