@@ -152,6 +152,8 @@ const CompanySettings = () => {
         }
       });
 
+      console.log("Updating company with data:", cleanedData);
+
       const response = await fetch(
         `${API_BASE}/company/${cmpId}`,
         {
@@ -175,35 +177,46 @@ const CompanySettings = () => {
         throw new Error(errorMsg);
       }
 
+      console.log("Company updated successfully");
+
       // Upload logo if a new one is selected
       if (logoFile) {
-        const logoFormData = new FormData();
-        logoFormData.append("comId", cmpId);
-        logoFormData.append("logo", logoFile);
+        try {
+          const logoFormData = new FormData();
+          logoFormData.append("comId", cmpId);
+          logoFormData.append("logo", logoFile);
 
-        const logoResponse = await fetch(
-          `${API_BASE}/logo/upload`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: logoFormData,
+          const logoResponse = await fetch(
+            `${API_BASE}/logo/upload`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: logoFormData,
+            }
+          );
+
+          if (!logoResponse.ok) {
+            console.warn("Logo upload failed but company updated successfully");
+            toast.warning("Company details saved, but logo upload failed. Please try again.");
+          } else {
+            notifyCompanyLogoUpdated(cmpId);
+            console.log("Logo uploaded successfully");
           }
-        );
-
-        if (!logoResponse.ok) {
-          throw new Error("Failed to upload logo");
+        } catch (logoError) {
+          console.warn("Logo Update error:", logoError);
+          toast.warning("Company details saved, but loho upload failed");
         }
-
-        notifyCompanyLogoUpdated(cmpId);
       }
 
       toast.success("Company details updated successfully");
+      setSuccess("Company details updated successfully");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Error updating company data";
       setError(errorMsg);
       console.error("Company update error:", err);
+      toast.error(errorMsg);
     }
   };
 

@@ -110,7 +110,10 @@ const OTSetting: React.FC = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        setError("Authentication token not found");
+        console.log("No authentication token found - showing initial setup form");
+        setOtDetails(null);
+        setEditedDetails(null);
+        setError(null);
         setIsLoading(false);
         return;
       }
@@ -125,35 +128,54 @@ const OTSetting: React.FC = () => {
           }
         );
 
+        // 404 = No OT settings yet (normal for new companies)
         if (response.status === 404) {
+          console.log("No OT settings yet - showing initial setup form");
           setOtDetails(null);
           setEditedDetails(null);
+          setError(null);
           setIsLoading(false);
           return;
         }
 
+        // For 500 or other errors, treat as no data (show empty form)
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          console.warn(`OT settings endpoint returned ${response.status} - showing initial setup form`);
+          setOtDetails(null);
+          setEditedDetails(null);
+          setError(null);
+          setIsLoading(false);
+          return;
         }
 
         const data: ApiResponse = await response.json();
-        const details = extractOTDetails(data);
 
+        // If response says success but no details, treat as empty
         if (!isSuccessResponse(data)) {
-          throw new Error(
-            data.response?.resultDesc || data.resultDesc || "Operation failed"
-          );
+          console.log("No OT details in response - showing initial setup form");
+          setOtDetails(null);
+          setEditedDetails(null);
+          setError(null);
+          setIsLoading(false);
+          return;
         }
 
+        const details = extractOTDetails(data);
         if (details) {
           setOtDetails(details);
           setEditedDetails(details);
         } else {
+          // No details = new company, show empty form
           setOtDetails(null);
+          setEditedDetails(null);
         }
+        setError(null);
       } catch (error) {
-        console.error("Error fetching OT settings:", error);
+        // Network error or unexpected error - show empty form instead of crashing
+        console.warn("Error fetching OT settings (showing empty form):", error);
         setOtDetails(null);
+        setEditedDetails(null);
+        setError(null);
       } finally {
         setIsLoading(false);
       }
