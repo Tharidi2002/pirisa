@@ -96,16 +96,17 @@ public class SecurityConfig {
                         "/company_leave/**",
                         "/companyOT/**"
                 ).permitAll()
-                // ============================================
-                // EMPLOYEE SELF-SERVICE (NEW - Part 2)
-                // ============================================
+                // Public job application endpoint
+                .antMatchers(HttpMethod.POST, "/api/recruitment/applicants/apply").permitAll()
+                // Self-service
                 .antMatchers("/api/self-service/**")
                     .hasAnyAuthority("EMPLOYEE", "CMPNY", "HRM")
                 .antMatchers("/api/admin/missing-punch/**")
                     .hasAnyAuthority("CMPNY", "HRM")
-                // ============================================
-                // EXISTING ENDPOINTS
-                // ============================================
+                // Recruitment (protected)
+                .antMatchers("/api/recruitment/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                // Existing endpoints
                 .antMatchers("/user/all").hasAnyAuthority("USER")
                 .antMatchers("/employee/all").hasAnyAuthority("HRM")
                 .antMatchers(
