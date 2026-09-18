@@ -50,7 +50,6 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Parse origins and trim whitespace to prevent CORS errors
         List<String> origins = List.of(allowedOrigins.split(","));
         origins = origins.stream().map(String::trim).toList();
         config.setAllowedOrigins(origins);
@@ -96,32 +95,36 @@ public class SecurityConfig {
                         "/company_leave/**",
                         "/companyOT/**"
                 ).permitAll()
-                // Public job application endpoint
+                // Public job application
                 .antMatchers(HttpMethod.POST, "/api/recruitment/applicants/apply").permitAll()
                 // Self-service
                 .antMatchers("/api/self-service/**")
                     .hasAnyAuthority("EMPLOYEE", "CMPNY", "HRM")
                 .antMatchers("/api/admin/missing-punch/**")
                     .hasAnyAuthority("CMPNY", "HRM")
-                // Recruitment (protected)
+                // Recruitment
                 .antMatchers("/api/recruitment/**")
                     .hasAnyAuthority("CMPNY", "HRM")
-                // Existing endpoints
+                // ============================================
+                // EMPLOYEE MANAGEMENT - FIX (was only HRM)
+                // ============================================
+                .antMatchers("/employee/**")
+                    .hasAnyAuthority("CMPNY", "HRM", "EMPLOYEE")
+                .antMatchers("/payrole/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                .antMatchers("/allowance/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                .antMatchers("/bonus/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                .antMatchers("/designation/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
+                .antMatchers("/leave_balance/**")
+                    .hasAnyAuthority("CMPNY", "HRM", "EMPLOYEE")
+                .antMatchers("/emp_leave/**")
+                    .hasAnyAuthority("CMPNY", "HRM", "EMPLOYEE")
+                .antMatchers("/api/attendance/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
                 .antMatchers("/user/all").hasAnyAuthority("USER")
-                .antMatchers("/employee/all").hasAnyAuthority("HRM")
-                .antMatchers(
-                        "/employee/emp/**",
-                        "/employee/payroleListEmp/**",
-                        "/employee/EmpDetailsListByEmp/**",
-                        "/emp_leave/add_leave",
-                        "/document/view/**",
-                        "/company_leave/company/**",
-                        "/employee/changePassword/**",
-                        "/document/update/**",
-                        "/employee/EmpDetailsList/**",
-                        "/logo/view/**",
-                        "/document/upload-all"
-                ).hasAnyAuthority("EMPLOYEE", "CMPNY")
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)

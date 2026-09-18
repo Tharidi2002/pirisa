@@ -501,42 +501,72 @@ public class EmployeeService {
 
 
 
-    public List<AttendanceEmployeeDTO> getLastAttendanceByCompanyId(long cmpId) {
+        @Transactional(readOnly = true)
+        public List<AttendanceEmployeeDTO> getLastAttendanceByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
         return employees.stream().map(employee -> {
-            // Get the latest attendance record
-            Attendance latestAttendance = employee.getAttendanceList().stream()
-                    .max(Comparator.comparing(a -> a.getAttendanceDate() != null ? a.getAttendanceDate() : (a.getStartedAt() != null ? a.getStartedAt().toLocalDate() : java.time.LocalDate.MIN)))
-                    .orElse(null);
+            // Get latest attendance (with null safety)
+            Attendance latestAttendance = null;
+            try {
+                if (employee.getAttendanceList() != null && !employee.getAttendanceList().isEmpty()) {
+                    latestAttendance = employee.getAttendanceList().stream()
+                            .filter(a -> a.getAttendanceDate() != null || a.getStartedAt() != null)
+                            .max(Comparator.comparing(a -> {
+                                if (a.getAttendanceDate() != null) return a.getAttendanceDate();
+                                if (a.getStartedAt() != null) return a.getStartedAt().toLocalDate();
+                                return java.time.LocalDate.MIN;
+                            }))
+                            .orElse(null);
+                }
+            } catch (Exception e) {
+                // Silent fail - attendance list couldn't be loaded
+                latestAttendance = null;
+            }
 
             List<AttendanceDTO> latestAttendanceList = new ArrayList<>();
             if (latestAttendance != null) {
-                latestAttendanceList.add(new AttendanceDTO(
-                        latestAttendance.getId(),
-                        latestAttendance.getAttendanceDate(),
-                        latestAttendance.getStartedAt(),
-                        latestAttendance.getEndedAt(),
-                        latestAttendance.getWorking_status(),
-                        latestAttendance.getAttendance_status(),
-                        latestAttendance.getTotalTime(),
-                        latestAttendance.getDayName()
-                ));
+                try {
+                    latestAttendanceList.add(new AttendanceDTO(
+                            latestAttendance.getId(),
+                            latestAttendance.getAttendanceDate(),
+                            latestAttendance.getStartedAt(),
+                            latestAttendance.getEndedAt(),
+                            latestAttendance.getWorking_status(),
+                            latestAttendance.getAttendance_status(),
+                            latestAttendance.getTotalTime(),
+                            latestAttendance.getDayName()
+                    ));
+                } catch (Exception e) {
+                    // Silent fail
+                }
             }
-            EmpDetailsDepartmentDTO departmentDTO = (employee.getDepartment() != null) ?
-                    new EmpDetailsDepartmentDTO(
+
+            // Department DTO
+            EmpDetailsDepartmentDTO departmentDTO = null;
+            try {
+                if (employee.getDepartment() != null) {
+                    departmentDTO = new EmpDetailsDepartmentDTO(
                             employee.getDepartment().getId(),
                             employee.getDepartment().getDptName(),
                             employee.getDepartment().getDptCode(),
                             employee.getDepartment().getDptDesc()
-                    ) : null;
+                    );
+                }
+            } catch (Exception e) {
+                departmentDTO = null;
+            }
 
-            EmpDetailsDocumentsDTO documentDTO = (employee.getDocuments() != null) ?
-                    new EmpDetailsDocumentsDTO(
-                            employee.getDocuments().getPhoto(),
-                            employee.getDocuments().getPhoto() != null ?
-                                    ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/profile-image/view/").path(String.valueOf(employee.getId())).toUriString() : null
-                    ) : null;
+            // Documents DTO - SIMPLIFIED (no ServletUriComponentsBuilder)
+            EmpDetailsDocumentsDTO documentDTO = null;
+            try {
+                if (employee.getDocuments() != null) {
+                    // Just pass the photo bytes, no URL
+                    documentDTO = new EmpDetailsDocumentsDTO(employee.getDocuments().getPhoto());
+                }
+            } catch (Exception e) {
+                documentDTO = null;
+            }
 
             return new AttendanceEmployeeDTO(
                     employee.getId(),
@@ -630,29 +660,60 @@ public class EmployeeService {
 
     public Employee updateEmployee(Long emp_id, Employee updateEmployee) {
         Employee employee = getEmployeeById(emp_id);
-        if (employee != null) {
-            employee.setEmpNo(updateEmployee.getEmpNo());
-            employee.setFirstName(updateEmployee.getFirstName());
-            employee.setLastName(updateEmployee.getLastName());
-            employee.setBasicSalary(updateEmployee.getBasicSalary());
-            employee.setEmail(updateEmployee.getEmail());
-            // Keep username in sync with email (login identifier)
-            employee.setUsername(updateEmployee.getEmail());
-            employee.setGender(updateEmployee.getGender());
-            employee.setDob(updateEmployee.getDob());
-            employee.setPhone(updateEmployee.getPhone());
-            employee.setAddress(updateEmployee.getAddress());
-            employee.setDateOfJoining(updateEmployee.getDateOfJoining());
-            employee.setNic(updateEmployee.getNic());
+        if (employee == null) {
+            throw new IllegalArgumentException("Employee not found with id: " + emp_id);
+        }
+        
+        try {
+            // Validate required fields
+            if (updateEmployee.getFirstName() != null && !updateEmployee.getFirstName().trim().isEmpty()) {
+                employee.setFirstName(updateEmployee.getFirstName().trim());
+            }
+            if (updateEmployee.getLastName() != null && !updateEmployee.getLastName().trim().isEmpty()) {
+                employee.setLastName(updateEmployee.getLastName().trim());
+            }
+            if (updateEmployee.getEmail() != null && !updateEmployee.getEmail().trim().isEmpty()) {
+                employee.setEmail(updateEmployee.getEmail().trim());
+                employee.setUsername(updateEmployee.getEmail().trim());
+            }
+            if (updateEmployee.getPhone() != null) employee.setPhone(updateEmployee.getPhone());
+            if (updateEmployee.getAddress() != null) employee.setAddress(updateEmployee.getAddress());
+            if (updateEmployee.getGender() != null) employee.setGender(updateEmployee.getGender());
+            if (updateEmployee.getDob() != null) employee.setDob(updateEmployee.getDob());
+            if (updateEmployee.getNic() != null) employee.setNic(updateEmployee.getNic());
+            if (updateEmployee.getDateOfJoining() != null) employee.setDateOfJoining(updateEmployee.getDateOfJoining());
+            
+            // Update salary if provided (not null and >= 0)
+            if (updateEmployee.getBasicSalary() > 0) {
+                employee.setBasicSalary(updateEmployee.getBasicSalary());
+            } else if (updateEmployee.getBasicSalary() == 0 && updateEmployee.getEmpNo() != null) {
+                // If frontend explicitly sends 0, only keep existing if current is > 0
+                // This prevents accidental salary reset
+                System.out.println("Keeping existing basicSalary: " + employee.getBasicSalary());
+            }
+            
             if (updateEmployee.getStatus() != null && !updateEmployee.getStatus().trim().isEmpty()) {
                 employee.setStatus(updateEmployee.getStatus());
             }
-            employee.setCmpId(updateEmployee.getCmpId());
-            employee.setDptId(updateEmployee.getDptId());
-            employee.setDesignationId(updateEmployee.getDesignationId());
+            if (updateEmployee.getCmpId() > 0) employee.setCmpId(updateEmployee.getCmpId());
+            if (updateEmployee.getDptId() > 0) employee.setDptId(updateEmployee.getDptId());
+            if (updateEmployee.getDesignationId() > 0) employee.setDesignationId(updateEmployee.getDesignationId());
+            
+            // Handle empNo and epfNo carefully (only if changed)
+            if (updateEmployee.getEmpNo() != null && !updateEmployee.getEmpNo().trim().isEmpty()) {
+                employee.setEmpNo(updateEmployee.getEmpNo().trim());
+            }
+            if (updateEmployee.getEpfNo() != null && !updateEmployee.getEpfNo().trim().isEmpty()) {
+                // EPF is updateable = false, so don't update unless necessary
+                // employee.setEpfNo(updateEmployee.getEpfNo().trim());
+            }
+            
             return employeeRepository.save(employee);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new RuntimeException("Update failed: Duplicate values detected for unique fields (Email, EmpNo, EPF No, NIC). Please check your input.");
+        } catch (Exception e) {
+            throw new RuntimeException("Update failed: " + e.getMessage());
         }
-        return null;
     }
 
 

@@ -22,15 +22,30 @@ public class BonusController {
 
 
     @PostMapping(value = "/add_bonus", produces = {"application/json"})
-    public ResponseEntity<?> addBonus(@RequestBody Bonus bonus) {
+    public ResponseEntity<?> addBonus(@RequestBody Map<String, Object> payload) {
         try {
-            // Validate required fields
-            if (bonus.getBonusName() == null || bonus.getBonusName().trim().isEmpty()) {
+            String bonusName = payload.get("bonusName") != null 
+                ? payload.get("bonusName").toString() 
+                : (payload.get("bonus_name") != null ? payload.get("bonus_name").toString() : null);
+            Object cmpIdObj = payload.get("cmpId") != null ? payload.get("cmpId") : payload.get("cmp_id");
+
+            if (bonusName == null || bonusName.trim().isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("resultCode", 101);
                 errorResponse.put("resultDesc", "Bonus name is required");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
+
+            if (cmpIdObj == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Company ID is required");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
+            Bonus bonus = new Bonus();
+            bonus.setBonusName(bonusName.trim());
+            bonus.setCmpId(Long.valueOf(cmpIdObj.toString()));
 
             Bonus createdBonus = bonusService.createBonus(bonus);
             if (createdBonus != null) {

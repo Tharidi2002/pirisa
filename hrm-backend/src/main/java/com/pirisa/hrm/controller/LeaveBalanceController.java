@@ -26,7 +26,7 @@ public class LeaveBalanceController {
         try {
             LeaveBalanceService.AsOfMode mode;
             try {
-                mode = LeaveBalanceService.AsOfMode.valueOf(asOfMode);
+                mode = LeaveBalanceService.AsOfMode.valueOf(asOfMode.trim().toUpperCase());
             } catch (IllegalArgumentException ex) {
                 return ResponseEntity.badRequest().body(errorBody("Invalid asOfMode"));
             }

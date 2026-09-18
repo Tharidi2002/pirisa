@@ -33,8 +33,37 @@ public class EmployeeLeaveRequestController {
 
 
     @PostMapping(value = "/add_leave", produces = {"application/json"})
-    public ResponseEntity<?> addLeave(@RequestBody EmployeeLeave employeeLeave) {
+    public ResponseEntity<?> addLeave(@RequestBody Map<String, Object> payload) {
         try {
+            EmployeeLeave employeeLeave = new EmployeeLeave();
+            
+            Object empIdObj = payload.get("empId") != null ? payload.get("empId") : payload.get("emp_id");
+            if (empIdObj == null) {
+                return ResponseEntity.badRequest().body(
+                    java.util.Collections.singletonMap("error", "Employee ID is required"));
+            }
+            employeeLeave.setEmpId(Long.valueOf(empIdObj.toString()));
+            
+            employeeLeave.setLeaveType(payload.get("leaveType") != null 
+                ? payload.get("leaveType").toString() : null);
+            employeeLeave.setLeaveReason(payload.get("leaveReason") != null 
+                ? payload.get("leaveReason").toString() : null);
+            
+            String startDayStr = payload.get("leaveStartDay") != null 
+                ? payload.get("leaveStartDay").toString() : null;
+            if (startDayStr != null) {
+                employeeLeave.setLeaveStartDay(java.time.LocalDateTime.parse(startDayStr));
+            }
+            
+            String endDayStr = payload.get("leaveEndDay") != null 
+                ? payload.get("leaveEndDay").toString() : null;
+            if (endDayStr != null) {
+                employeeLeave.setLeaveEndDay(java.time.LocalDateTime.parse(endDayStr));
+            }
+            
+            employeeLeave.setLeaveStatus(payload.get("leaveStatus") != null 
+                ? payload.get("leaveStatus").toString() : "PENDING");
+
             EmployeeLeave createdEmployeeLeave = employeeLeaveRequestService.createEmployeeLeave(employeeLeave);
             if (createdEmployeeLeave != null) {
                 Map<String, Object> leaveResponse = new HashMap<>();

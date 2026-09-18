@@ -22,33 +22,46 @@ public class UnitController {
 
 
     @PostMapping(value = "/add_department", produces = {"application/json"})
-    public ResponseEntity<?> addUnit(@RequestBody Unit unit) {
+    public ResponseEntity<?> addUnit(@RequestBody Map<String, Object> payload) {
         try {
+            String dptName = payload.get("dptName") != null 
+                ? payload.get("dptName").toString() 
+                : (payload.get("dpt_name") != null ? payload.get("dpt_name").toString() : null);
+            String dptCode = payload.get("dptCode") != null 
+                ? payload.get("dptCode").toString() 
+                : (payload.get("dpt_code") != null ? payload.get("dpt_code").toString() : null);
+            String dptDesc = payload.get("dptDesc") != null 
+                ? payload.get("dptDesc").toString() 
+                : (payload.get("dpt_desc") != null ? payload.get("dpt_desc").toString() : "");
+            Object cmpIdObj = payload.get("cmpId") != null ? payload.get("cmpId") : payload.get("cmp_id");
+
             // Validate required fields
-            if (unit.getDptName() == null || unit.getDptName().trim().isEmpty()) {
+            if (dptName == null || dptName.trim().isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("resultCode", 101);
                 errorResponse.put("resultDesc", "Department name is required");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
-            if (unit.getDptCode() == null || unit.getDptCode().trim().isEmpty()) {
+            if (dptCode == null || dptCode.trim().isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("resultCode", 101);
                 errorResponse.put("resultDesc", "Department code is required");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
-            if (unit.getCmpId() == null) {
+            if (cmpIdObj == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("resultCode", 101);
                 errorResponse.put("resultDesc", "Company ID is required");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
 
-            // Check for duplicate unit code or name within the same company
-            List<Unit> existingDepts = unitService.getUnitsByCompanyId(unit.getCmpId());
+            Long cmpId = Long.valueOf(cmpIdObj.toString());
+
+            // Check duplicate
+            List<Unit> existingDepts = unitService.getUnitsByCompanyId(cmpId);
             boolean duplicate = existingDepts.stream().anyMatch(dept ->
-                dept.getDptCode().equals(unit.getDptCode()) ||
-                dept.getDptName().equalsIgnoreCase(unit.getDptName())
+                dept.getDptCode() != null && dept.getDptCode().equalsIgnoreCase(dptCode) ||
+                dept.getDptName() != null && dept.getDptName().equalsIgnoreCase(dptName)
             );
 
             if (duplicate) {
@@ -57,6 +70,12 @@ public class UnitController {
                 errorResponse.put("resultDesc", "Unit code or name already exists");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
+
+            Unit unit = new Unit();
+            unit.setDptName(dptName.trim());
+            unit.setDptCode(dptCode.trim());
+            unit.setDptDesc(dptDesc);
+            unit.setCmpId(cmpId);
 
             Unit createdUnit = unitService.createUnit(unit);
             if (createdUnit != null) {

@@ -40,12 +40,16 @@ public class CompanyController {
         try {
             List<Company> companies = companyService.getAllCompanies();
 
+            List<Map<String, Object>> safeList = companies.stream()
+                    .map(this::toCompanyMap)
+                    .collect(java.util.stream.Collectors.toList());
+
             Map<String, Object> companyResponse = new HashMap<>();
             companyResponse.put("resultCode", 100);
             companyResponse.put("resultDesc", "Successfull");
 
             Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("CompanyList", companies);
+            responseBody.put("CompanyList", safeList);
             responseBody.put("response", companyResponse);
 
             return new ResponseEntity<>(responseBody, HttpStatus.OK);

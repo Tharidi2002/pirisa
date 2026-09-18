@@ -42,7 +42,7 @@ public class Employee implements Serializable {
 
     @JsonProperty("basic_salary")
     @Column(name = "basic_salary")
-    private double basicSalary;
+    private Double basicSalary;
 
     @Column(unique = true)
     private String email;

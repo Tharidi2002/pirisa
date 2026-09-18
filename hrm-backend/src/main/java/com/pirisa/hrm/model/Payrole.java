@@ -1,5 +1,6 @@
 package com.pirisa.hrm.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,9 +31,11 @@ public class Payrole implements Serializable {
     private String allowance;
 
     @Column(name = "overtime_pay")
+    @JsonProperty("overtime_pay")
     private float overtimePay;
 
     @Column(name = "bonus_pay")
+    @JsonProperty("bonus_pay")
     private String bonusPay;
 
     private float appit;
@@ -40,28 +43,34 @@ public class Payrole implements Serializable {
     private float loan;
 
     @Column(name = "other_deductions")
+    @JsonProperty("other_deductions")
     private float otherDeductions;
 
     @Column(name = "epf_8")
+    @JsonProperty("epf_8")
     private float epf8;
 
     @Column(name = "total_earnings")
+    @JsonProperty("total_earnings")
     private float totalEarnings;
 
     @Column(name = "total_deductions")
+    @JsonProperty("total_deductions")
     private float totalDeductions;
 
     @Column(name = "net_salary")
+    @JsonProperty("net_salary")
     private float netSalary;
 
     @Column(name = "basic_salary")
+    @JsonProperty("basic_salary")
     private float basicSalary;
 
     @Column(name = "emp_id")
+    @JsonProperty("emp_id")
     private long empId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
 }
