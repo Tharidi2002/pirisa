@@ -7,6 +7,7 @@ import {
   FaAccusoft,
   FaAddressCard,
   FaUserCircle,
+  FaBriefcase,
 } from "react-icons/fa";
 import { NavItem } from "../types/navigation";
 
@@ -20,7 +21,7 @@ export const navItems: NavItem[] = [
     label: "Dashboard",
     icon: FaTachometerAlt,
     subItems: [],
-    roles: ["CMPNY"]
+    roles: ["CMPNY"],
   },
   {
     id: "employee",
@@ -57,7 +58,7 @@ export const navItems: NavItem[] = [
     subItems: [
       { id: "salaryList", path: "/payrole/salaryList", label: "Salary List" },
       { id: "makesalary", path: "/payrole/makesalary/:employeeId", label: "Make Salary" },
-      { id: "payslips", path: "/payrole/payslips/:employeeId", label: "Pay Slips" }
+      { id: "payslips", path: "/payrole/payslips/:employeeId", label: "Pay Slips" },
     ],
   },
   {
@@ -82,6 +83,19 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    id: "recruitment",
+    path: "/recruitment",
+    label: "Recruitment",
+    icon: FaBriefcase,
+    roles: ["CMPNY"],
+    subItems: [
+      { id: "recruitment-dashboard", path: "/recruitment/dashboard", label: "Dashboard" },
+      { id: "job-postings", path: "/recruitment/jobs", label: "Job Postings" },
+      { id: "applicants", path: "/recruitment/applicants", label: "Applicants" },
+      { id: "interviews", path: "/recruitment/interviews", label: "Interviews" },
+    ],
+  },
+  {
     id: "reports",
     path: "/reports",
     label: "Reports",
@@ -101,7 +115,7 @@ export const navItems: NavItem[] = [
     label: "Employee Dashboard",
     icon: FaTachometerAlt,
     roles: ["EMPLOYEE"],
-    subItems: []
+    subItems: [],
   },
   {
     id: "self-service",
@@ -124,7 +138,7 @@ export const navItems: NavItem[] = [
     label: "Payrole List",
     icon: FaDollarSign,
     roles: ["EMPLOYEE"],
-    subItems: []
+    subItems: [],
   },
   {
     id: "emp-leave",
@@ -132,6 +146,6 @@ export const navItems: NavItem[] = [
     label: "Leave",
     icon: FaAccusoft,
     roles: ["EMPLOYEE"],
-    subItems: []
-  }
+    subItems: [],
+  },
 ];

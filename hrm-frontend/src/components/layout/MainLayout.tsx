@@ -12,60 +12,114 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
   const location = useLocation();
   const userRole = localStorage.getItem("role") || "EMPLOYEE";
 
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  // Mobile sidebar visibility (slide-in overlay)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Desktop sidebar collapsed state (persisted)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem("hrmSidebarCollapsed");
-    return saved ? saved === "true" : true;
+    return saved ? saved === "true" : false;
   });
 
-  const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
-  const toggleSidebarMode = () => {
-    const next = !isSidebarCollapsed;
-    setIsSidebarCollapsed(next);
-    localStorage.setItem("hrmSidebarCollapsed", String(next));
-  };
+  // Detect screen size
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
 
+  // ============ Effects ============
   useEffect(() => {
-    const syncWithViewport = () => {
-      if (window.innerWidth >= 1024) {
-        setIsSidebarVisible(true);
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+
+      // Auto-close mobile sidebar when resizing to desktop
+      if (desktop) {
+        setIsMobileSidebarOpen(false);
       }
     };
 
-    syncWithViewport();
-    window.addEventListener("resize", syncWithViewport);
-    return () => window.removeEventListener("resize", syncWithViewport);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Persist collapsed state
+  useEffect(() => {
+    localStorage.setItem("hrmSidebarCollapsed", String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobileSidebarOpen && !isDesktop) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileSidebarOpen, isDesktop]);
+
+  // ============ Handlers ============
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen((prev) => !prev);
+  };
+
+  const toggleSidebarMode = () => {
+    setIsSidebarCollapsed((prev) => !prev);
+  };
+
+  // Calculate content padding based on sidebar state
+  const contentPadding = isDesktop
+    ? isSidebarCollapsed
+      ? "lg:pl-20"
+      : "lg:pl-64"
+    : "pl-0";
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* ============ SIDEBAR ============ */}
       <Sidebar
-        isVisible={isSidebarVisible}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
         userRole={userRole}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={toggleSidebarMode}
+        isDesktop={isDesktop}
       />
 
-      {/* Mobile backdrop when sidebar open */}
-      {isSidebarVisible && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-          onClick={toggleSidebar}
+      {/* ============ MOBILE BACKDROP ============ */}
+      {isMobileSidebarOpen && !isDesktop && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
-      <div className={`min-w-0 ${isSidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}`}>
+      {/* ============ MAIN CONTENT ============ */}
+      <div
+        className={`
+          min-w-0 min-h-screen
+          transition-[padding] duration-300 ease-in-out
+          ${contentPadding}
+        `}
+      >
+        {/* Sticky Header */}
         <div className="sticky top-0 z-30">
-          <Header toggleSidebar={toggleSidebar} />
+          <Header toggleSidebar={toggleMobileSidebar} />
         </div>
 
+        {/* Breadcrumb Tab Header */}
         <TabHeader pathname={location.pathname} />
 
+        {/* Page Content */}
         <main className="p-3 sm:p-4 lg:p-6">
           <Outlet />
-          {location.pathname === "/companyProfile"}
         </main>
       </div>
     </div>

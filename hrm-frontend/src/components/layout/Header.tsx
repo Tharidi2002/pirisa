@@ -656,8 +656,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       <div className="flex items-center min-w-0 flex-1">
         <button
           onClick={toggleSidebar}
-          className="text-gray-600 mr-3 sm:mr-4 focus:outline-none cursor-pointer"
-        >
+          className="text-gray-600 mr-3 sm:mr-4 focus:outline-none cursor-pointer lg:hidden"
+          aria-label="Toggle sidebar">
           <FaBars className="text-xl" />
         </button>
 

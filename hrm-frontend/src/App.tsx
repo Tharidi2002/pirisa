@@ -41,6 +41,8 @@ import SelfServiceAttendance from "./pages/EmployeeSelfService/SelfServiceAttend
 import SelfServiceLeaveBalance from "./pages/EmployeeSelfService/SelfServiceLeaveBalance";
 import SelfServiceMissingPunch from "./pages/EmployeeSelfService/SelfServiceMissingPunch";
 
+import RecruitmentDashboardPage from "./pages/Recruitment/RecruitmentDashboardPage";
+
 function App() {
   return (
     <div>
@@ -61,9 +63,7 @@ function App() {
                 <Route path="pay-role-list" element={<PayroleList />} />
                 <Route path="emp-leave" element={<EmployeeLeave />} />
 
-                {/* ============================================
-                    EMPLOYEE SELF-SERVICE
-                    ============================================ */}
+                {/* EMPLOYEE SELF-SERVICE */}
                 <Route path="self-service">
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<SelfServiceDashboard />} />
@@ -123,6 +123,12 @@ function App() {
                 {/* Company */}
                 <Route path="companyProfile" element={<CompanyProfile />} />
                 <Route path="company-settings" element={<CompanySettings />} />
+
+                {/* Recruitment */}
+                <Route path="recruitment">
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<RecruitmentDashboardPage />} />
+                </Route>
               </Route>
             </Route>
           </Routes>
