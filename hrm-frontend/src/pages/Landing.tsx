@@ -19,6 +19,12 @@ import {
   X,
   Search,
   HelpCircle,
+  Phone,
+  Send,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface Feature {
@@ -63,6 +69,65 @@ const Landing: React.FC = () => {
   const [modalFaqOpenIndex, setModalFaqOpenIndex] = useState<number | null>(0);
 
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+
+  // Demo Request Form states
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState<boolean>(false);
+  const [demoForm, setDemoForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    companyName: "",
+    teamSize: "11-50 employees",
+    message: "",
+  });
+  const [demoSubmitting, setDemoSubmitting] = useState<boolean>(false);
+  const [demoSuccess, setDemoSuccess] = useState<boolean>(false);
+  const [demoError, setDemoError] = useState<string>("");
+
+  const handleDemoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDemoError("");
+
+    if (!demoForm.fullName.trim() || !demoForm.email.trim() || !demoForm.phone.trim()) {
+      setDemoError("Please fill in your name, work email, and phone number.");
+      return;
+    }
+
+    setDemoSubmitting(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+      const response = await fetch(`${baseUrl}/email/request-demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(demoForm),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setDemoSuccess(true);
+      } else {
+        setDemoError(data.message || "Failed to submit demo request. Please try again.");
+      }
+    } catch {
+      setDemoError("Network error. Please verify your connection or try again later.");
+    } finally {
+      setDemoSubmitting(false);
+    }
+  };
+
+  const resetDemoModal = () => {
+    setIsDemoModalOpen(false);
+    setDemoSuccess(false);
+    setDemoError("");
+    setDemoForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      companyName: "",
+      teamSize: "11-50 employees",
+      message: "",
+    });
+  };
 
   // Check if user is already logged in, redirect to dashboard
   useEffect(() => {
@@ -413,6 +478,9 @@ const Landing: React.FC = () => {
             <button onClick={() => scrollToSection("pricing")} className="hover:text-blue-600 transition-colors">
               Pricing
             </button>
+            <button onClick={() => scrollToSection("demo-section")} className="hover:text-blue-600 transition-colors font-semibold text-blue-600">
+              Free Demo
+            </button>
             <button onClick={() => scrollToSection("faq")} className="hover:text-blue-600 transition-colors">
               FAQ
             </button>
@@ -420,10 +488,17 @@ const Landing: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setIsDemoModalOpen(true)}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+            >
+              <Calendar className="w-4 h-4 text-blue-600" />
+              Request a Free Demo
+            </button>
+            <button
               onClick={() => navigate("/login")}
               className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-600/20 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
             >
-              Get Started <ArrowRight className="w-4 h-4" />
+              Sign In <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -444,10 +519,11 @@ const Landing: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={() => navigate("/login")}
-            className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-lg shadow-blue-600/25 hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+            onClick={() => setIsDemoModalOpen(true)}
+            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg shadow-blue-600/25 hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
           >
-            Get Started Free <ArrowRight className="w-5 h-5" />
+            <Calendar className="w-5 h-5 text-blue-200" />
+            Request a Free Demo <ArrowRight className="w-5 h-5" />
           </button>
           <button
             onClick={() => scrollToSection("pricing")}
@@ -723,6 +799,240 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+      {/* Request a Free Demo Section */}
+      <section id="demo-section" className="scroll-mt-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl shadow-2xl border border-indigo-800/40 p-8 sm:p-12 lg:p-16 text-white overflow-hidden relative">
+          {/* Subtle Ambient Background */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+            {/* Left Column: Value Proposition */}
+            <div className="lg:col-span-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-4 border border-blue-400/30">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <span>Personalized 1-on-1 Walkthrough</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 leading-tight">
+                Request a <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Free Live Demo</span>
+              </h2>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+                Discover how PirisaHR can automate your team&apos;s daily attendance, EPF/ETF compliant payroll runs, and employee self-service.
+              </p>
+
+              <div className="space-y-4 text-xs sm:text-sm text-slate-300">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white">Tailored to Your Organization:</span>
+                    <p className="text-slate-400 text-xs">We customize the walkthrough to fit your business size, industry, and HR workflows.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white">Full Feature Preview:</span>
+                    <p className="text-slate-400 text-xs">Explore employee database, shift attendance, leaves, loans, and 1-click payslips.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white">No Obligation & Zero Pressure:</span>
+                    <p className="text-slate-400 text-xs">Free expert consultation to see if PirisaHR is the right fit for your team.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Phone / Contact Badge */}
+              <div className="mt-8 pt-6 border-t border-slate-800 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Fast Callback Support</p>
+                  <p className="text-sm font-semibold text-white">We contact you within 24 hours</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Lead Form Card */}
+            <div className="lg:col-span-7">
+              <div className="bg-white text-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200">
+                {demoSuccess ? (
+                  <div className="py-8 text-center animate-in fade-in duration-300">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
+                    <p className="text-slate-600 text-sm max-w-md mx-auto mb-4 leading-relaxed">
+                      Thank you, <strong className="text-slate-900">{demoForm.fullName}</strong>. A confirmation email has been sent to <strong className="text-blue-600">{demoForm.email}</strong>. Our specialist will call you at <strong className="text-slate-900">{demoForm.phone}</strong> to schedule your demo.
+                    </p>
+                    <button
+                      onClick={resetDemoModal}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                    >
+                      Submit Another Request
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleDemoSubmit} className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-1">Book Your Demo Session</h3>
+                      <p className="text-slate-500 text-xs">Fill in your information below and we&apos;ll get in touch with you promptly.</p>
+                    </div>
+
+                    {demoError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700">
+                        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                        <span>{demoError}</span>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Full Name */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Kasun Perera"
+                            value={demoForm.fullName}
+                            onChange={(e) => setDemoForm({ ...demoForm, fullName: e.target.value })}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Work Email */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Work Email <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            required
+                            placeholder="e.g. kasun@company.com"
+                            value={demoForm.email}
+                            onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Phone Number */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Phone Number <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            required
+                            placeholder="e.g. +94 77 123 4567"
+                            value={demoForm.phone}
+                            onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Company Name */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Company / Organization
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="e.g. Acme Lanka Ltd"
+                            value={demoForm.companyName}
+                            onChange={(e) => setDemoForm({ ...demoForm, companyName: e.target.value })}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Team Size */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Estimated Team Size
+                        </label>
+                        <select
+                          value={demoForm.teamSize}
+                          onChange={(e) => setDemoForm({ ...demoForm, teamSize: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                          <option value="1-10 employees">1 - 10 employees</option>
+                          <option value="11-50 employees">11 - 50 employees</option>
+                          <option value="51-200 employees">51 - 200 employees</option>
+                          <option value="200+ employees">200+ employees</option>
+                        </select>
+                      </div>
+
+                      {/* Special Focus / Note */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Primary Area of Interest
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Payroll & EPF or Attendance"
+                          value={demoForm.message}
+                          onChange={(e) => setDemoForm({ ...demoForm, message: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={demoSubmitting}
+                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-blue-600/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {demoSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Sending Demo Request...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            <span>Request a Free Demo Now</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-center text-slate-400">
+                      🔒 Your details are safe with us. No spam, ever.
+                    </p>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section id="faq" className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto relative z-10">
         <div className="text-center mb-8">
@@ -855,6 +1165,172 @@ const Landing: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Demo Request Popup Modal */}
+      {isDemoModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative my-8">
+            {/* Close Button */}
+            <button
+              onClick={resetDemoModal}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {demoSuccess ? (
+              <div className="py-8 text-center animate-in fade-in duration-300">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
+                <p className="text-slate-600 text-sm max-w-md mx-auto mb-6 leading-relaxed">
+                  Thank you, <strong className="text-slate-900">{demoForm.fullName}</strong>. A confirmation email has been sent to <strong className="text-blue-600">{demoForm.email}</strong>. Our team will contact you at <strong className="text-slate-900">{demoForm.phone}</strong> shortly.
+                </p>
+                <button
+                  onClick={resetDemoModal}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Request a Free Live Demo</h3>
+                    <p className="text-slate-500 text-xs">Experience the power of PirisaHR tailored for your team.</p>
+                  </div>
+                </div>
+
+                {demoError && (
+                  <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700">
+                    <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                    <span>{demoError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleDemoSubmit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Kasun Perera"
+                      value={demoForm.fullName}
+                      onChange={(e) => setDemoForm({ ...demoForm, fullName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Work Email <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          placeholder="e.g. kasun@company.com"
+                          value={demoForm.email}
+                          onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          required
+                          placeholder="e.g. +94 77 123 4567"
+                          value={demoForm.phone}
+                          onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Company Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Acme Lanka"
+                        value={demoForm.companyName}
+                        onChange={(e) => setDemoForm({ ...demoForm, companyName: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Team Size
+                      </label>
+                      <select
+                        value={demoForm.teamSize}
+                        onChange={(e) => setDemoForm({ ...demoForm, teamSize: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      >
+                        <option value="1-10 employees">1 - 10 employees</option>
+                        <option value="11-50 employees">11 - 50 employees</option>
+                        <option value="51-200 employees">51 - 200 employees</option>
+                        <option value="200+ employees">200+ employees</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Anything specific you want to see? (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Automated salary slips, biometric machine integration"
+                      value={demoForm.message}
+                      onChange={(e) => setDemoForm({ ...demoForm, message: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={demoSubmitting}
+                      className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-blue-600/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {demoSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Sending Demo Request...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Submit Demo Request</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Final CTA Banner */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-8 sm:p-14 text-center shadow-xl shadow-blue-500/20 text-white">
@@ -877,16 +1353,17 @@ const Landing: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => navigate("/login")}
+                onClick={() => setIsDemoModalOpen(true)}
                 className="w-full sm:w-auto px-9 py-4 bg-white text-blue-700 hover:bg-blue-50 rounded-xl font-bold text-base shadow-lg shadow-black/10 hover:shadow-xl transition-all inline-flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
               >
-                Get Started Now <ArrowRight className="w-5 h-5" />
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Request a Free Demo <ArrowRight className="w-5 h-5" />
               </button>
               <button
-                onClick={() => scrollToSection("pricing")}
+                onClick={() => navigate("/login")}
                 className="w-full sm:w-auto px-9 py-4 bg-blue-700/60 hover:bg-blue-700/80 text-white border border-white/20 rounded-xl font-bold text-base transition-all inline-flex items-center justify-center gap-2 cursor-pointer backdrop-blur-sm"
               >
-                View Pricing Plans
+                Sign In to Platform
               </button>
             </div>
           </div>
@@ -918,6 +1395,7 @@ const Landing: React.FC = () => {
             <ul className="space-y-2 text-xs text-slate-400">
               <li><button onClick={() => scrollToSection("features")} className="hover:text-white">Features</button></li>
               <li><button onClick={() => scrollToSection("pricing")} className="hover:text-white">Pricing Plans</button></li>
+              <li><button onClick={() => scrollToSection("demo-section")} className="hover:text-white">Request a Demo</button></li>
               <li><button onClick={() => scrollToSection("faq")} className="hover:text-white">FAQ</button></li>
               <li><button onClick={() => navigate("/login")} className="hover:text-white">Sign In</button></li>
             </ul>

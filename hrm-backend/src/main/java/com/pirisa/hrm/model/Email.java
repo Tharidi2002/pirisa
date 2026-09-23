@@ -25,6 +25,7 @@ public class Email implements Serializable {
 
     private String subject;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Temporal(TemporalType.TIMESTAMP)

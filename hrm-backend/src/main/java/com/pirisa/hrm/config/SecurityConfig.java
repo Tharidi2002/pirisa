@@ -93,7 +93,8 @@ public class SecurityConfig {
                         "/add/unit",
                         "/department/**",
                         "/company_leave/**",
-                        "/companyOT/**"
+                        "/companyOT/**",
+                        "/email/request-demo"
                 ).permitAll()
                 // Public job application
                 .antMatchers(HttpMethod.POST, "/api/recruitment/applicants/apply").permitAll()
