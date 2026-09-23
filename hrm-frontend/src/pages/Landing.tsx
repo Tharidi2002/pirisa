@@ -15,7 +15,6 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Building2,
   Lock,
   X,
   Search,
@@ -388,9 +387,15 @@ const Landing: React.FC = () => {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-50 transition-all shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
           <div className="flex items-center gap-3 cursor-pointer" onClick={scrollToTop} title="Scroll to top">
-            <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-              <Building2 className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="PirisaHR"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                // Fallback to icon if logo image fails
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
             <div>
               <span className="text-xl font-bold tracking-tight text-slate-900">
                 Pirisa<span className="text-blue-600">HR</span>
@@ -439,10 +444,16 @@ const Landing: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={() => scrollToSection("pricing")}
-            className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => navigate("/login")}
+            className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-lg shadow-blue-600/25 hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
           >
-            Explore Pricing & Plans <ArrowRight className="w-5 h-5" />
+            Get Started Free <ArrowRight className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => scrollToSection("pricing")}
+            className="w-full sm:w-auto px-8 py-3.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:border-slate-400"
+          >
+            Explore Pricing & Plans
           </button>
         </div>
       </section>
@@ -845,18 +856,40 @@ const Landing: React.FC = () => {
       )}
 
       {/* Final CTA Banner */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
-        <div className="bg-white border-2 border-blue-300 rounded-3xl p-8 sm:p-12 text-center shadow-md relative overflow-hidden">
-          <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">Ready to Modernize Your HR Department?</h3>
-          <p className="text-slate-600 max-w-2xl mx-auto text-base sm:text-lg mb-6 leading-relaxed font-normal">
-            Join hundreds of HR professionals streamline attendance, leaves, and payroll effortlessly today.
-          </p>
-          <button
-            onClick={() => navigate("/login")}
-            className="px-10 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-md shadow-blue-600/20 hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer"
-          >
-            Get Started Now <ArrowRight className="w-5 h-5" />
-          </button>
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-8 sm:p-14 text-center shadow-xl shadow-blue-500/20 text-white">
+          {/* Decorative blur elements */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-white/90 mb-4 border border-white/20">
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Start Your 14-Day Free Trial</span>
+            </div>
+            
+            <h3 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
+              Ready to Modernize Your HR Department?
+            </h3>
+            <p className="text-blue-100 max-w-2xl mx-auto text-base sm:text-lg mb-8 leading-relaxed">
+              Join high-performing teams automating attendance, leave management, and statutory payroll with PirisaHR today.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full sm:w-auto px-9 py-4 bg-white text-blue-700 hover:bg-blue-50 rounded-xl font-bold text-base shadow-lg shadow-black/10 hover:shadow-xl transition-all inline-flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+              >
+                Get Started Now <ArrowRight className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => scrollToSection("pricing")}
+                className="w-full sm:w-auto px-9 py-4 bg-blue-700/60 hover:bg-blue-700/80 text-white border border-white/20 rounded-xl font-bold text-base transition-all inline-flex items-center justify-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                View Pricing Plans
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -865,9 +898,14 @@ const Landing: React.FC = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                <Building2 className="w-5 h-5" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="PirisaHR"
+                className="h-8 w-auto object-contain brightness-0 invert"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
               <span className="text-lg font-bold text-white tracking-tight">PirisaHR System</span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
