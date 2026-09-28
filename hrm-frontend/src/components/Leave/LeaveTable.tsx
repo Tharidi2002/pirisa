@@ -112,19 +112,22 @@ const LeaveTable = () => {
   };
 
   const transformApiData = (employeeList: any[]): LeaveRecord[] => {
+    if (!Array.isArray(employeeList)) return [];
     return employeeList.flatMap((employee) =>
-      employee.leaveList.map((leave: any) => ({
-        id: leave.id,
-        name: `${employee.firstName} ${employee.lastName}`,
-        employeeId: employee.epfNo,
-        department: employee.department.dpt_name,
-        leaveType: leave.leaveType,
-        leaveStartDay: new Date(leave.leaveStartDay).toLocaleDateString(),
-        leaveEndDay: new Date(leave.leaveEndDay).toLocaleDateString(),
-        leaveDays: leave.leaveDays,
-        leaveReason: leave.leaveReason,
-        status: leave.leaveStatus,
-      }))
+      Array.isArray(employee?.leaveList)
+        ? employee.leaveList.map((leave: any) => ({
+            id: leave?.id ?? 0,
+            name: `${employee?.firstName || ""} ${employee?.lastName || ""}`.trim() || "Unknown",
+            employeeId: employee?.epfNo || "-",
+            department: employee?.department?.dpt_name || "N/A",
+            leaveType: leave?.leaveType || "-",
+            leaveStartDay: leave?.leaveStartDay ? new Date(leave.leaveStartDay).toLocaleDateString() : "-",
+            leaveEndDay: leave?.leaveEndDay ? new Date(leave.leaveEndDay).toLocaleDateString() : "-",
+            leaveDays: leave?.leaveDays ?? 0,
+            leaveReason: leave?.leaveReason || "-",
+            status: leave?.leaveStatus || "PENDING",
+          }))
+        : []
     );
   };
 

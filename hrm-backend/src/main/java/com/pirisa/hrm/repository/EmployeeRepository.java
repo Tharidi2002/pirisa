@@ -62,4 +62,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     // Check if any employees are assigned to department
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Employee e WHERE e.dptId = :departmentId")
     boolean existsEmployeesByDepartmentId(@Param("departmentId") Long departmentId);
+
+    @Query("SELECT e.empNo FROM Employee e WHERE e.empNo IS NOT NULL")
+    List<String> findAllEmpNos();
+
+    @Query("SELECT e.epfNo FROM Employee e WHERE e.epfNo IS NOT NULL")
+    List<String> findAllEpfNos();
 }

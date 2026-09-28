@@ -37,16 +37,69 @@ public class EmployeeService {
 
 
 
+    public Map<String, String> getNextEmployeeNumbers() {
+        long maxEmp = 0;
+        long maxEpf = 0;
+        try {
+            List<String> empNos = employeeRepository.findAllEmpNos();
+            if (empNos != null) {
+                for (String empNo : empNos) {
+                    if (empNo != null && empNo.toUpperCase().startsWith("EMP")) {
+                        try {
+                            String digits = empNo.substring(3).replaceAll("\\D+", "");
+                            if (!digits.isEmpty()) {
+                                long num = Long.parseLong(digits);
+                                if (num > maxEmp) maxEmp = num;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching empNos: " + e.getMessage());
+        }
+
+        try {
+            List<String> epfNos = employeeRepository.findAllEpfNos();
+            if (epfNos != null) {
+                for (String epfNo : epfNos) {
+                    if (epfNo != null && epfNo.toUpperCase().startsWith("EPF")) {
+                        try {
+                            String digits = epfNo.substring(3).replaceAll("\\D+", "");
+                            if (!digits.isEmpty()) {
+                                long num = Long.parseLong(digits);
+                                if (num > maxEpf) maxEpf = num;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching epfNos: " + e.getMessage());
+        }
+
+        long count = employeeRepository.count();
+        long nextEmpNum = Math.max(maxEmp + 1, count + 1);
+        long nextEpfNum = Math.max(maxEpf + 1, count + 1);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("emp_no", "EMP" + String.format("%04d", nextEmpNum));
+        result.put("epf_no", "EPF" + String.format("%04d", nextEpfNum));
+        return result;
+    }
+
     public Employee createEmployee(Employee emp) {
         emp.setUsername(emp.getEmail());
 
-        if (emp.getEmpNo() == null || emp.getEmpNo().isEmpty()) {
-            String empNo = "EMP" + String.format("%04d", employeeRepository.count() + 1);
-            emp.setEmpNo(empNo);
+        Map<String, String> nextNumbers = getNextEmployeeNumbers();
+
+        if (emp.getEmpNo() == null || emp.getEmpNo().trim().isEmpty() || emp.getEmpNo().contains("Auto-generated")) {
+            emp.setEmpNo(nextNumbers.get("emp_no"));
         }
 
-        String epfNo = "EPF" + String.format("%04d", employeeRepository.count() + 1);
-        emp.setEpfNo(epfNo);
+        if (emp.getEpfNo() == null || emp.getEpfNo().trim().isEmpty() || emp.getEpfNo().contains("Auto-generated")) {
+            emp.setEpfNo(nextNumbers.get("epf_no"));
+        }
 
         // 1) Generate a secure random temporary password (12 chars alphanumeric)
         String tempPwd = new SecureRandom()

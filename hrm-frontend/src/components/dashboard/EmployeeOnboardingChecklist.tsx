@@ -11,7 +11,7 @@ interface OnboardingItem {
 }
 
 const EmployeeOnboardingChecklist = () => {
-  const [items, setItems] = useState<OnboardingItem[]>([
+  const [items] = useState<OnboardingItem[]>([
     {
       id: "profile",
       title: "Complete profile",
@@ -46,17 +46,7 @@ const EmployeeOnboardingChecklist = () => {
   const progressPercent = Math.round((completedCount / items.length) * 100);
 
   useEffect(() => {
-    // In production, fetch actual onboarding status from backend
-    // For now, simulate some progress
-    const timer = setTimeout(() => {
-      setItems((prev) =>
-        prev.map((item, idx) =>
-          idx < 2 ? { ...item, completed: true } : item
-        )
-      );
-    }, 500);
-
-    return () => clearTimeout(timer);
+    // Only real data from backend/database should update state
   }, []);
 
   return (

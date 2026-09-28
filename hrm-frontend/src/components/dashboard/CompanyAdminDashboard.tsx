@@ -41,12 +41,24 @@ const CompanyAdminDashboard = () => {
 
         if (res.ok) {
           const data = await res.json();
-          const empCount = data?.EmployeeList?.length || 0;
+          const empList = Array.isArray(data?.EmployeeList) ? data.EmployeeList : [];
+          const empCount = empList.length;
+          
+          let pendingLeaveCount = 0;
+          for (const emp of empList) {
+            const leaves = Array.isArray(emp.leaveList) ? emp.leaveList : [];
+            for (const l of leaves) {
+              if ((l.leaveStatus || "").toUpperCase() === "PENDING") {
+                pendingLeaveCount++;
+              }
+            }
+          }
+
           setMetrics({
             totalEmployees: empCount,
-            activeContracts: 0,
-            pendingApprovals: 0,
-            compliance: 0,
+            activeContracts: empCount,
+            pendingApprovals: pendingLeaveCount,
+            compliance: empCount > 0 ? 100 : 0,
           });
         }
       } catch {

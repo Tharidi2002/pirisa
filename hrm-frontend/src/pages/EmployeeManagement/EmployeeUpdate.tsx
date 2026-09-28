@@ -557,10 +557,10 @@ const EmployeeUpdate: React.FC = () => {
               type="text"
               name="emp_no"
               value={employeeDetails.emp_no}
-              onChange={handleInputChange}
-              className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter EMP Number"
-              required
+              readOnly
+              tabIndex={-1}
+              className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 text-gray-700 pointer-events-none select-none cursor-default focus:outline-none"
+              placeholder="EMP Number"
             />
           </div>
           <div>
@@ -571,10 +571,10 @@ const EmployeeUpdate: React.FC = () => {
               type="text"
               name="epf_no"
               value={employeeDetails.epf_no}
-              onChange={handleInputChange}
-              className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter EPF Number"
-              required
+              readOnly
+              tabIndex={-1}
+              className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 text-gray-700 pointer-events-none select-none cursor-default focus:outline-none"
+              placeholder="EPF Number"
             />
           </div>
           <div>

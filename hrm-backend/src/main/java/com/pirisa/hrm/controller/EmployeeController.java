@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -454,6 +453,21 @@ public class EmployeeController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "An error occurred while processing your request"));
+        }
+    }
+
+    @GetMapping(value = "/next-numbers", produces = "application/json")
+    public ResponseEntity<?> getNextEmployeeNumbers() {
+        try {
+            Map<String, String> numbers = employeeService.getNextEmployeeNumbers();
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("emp_no", numbers.get("emp_no"));
+            response.put("epf_no", numbers.get("epf_no"));
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 

@@ -1,6 +1,7 @@
 # Local and deployment secrets
 .env
 .env.*
+!.env.example
 !.env.production.example
 
 # Build output

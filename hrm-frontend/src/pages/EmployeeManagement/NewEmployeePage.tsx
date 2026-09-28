@@ -103,9 +103,87 @@ const EmployeeRegistration: React.FC = () => {
   useEffect(() => {
     if (token) {
       fetchDepartments();
+      fetchNextNumbers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  const fetchNextNumbers = async () => {
+    const cmpId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
+    try {
+      const response = await fetch(`${API_BASE}/employee/next-numbers`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.emp_no && data.epf_no) {
+          setEmployeeDetails((prev) => ({
+            ...prev,
+            emp_no: data.emp_no,
+            epf_no: data.epf_no,
+          }));
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn("Could not fetch next-numbers directly, falling back to employee list calculation:", error);
+    }
+
+    // Fallback: calculate directly from existing employees if endpoint returned error or not yet reloaded
+    if (cmpId) {
+      try {
+        const listRes = await fetch(`${API_BASE}/employee/company/${cmpId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          const list: Array<{ empNo?: string; epfNo?: string }> = Array.isArray(listData.EmployeeList) ? listData.EmployeeList : [];
+          let maxEmp = 0;
+          let maxEpf = 0;
+          list.forEach((emp) => {
+            if (emp.empNo && typeof emp.empNo === "string") {
+              const digits = emp.empNo.replace(/\D/g, "");
+              if (digits) {
+                const n = parseInt(digits, 10);
+                if (n > maxEmp) maxEmp = n;
+              }
+            }
+            if (emp.epfNo && typeof emp.epfNo === "string") {
+              const digits = emp.epfNo.replace(/\D/g, "");
+              if (digits) {
+                const n = parseInt(digits, 10);
+                if (n > maxEpf) maxEpf = n;
+              }
+            }
+          });
+          const nextEmp = Math.max(maxEmp + 1, list.length + 1);
+          const nextEpf = Math.max(maxEpf + 1, list.length + 1);
+          setEmployeeDetails((prev) => ({
+            ...prev,
+            emp_no: `EMP${String(nextEmp).padStart(4, "0")}`,
+            epf_no: `EPF${String(nextEpf).padStart(4, "0")}`,
+          }));
+          return;
+        }
+      } catch (err) {
+        console.error("Fallback employee list fetch error:", err);
+      }
+    }
+
+    // Final fallback
+    setEmployeeDetails((prev) => ({
+      ...prev,
+      emp_no: prev.emp_no || "EMP0001",
+      epf_no: prev.epf_no || "EPF0001",
+    }));
+  };
 
   const fetchDepartments = async () => {
     const cmpId =
@@ -208,15 +286,49 @@ const EmployeeRegistration: React.FC = () => {
       console.error("Company ID not found in localStorage");
       return;
     }
-    setSubmittingDetails(true);
-    const formattedDOB = new Date(employeeDetails.DOB)
-      .toISOString()
-      .split("T")[0];
-    const formattedJoiningDate = new Date(employeeDetails.date_of_joining)
-      .toISOString()
-      .split("T")[0];
+    // Comprehensive Validation checks
+    if (!employeeDetails.first_name.trim()) {
+      toast.error("Please enter first name");
+      setSubmittingDetails(false);
+      return;
+    }
 
-    // Validation checks
+    if (!employeeDetails.last_name.trim()) {
+      toast.error("Please enter last name");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    if (!employeeDetails.email.trim() || !/^\S+@\S+\.\S+$/.test(employeeDetails.email)) {
+      toast.error("Please enter a valid email address");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    if (!employeeDetails.phone.trim()) {
+      toast.error("Please enter phone number");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    if (!employeeDetails.nic.trim()) {
+      toast.error("Please enter NIC number");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    if (!employeeDetails.DOB) {
+      toast.error("Please select Date of Birth");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    if (!employeeDetails.date_of_joining) {
+      toast.error("Please select Date of Joining");
+      setSubmittingDetails(false);
+      return;
+    }
+
     if (!employeeDetails.dptId || employeeDetails.dptId === 0) {
       toast.error("Please select a department");
       setSubmittingDetails(false);
@@ -225,6 +337,30 @@ const EmployeeRegistration: React.FC = () => {
 
     if (!employeeDetails.designationId || employeeDetails.designationId === 0) {
       toast.error("Please select a designation");
+      setSubmittingDetails(false);
+      return;
+    }
+
+    let formattedDOB = "";
+    let formattedJoiningDate = "";
+    try {
+      const dobDate = new Date(employeeDetails.DOB);
+      if (isNaN(dobDate.getTime())) {
+        toast.error("Invalid Date of Birth");
+        setSubmittingDetails(false);
+        return;
+      }
+      formattedDOB = dobDate.toISOString().split("T")[0];
+
+      const joinDate = new Date(employeeDetails.date_of_joining);
+      if (isNaN(joinDate.getTime())) {
+        toast.error("Invalid Date of Joining");
+        setSubmittingDetails(false);
+        return;
+      }
+      formattedJoiningDate = joinDate.toISOString().split("T")[0];
+    } catch {
+      toast.error("Error parsing dates. Please check Date of Birth and Date of Joining.");
       setSubmittingDetails(false);
       return;
     }
@@ -556,9 +692,10 @@ const EmployeeRegistration: React.FC = () => {
               <input
                 type="text"
                 name="emp_no"
-                value={employeeDetails.emp_no || "(Auto-generated)"}
-                disabled
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-500"
+                value={employeeDetails.emp_no || "(Auto-calculating...)"}
+                readOnly
+                tabIndex={-1}
+                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 text-gray-700 pointer-events-none select-none cursor-default focus:outline-none"
               />
             </div>
             <div>
@@ -568,9 +705,10 @@ const EmployeeRegistration: React.FC = () => {
               <input
                 type="text"
                 name="epf_no"
-                value={employeeDetails.epf_no || "(Auto-generated)"}
-                disabled
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-500"
+                value={employeeDetails.epf_no || "(Auto-calculating...)"}
+                readOnly
+                tabIndex={-1}
+                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 bg-gray-100 text-gray-700 pointer-events-none select-none cursor-default focus:outline-none"
               />
             </div>
             <div>
@@ -749,7 +887,7 @@ const EmployeeRegistration: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                <TranslatableText text="nic" />
+                <TranslatableText text="NIC" />
               </label>
               <input
                 type="text"
@@ -757,7 +895,7 @@ const EmployeeRegistration: React.FC = () => {
                 value={employeeDetails.nic}
                 onChange={handleInputChange}
                 className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter nic Number"
+                placeholder="Enter NIC Number"
               />
             </div>
             <div>

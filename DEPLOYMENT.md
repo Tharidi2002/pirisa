@@ -4,6 +4,15 @@ The repository uses the same source code for local testing and production hostin
 
 ## Local testing
 
+Create the machine-local environment file once. `.env` is ignored by Git and Compose loads it automatically:
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Set the local database values to match the existing MySQL volume, and set a private `JWT_SECRET`. Keep real SMTP and Stripe credentials in this file only; rotate any credential that was previously committed. Do not commit `.env`.
+
 Start the full local stack, including an isolated MySQL database:
 
 ```bash
@@ -23,6 +32,26 @@ docker compose logs -f backend
 docker compose logs -f frontend
 docker compose logs -f mysql
 ```
+
+Start the frontend for local use (Compose also starts the backend and MySQL it depends on):
+
+```bash
+docker compose up -d --build frontend
+```
+
+Open `http://localhost:5174`. Stop only the frontend while leaving the backend and database running:
+
+```bash
+docker compose stop frontend
+```
+
+Start the stopped frontend again:
+
+```bash
+docker compose start frontend
+```
+
+To rebuild after frontend source changes, run `docker compose up -d --build frontend` again. The frontend needs the backend for HR data and the backend needs MySQL; starting the frontend through Compose therefore brings up those dependencies automatically. To stop all services, run `docker compose down` (the database volume is kept unless `-v` is added).
 
 Check status and memory:
 

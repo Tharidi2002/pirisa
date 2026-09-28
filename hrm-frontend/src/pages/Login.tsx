@@ -5,6 +5,7 @@ import backgroundImage from "../assets/images/loginBackground.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
+import { API_BASE } from "../api/endpoints";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -20,41 +21,43 @@ const LoginPage: React.FC = () => {
   // Check for SSO token on component mount
   useEffect(() => {
     const checkSSOToken = () => {
-      const ssoTokenStr = localStorage.getItem('knoweb_sso_token');
-      
+      const ssoTokenStr = localStorage.getItem("knoweb_sso_token");
+
       if (ssoTokenStr) {
         try {
           const ssoToken = JSON.parse(ssoTokenStr);
-          
+
           // Verify token is recent (within 5 minutes)
           const tokenAge = Date.now() - ssoToken.timestamp;
           const fiveMinutes = 5 * 60 * 1000;
-          
-          if (tokenAge < fiveMinutes && ssoToken.source === 'knoweb') {
+
+          if (tokenAge < fiveMinutes && ssoToken.source === "knoweb") {
             // Valid SSO token - set up session data for company user
             // Using dummy token since we're bypassing normal login
             localStorage.setItem("token", "sso_token_" + Date.now());
             localStorage.setItem("role", "CMPNY");
             localStorage.setItem("username", ssoToken.email);
             localStorage.setItem("companyName", ssoToken.companyName);
-            
+
             // Remove SSO token after use
-            localStorage.removeItem('knoweb_sso_token');
-            
-            toast.success(`Welcome ${ssoToken.companyName}! Logged in via KNOWEB`);
+            localStorage.removeItem("knoweb_sso_token");
+
+            toast.success(
+              `Welcome ${ssoToken.companyName}! Logged in via KNOWEB`,
+            );
             navigate("/dashboard");
             return;
           } else {
             // Token expired or invalid
-            localStorage.removeItem('knoweb_sso_token');
+            localStorage.removeItem("knoweb_sso_token");
           }
         } catch (error) {
-          console.error('Error parsing SSO token:', error);
-          localStorage.removeItem('knoweb_sso_token');
+          console.error("Error parsing SSO token:", error);
+          localStorage.removeItem("knoweb_sso_token");
         }
       }
     };
-    
+
     checkSSOToken();
   }, [navigate]);
 
@@ -64,7 +67,7 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch(`${API_BASE}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +82,7 @@ const LoginPage: React.FC = () => {
 
       if (data.response.resultCode === 100) {
         console.log("DEBUG - Login successful, storing data:", data.details);
-        
+
         // Store common user data
         localStorage.setItem("token", data.details.token);
         localStorage.setItem("role", data.details.Role);
@@ -103,7 +106,7 @@ const LoginPage: React.FC = () => {
           console.log("DEBUG - Storing employee data:", data.details);
           localStorage.setItem(
             "empId",
-            data.details.EMP_id || data.details.employeeId
+            data.details.EMP_id || data.details.employeeId,
           );
           localStorage.setItem("cmpnyId", data.details.CMPNY_Id);
           localStorage.setItem("companyId", data.details.CMPNY_Id);
@@ -120,11 +123,11 @@ const LoginPage: React.FC = () => {
       } else {
         setError(
           data.response.resultMessage ||
-            "Login failed. Please check your credentials."
+            "Login failed. Please check your credentials.",
         );
         toast.error(
           data.response.resultMessage ||
-            "Login failed. Please check your credentials."
+            "Login failed. Please check your credentials.",
         );
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -145,44 +148,49 @@ const LoginPage: React.FC = () => {
       toast.error("Please enter your email address to reset your password.");
       return;
     }
-    
+
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(resetEmail)) {
       toast.error("Please enter a valid email address.");
       return;
     }
-    
+
     setIsForgotLoading(true);
 
     try {
       const response = await fetch(
-        `/api/password/forgotPassword?email=${encodeURIComponent(
-          resetEmail
-        )}`,
+        `/api/password/forgotPassword?email=${encodeURIComponent(resetEmail)}`,
         {
           method: "POST",
-        }
+        },
       );
 
       const data = await response.json();
-      
+
       if (data.resultCode === 100) {
         // Show success message and close modal
-        toast.success(data.message || "A new password has been sent to your email address.", {
-          position: "top-center",
-          autoClose: 8000,
-          closeOnClick: false,
-          pauseOnHover: true,
-        });
+        toast.success(
+          data.message || "A new password has been sent to your email address.",
+          {
+            position: "top-center",
+            autoClose: 8000,
+            closeOnClick: false,
+            pauseOnHover: true,
+          },
+        );
         setShowForgotModal(false);
         setResetEmail("");
       } else {
         // Show error message
-        toast.error(data.message || "Email not found. Please check your email and try again.", {
-          position: "top-center",
-          autoClose: 8000,
-        });
+        toast.error(
+          data.message ||
+            "Email not found. Please check your email and try again.",
+          {
+            position: "top-center",
+            autoClose: 8000,
+          },
+        );
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.", {
@@ -321,7 +329,7 @@ const LoginPage: React.FC = () => {
               </button>
             </form>
           </div>
-        {/* Login Link */}
+          {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm">
               Don't have an account?{" "}
@@ -340,11 +348,13 @@ const LoginPage: React.FC = () => {
       {showForgotModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Reset Password</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Reset Password
+            </h2>
             <p className="text-gray-600 mb-6">
               Enter your email address and we'll send you a new password.
             </p>
-            
+
             <div className="space-y-4">
               <div>
                 <label
@@ -364,7 +374,7 @@ const LoginPage: React.FC = () => {
                   required
                 />
               </div>
-              
+
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
