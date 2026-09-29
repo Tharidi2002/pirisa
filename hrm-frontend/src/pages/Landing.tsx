@@ -103,7 +103,8 @@ const Landing: React.FC = () => {
     setDemoSubmitting(true);
     try {
       const baseUrl =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+        import.meta.env.VITE_API_BASE_URL ||
+        (import.meta.env.DEV ? "http://localhost:8080" : "");
       const response = await fetch(`${baseUrl}/email/request-demo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -37,7 +37,7 @@ Do not put the Apps Script URL or shared secret in frontend variables. Keep the 
 
 ### Run backend and frontend directly
 
-For the usual development loop, run only MySQL in Docker and run Spring Boot and Vite from their own project folders. Spring Boot and Vite load the root `.env` automatically; Docker uses its internal `mysql` hostname while the native backend connects through `127.0.0.1`.
+For the usual development loop, run only MySQL in Docker and run Spring Boot and Vite from their own project folders. Spring Boot loads the root `.env`; Vite loads frontend-specific env files from `hrm-frontend`. Docker uses its internal `mysql` hostname while the native backend connects through `127.0.0.1`.
 
 Choose either this native development mode or the full Docker stack below. Do not run both at once: both modes use ports `8080` and `5174`. Stop a running native app with `Ctrl+C` before starting the full Docker stack, or stop the Docker backend/frontend before starting the native apps.
 
@@ -215,6 +215,15 @@ systemctl restart mysql
 mvn -f hrm-backend/pom.xml -DskipTests clean package
 cp hrm-backend/target/HRM-1.jar /root/app.jar
 
+# Rebuild the frontend with production same-origin API routing and deploy it.
+cd /root/hrm/hrm-frontend
+npm ci
+npm run build
+cp -r /var/www/html /var/www/html.bak.$(date +%Y%m%d%H%M%S)
+cp -r dist/. /var/www/html/
+chown -R www-data:www-data /var/www/html
+chmod -R 755 /var/www/html
+
 systemctl daemon-reload
 systemctl restart hrm-backend
 systemctl restart nginx
@@ -238,5 +247,5 @@ The service uses `-Xmx256m`; this is a heap ceiling, not a promise that the proc
 - Port 80 must be available for the frontend container. Stop or reconfigure an existing Nginx service if it already owns port 80.
 - The production backend uses host networking so `127.0.0.1:3306` refers to the server's MySQL service.
 - The production Compose file is intended for Linux Docker Engine. Use `docker-compose.yml` for local Windows/Docker Desktop testing.
-- The frontend API URL is embedded during the image build. Change `PUBLIC_API_BASE_URL` and `PUBLIC_WS_URL` before rebuilding if the public address changes.
-- Nginx must proxy the backend path prefixes used by the application (`/employee`, `/logo`, `/calendar`, `/actuator`, `/ws`, and the other API paths), not only `/api`.
+- The frontend API URL is embedded during the image build. Production builds use same-origin API requests by default, so the browser works on either `http://pirisahr.com` or `http://167.172.95.86` without calling the visitor's localhost. Nginx must proxy `/email` and the other backend path prefixes to `127.0.0.1:8080`.
+- After pulling frontend changes on the systemd/Nginx server, rebuild `hrm-frontend` with `npm ci && npm run build`, then copy `dist/.` into `/var/www/html` and reload Nginx. Restarting only the backend does not update the static frontend.
