@@ -4,7 +4,6 @@ import {
   Users,
   Clock,
   Briefcase,
-  TrendingUp,
   DollarSign,
   BarChart3,
   ArrowRight,
@@ -59,9 +58,13 @@ interface FAQItem {
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string>("plus");
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [activeModalFeature, setActiveModalFeature] = useState<Feature | null>(null);
+  const [activeModalFeature, setActiveModalFeature] = useState<Feature | null>(
+    null,
+  );
 
   // FAQ Modal states
   const [isFaqModalOpen, setIsFaqModalOpen] = useState<boolean>(false);
@@ -88,28 +91,37 @@ const Landing: React.FC = () => {
     e.preventDefault();
     setDemoError("");
 
-    if (!demoForm.fullName.trim() || !demoForm.email.trim() || !demoForm.phone.trim()) {
+    if (
+      !demoForm.fullName.trim() ||
+      !demoForm.email.trim() ||
+      !demoForm.phone.trim()
+    ) {
       setDemoError("Please fill in your name, work email, and phone number.");
       return;
     }
 
     setDemoSubmitting(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+      const baseUrl =
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
       const response = await fetch(`${baseUrl}/email/request-demo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(demoForm),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (response.ok && data.success) {
         setDemoSuccess(true);
       } else {
-        setDemoError(data.message || "Failed to submit demo request. Please try again.");
+        setDemoError(
+          data.message || "Failed to submit demo request. Please try again.",
+        );
       }
     } catch {
-      setDemoError("Network error. Please verify your connection or try again later.");
+      setDemoError(
+        "Network error. Please verify your connection or try again later.",
+      );
     } finally {
       setDemoSubmitting(false);
     }
@@ -156,7 +168,8 @@ const Landing: React.FC = () => {
     const element = document.getElementById(id);
     if (element) {
       const navbarHeight = 96; // 80px fixed navbar height + 16px padding
-      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
       const offsetPosition = elementPosition - navbarHeight;
 
       window.scrollTo({
@@ -171,7 +184,8 @@ const Landing: React.FC = () => {
       id: "directory",
       icon: Users,
       title: "Employee Directory & Records",
-      description: "Centralized employee profiles, document management, organizational hierarchy, and team roles.",
+      description:
+        "Centralized employee profiles, document management, organizational hierarchy, and team roles.",
       badge: "Core HR",
       color: "from-blue-500 to-indigo-600",
       longDescription:
@@ -193,7 +207,8 @@ const Landing: React.FC = () => {
       id: "attendance",
       icon: Clock,
       title: "Smart Attendance Tracking",
-      description: "Real-time clock-in/out monitoring, automated shift scheduling, attendance reports, and leave syncing.",
+      description:
+        "Real-time clock-in/out monitoring, automated shift scheduling, attendance reports, and leave syncing.",
       badge: "Automation",
       color: "from-emerald-500 to-teal-600",
       longDescription:
@@ -215,7 +230,8 @@ const Landing: React.FC = () => {
       id: "leave",
       icon: Briefcase,
       title: "Leave Management System",
-      description: "Streamlined leave application workflows, multi-level approval matrices, and live balance tracking.",
+      description:
+        "Streamlined leave application workflows, multi-level approval matrices, and live balance tracking.",
       badge: "Workflows",
       color: "from-purple-500 to-violet-600",
       longDescription:
@@ -237,7 +253,8 @@ const Landing: React.FC = () => {
       id: "payroll",
       icon: DollarSign,
       title: "Automated Payroll & Slips",
-      description: "Error-free salary calculations, statutory deductions, tax reports, and one-click PDF payslips.",
+      description:
+        "Error-free salary calculations, statutory deductions, tax reports, and one-click PDF payslips.",
       badge: "Finance",
       color: "from-amber-500 to-orange-600",
       longDescription:
@@ -256,32 +273,11 @@ const Landing: React.FC = () => {
       ],
     },
     {
-      id: "performance",
-      icon: TrendingUp,
-      title: "Performance Evaluations",
-      description: "360-degree appraisal forms, KPI tracking, goals management, and employee growth analytics.",
-      badge: "Growth",
-      color: "from-pink-500 to-rose-600",
-      longDescription:
-        "Drive high performance and continuous growth with structured appraisal cycles. Set quarterly Key Performance Indicators (KPIs) and OKRs, conduct 360-degree peer reviews, manager evaluations, and self-assessments with transparent scoring matrices.",
-      highlights: [
-        "Customizable Appraisal Questionnaires & Rating Scales",
-        "Individual & Departmental KPI / OKR Goal Tracking",
-        "Self-Evaluation, Peer Review & Manager Appraisals",
-        "Historical Evaluation Records & Growth Charts",
-        "Promotion & Merit Salary Increase Recommendations",
-      ],
-      benefits: [
-        "Align team objectives with company growth goals",
-        "Provide objective, data-driven feedback to staff",
-        "Identify high performers and talent development needs early",
-      ],
-    },
-    {
       id: "analytics",
       icon: BarChart3,
       title: "Executive Analytics & Reports",
-      description: "Deep workforce insights, headcount trends, cost analysis, and exportable custom reports.",
+      description:
+        "Deep workforce insights, headcount trends, cost analysis, and exportable custom reports.",
       badge: "Analytics",
       color: "from-cyan-500 to-blue-600",
       longDescription:
@@ -363,77 +359,105 @@ const Landing: React.FC = () => {
   const faqs: FAQItem[] = [
     {
       question: "Can I switch or upgrade my pricing plan later?",
-      answer: "Yes, absolutely! You can upgrade, downgrade, or modify your subscription plan at any time directly from your company settings menu. Plan adjustments will automatically take effect in the next billing cycle.",
+      answer:
+        "Yes, absolutely! You can upgrade, downgrade, or modify your subscription plan at any time directly from your company settings menu. Plan adjustments will automatically take effect in the next billing cycle.",
     },
     {
       question: "Is employee data stored securely?",
-      answer: "We employ enterprise-grade 256-bit SSL encryption, automated daily data backups, strict role-based access control (RBAC), and full compliance with data privacy standards to keep your workforce data safe.",
+      answer:
+        "We employ enterprise-grade 256-bit SSL encryption, automated daily data backups, strict role-based access control (RBAC), and full compliance with data privacy standards to keep your workforce data safe.",
     },
     {
-      question: "How does the registration process work after selecting a plan?",
-      answer: "When you click 'Select Plan', you can evaluate and choose your desired plan. Ready to log in? Click 'Get Started' in the header or bottom banner to navigate directly to the login portal.",
+      question:
+        "How does the registration process work after selecting a plan?",
+      answer:
+        "When you click 'Select Plan', you can evaluate and choose your desired plan. Ready to log in? Click 'Get Started' in the header or bottom banner to navigate directly to the login portal.",
     },
     {
       question: "Is there a free trial available?",
-      answer: "Yes! Every plan includes a 14-day full feature trial with no credit card required upfront so you can evaluate PirisaHR with your team hassle-free.",
+      answer:
+        "Yes! Every plan includes a 14-day full feature trial with no credit card required upfront so you can evaluate PirisaHR with your team hassle-free.",
     },
   ];
 
   const moreFaqs: FAQItem[] = [
     {
-      question: "Does PirisaHR support biometric fingerprint & face recognition devices?",
-      answer: "Yes! PirisaHR seamlessly integrates with standard biometric clocking devices (such as ZKTeco, Hikvision, and Dahua) via automated background API sync or log file import routines.",
+      question:
+        "Does PirisaHR support biometric fingerprint & face recognition devices?",
+      answer:
+        "Yes! PirisaHR seamlessly integrates with standard biometric clocking devices (such as ZKTeco, Hikvision, and Dahua) via automated background API sync or log file import routines.",
     },
     {
-      question: "How are EPF, ETF, and APIT / PAYE taxes calculated in payroll?",
-      answer: "Our system automatically calculates statutory EPF (8% employee + 12% employer), ETF (3% employer), and progressive APIT/PAYE income tax slabs according to current Inland Revenue Department (IRD) regulations.",
+      question:
+        "How are EPF, ETF, and APIT / PAYE taxes calculated in payroll?",
+      answer:
+        "Our system automatically calculates statutory EPF (8% employee + 12% employer), ETF (3% employer), and progressive APIT/PAYE income tax slabs according to current Inland Revenue Department (IRD) regulations.",
     },
     {
-      question: "Can employees view payslips and apply for leave on mobile phones?",
-      answer: "Yes, employees get dedicated login credentials to access the self-service portal on any smartphone or desktop to submit leave requests, track approvals, and view or download PDF payslips.",
+      question:
+        "Can employees view payslips and apply for leave on mobile phones?",
+      answer:
+        "Yes, employees get dedicated login credentials to access the self-service portal on any smartphone or desktop to submit leave requests, track approvals, and view or download PDF payslips.",
     },
     {
-      question: "What happens if our workforce grows and exceeds our plan's employee limit?",
-      answer: "You will receive an in-app notice allowing you to seamlessly upgrade your plan or add extra employee licenses without any service disruption or data migration required.",
+      question:
+        "What happens if our workforce grows and exceeds our plan's employee limit?",
+      answer:
+        "You will receive an in-app notice allowing you to seamlessly upgrade your plan or add extra employee licenses without any service disruption or data migration required.",
     },
     {
-      question: "Can we customize leave types, short leave rules, and public holiday calendars?",
-      answer: "Absolutely. Admins can create unlimited custom leave categories (Annual, Casual, Medical, Maternity, Duty Leave), set half-day rules, and upload annual mercantile public holiday schedules.",
+      question:
+        "Can we customize leave types, short leave rules, and public holiday calendars?",
+      answer:
+        "Absolutely. Admins can create unlimited custom leave categories (Annual, Casual, Medical, Maternity, Duty Leave), set half-day rules, and upload annual mercantile public holiday schedules.",
     },
     {
-      question: "Can we export payroll payment files directly for commercial bank transfers?",
-      answer: "Yes, PirisaHR generates automated bank payroll files formatted for all major commercial banks (Commercial Bank, Sampath Bank, HNB, BOC, People's Bank, Nations Trust, NDB, etc.).",
+      question:
+        "Can we export payroll payment files directly for commercial bank transfers?",
+      answer:
+        "Yes, PirisaHR generates automated bank payroll files formatted for all major commercial banks (Commercial Bank, Sampath Bank, HNB, BOC, People's Bank, Nations Trust, NDB, etc.).",
     },
     {
-      question: "Can we configure multi-level leave approvals (e.g. Supervisor -> Department Head -> HR)?",
-      answer: "Yes, Plus and Enterprise plans support customizable multi-tiered approval matrices matching your organizational reporting hierarchy.",
+      question:
+        "Can we configure multi-level leave approvals (e.g. Supervisor -> Department Head -> HR)?",
+      answer:
+        "Yes, Plus and Enterprise plans support customizable multi-tiered approval matrices matching your organizational reporting hierarchy.",
     },
     {
-      question: "How long does initial company setup and employee data import take?",
-      answer: "Setup takes under 30 minutes! You can bulk-import existing staff records using our simple Excel / CSV template, set up departments, and invite your team immediately.",
+      question:
+        "How long does initial company setup and employee data import take?",
+      answer:
+        "Setup takes under 30 minutes! You can bulk-import existing staff records using our simple Excel / CSV template, set up departments, and invite your team immediately.",
     },
     {
-      question: "Is customer support and staff training included with our subscription?",
-      answer: "Yes! All plans include dedicated email & documentation support. Plus and Enterprise plans include 24/7 priority hotline support and guided onboarding sessions for your HR team.",
+      question:
+        "Is customer support and staff training included with our subscription?",
+      answer:
+        "Yes! All plans include dedicated email & documentation support. Plus and Enterprise plans include 24/7 priority hotline support and guided onboarding sessions for your HR team.",
     },
     {
-      question: "Can we manage probation periods, contract renewals, and appraisals?",
-      answer: "Yes, the system tracks probation end dates, sends automated alerts for contract renewals, and provides customizable 360-degree appraisal evaluation forms.",
+      question:
+        "Can we manage probation periods, contract renewals, and appraisals?",
+      answer:
+        "Yes, the system tracks probation end dates, sends automated alerts for contract renewals, and provides customizable 360-degree appraisal evaluation forms.",
     },
     {
       question: "Is my company data backed up automatically?",
-      answer: "Yes, automatic encrypted offsite backups are performed daily. In addition, company admins can export full employee, attendance, and payroll databases to Excel at any time.",
+      answer:
+        "Yes, automatic encrypted offsite backups are performed daily. In addition, company admins can export full employee, attendance, and payroll databases to Excel at any time.",
     },
     {
-      question: "Can we restrict admin permissions so HR staff can only manage specific departments?",
-      answer: "Yes, role-based access control (RBAC) allows you to grant granular permissions so managers and HR officers can only access data belonging to their assigned departments or branches.",
+      question:
+        "Can we restrict admin permissions so HR staff can only manage specific departments?",
+      answer:
+        "Yes, role-based access control (RBAC) allows you to grant granular permissions so managers and HR officers can only access data belonging to their assigned departments or branches.",
     },
   ];
 
   const filteredMoreFaqs = moreFaqs.filter(
     (faq) =>
       faq.question.toLowerCase().includes(faqSearchQuery.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(faqSearchQuery.toLowerCase())
+      faq.answer.toLowerCase().includes(faqSearchQuery.toLowerCase()),
   );
 
   const handlePlanSelect = (planId: string) => {
@@ -451,7 +475,11 @@ const Landing: React.FC = () => {
       {/* Navigation Header */}
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-50 transition-all shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={scrollToTop} title="Scroll to top">
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={scrollToTop}
+            title="Scroll to top"
+          >
             <img
               src="/logo.png"
               alt="PirisaHR"
@@ -472,16 +500,28 @@ const Landing: React.FC = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <button onClick={() => scrollToSection("features")} className="hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => scrollToSection("features")}
+              className="hover:text-blue-600 transition-colors"
+            >
               Features
             </button>
-            <button onClick={() => scrollToSection("pricing")} className="hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => scrollToSection("pricing")}
+              className="hover:text-blue-600 transition-colors"
+            >
               Pricing
             </button>
-            <button onClick={() => scrollToSection("demo-section")} className="hover:text-blue-600 transition-colors font-semibold text-blue-600">
+            <button
+              onClick={() => scrollToSection("demo-section")}
+              className="hover:text-blue-600 transition-colors font-semibold text-blue-600"
+            >
               Free Demo
             </button>
-            <button onClick={() => scrollToSection("faq")} className="hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => scrollToSection("faq")}
+              className="hover:text-blue-600 transition-colors"
+            >
               FAQ
             </button>
           </div>
@@ -514,7 +554,9 @@ const Landing: React.FC = () => {
         </h1>
 
         <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto mb-8 leading-relaxed font-normal">
-          Streamline employee directories, automated leave tracking, single-click payroll processing, and multi-tier appraisals — all inside one secure platform built for modern teams.
+          Streamline employee directories, automated leave tracking,
+          single-click payroll processing, and multi-tier appraisals — all
+          inside one secure platform built for modern teams.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -535,12 +577,21 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+      <section
+        id="features"
+        className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10"
+      >
         <div className="text-center max-w-3xl mx-auto mb-8">
-          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Comprehensive Suite</h2>
-          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">Everything Your HR Team Needs</p>
+          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+            Comprehensive Suite
+          </h2>
+          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">
+            Everything Your HR Team Needs
+          </p>
           <p className="text-slate-600 text-base">
-            Designed to replace fragmented spreadsheets with automated, compliant workflows. Click any feature to view detailed specifications.
+            Designed to replace fragmented spreadsheets with automated,
+            compliant workflows. Click any feature to view detailed
+            specifications.
           </p>
         </div>
 
@@ -555,7 +606,9 @@ const Landing: React.FC = () => {
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
+                    >
                       <Icon className="w-6 h-6 text-white" />
                     </div>
                     <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
@@ -565,7 +618,9 @@ const Landing: React.FC = () => {
                   <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-600 text-xs leading-relaxed mb-4">{feature.description}</p>
+                  <p className="text-slate-600 text-xs leading-relaxed mb-4">
+                    {feature.description}
+                  </p>
                 </div>
                 <div className="flex items-center text-xs font-semibold text-blue-600 group-hover:text-blue-700 gap-1 pt-3 border-t border-slate-100">
                   <span>Explore Feature</span>
@@ -591,14 +646,18 @@ const Landing: React.FC = () => {
 
             {/* Modal Header */}
             <div className="flex items-center gap-4 mb-6">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${activeModalFeature.color} flex items-center justify-center shadow-lg`}>
+              <div
+                className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${activeModalFeature.color} flex items-center justify-center shadow-lg`}
+              >
                 <activeModalFeature.icon className="w-7 h-7 text-white" />
               </div>
               <div>
                 <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full uppercase tracking-wider">
                   {activeModalFeature.badge}
                 </span>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1.5">{activeModalFeature.title}</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mt-1.5">
+                  {activeModalFeature.title}
+                </h3>
               </div>
             </div>
 
@@ -610,11 +669,15 @@ const Landing: React.FC = () => {
             {/* System Capabilities */}
             <div className="mb-6">
               <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600" /> Key System Capabilities
+                <Sparkles className="w-4 h-4 text-blue-600" /> Key System
+                Capabilities
               </h4>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {activeModalFeature.highlights.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs">
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs"
+                  >
                     <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </li>
@@ -629,7 +692,10 @@ const Landing: React.FC = () => {
               </h4>
               <ul className="space-y-2">
                 {activeModalFeature.benefits.map((benefit, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 text-xs text-slate-600">
+                  <li
+                    key={idx}
+                    className="flex items-center gap-2.5 text-xs text-slate-600"
+                  >
                     <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
                     <span>{benefit}</span>
                   </li>
@@ -660,10 +726,17 @@ const Landing: React.FC = () => {
       )}
 
       {/* Pricing Section */}
-      <section id="pricing" className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+      <section
+        id="pricing"
+        className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10"
+      >
         <div className="text-center max-w-3xl mx-auto mb-8">
-          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Transparent Plans</h2>
-          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">Choose the Right Plan for Your Team</p>
+          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+            Transparent Plans
+          </h2>
+          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">
+            Choose the Right Plan for Your Team
+          </p>
           <p className="text-slate-600 text-base mb-6">
             Click on any plan card below to select it for your workspace.
           </p>
@@ -700,7 +773,8 @@ const Landing: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {pricingPlans.map((plan) => {
             const isSelected = selectedPlan === plan.id;
-            const price = billingCycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+            const price =
+              billingCycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
 
             return (
               <div
@@ -729,26 +803,40 @@ const Landing: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
-                  <p className="text-xs text-slate-500 mb-6 h-8">{plan.tagline}</p>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-6 h-8">
+                    {plan.tagline}
+                  </p>
 
                   {/* Price */}
                   <div className="mb-6 pb-6 border-b border-slate-100">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold text-slate-900">{price}</span>
+                      <span className="text-4xl font-extrabold text-slate-900">
+                        {price}
+                      </span>
                       {plan.monthlyPrice !== "Custom" && (
-                        <span className="text-xs text-slate-500 font-medium">{plan.period}</span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {plan.period}
+                        </span>
                       )}
                     </div>
-                    {billingCycle === "yearly" && plan.monthlyPrice !== "Custom" && (
-                      <p className="text-[11px] text-emerald-600 font-semibold mt-1">Billed annually (20% discount applied)</p>
-                    )}
+                    {billingCycle === "yearly" &&
+                      plan.monthlyPrice !== "Custom" && (
+                        <p className="text-[11px] text-emerald-600 font-semibold mt-1">
+                          Billed annually (20% discount applied)
+                        </p>
+                      )}
                   </div>
 
                   {/* Feature Checklist */}
                   <ul className="space-y-3 mb-6">
                     {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-xs text-slate-700">
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 text-xs text-slate-700"
+                      >
                         <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Check className="w-3 h-3" />
                         </div>
@@ -788,19 +876,33 @@ const Landing: React.FC = () => {
               Enterprise Grade Compliance & Data Protection
             </h3>
             <p className="text-slate-600 text-xs sm:text-sm mb-4 leading-relaxed">
-              Your organizational data is encrypted using banking-grade security protocols. Enjoy peace of mind with automated daily backups, multi-factor admin login, and role isolation.
+              Your organizational data is encrypted using banking-grade security
+              protocols. Enjoy peace of mind with automated daily backups,
+              multi-factor admin login, and role isolation.
             </p>
             <div className="flex flex-wrap justify-center gap-5 text-xs text-slate-600 font-semibold">
-              <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-emerald-600" /> 256-Bit SSL Encrypted</span>
-              <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-amber-600" /> High Availability Cluster</span>
-              <span className="flex items-center gap-1.5"><Globe className="w-4 h-4 text-cyan-600" /> Regional Data Residency</span>
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-emerald-600" /> 256-Bit SSL
+                Encrypted
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-amber-600" /> High Availability
+                Cluster
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-cyan-600" /> Regional Data
+                Residency
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Request a Free Demo Section */}
-      <section id="demo-section" className="scroll-mt-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+      <section
+        id="demo-section"
+        className="scroll-mt-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10"
+      >
         <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl shadow-2xl border border-indigo-800/40 p-8 sm:p-12 lg:p-16 text-white overflow-hidden relative">
           {/* Subtle Ambient Background */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -814,10 +916,15 @@ const Landing: React.FC = () => {
                 <span>Personalized 1-on-1 Walkthrough</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 leading-tight">
-                Request a <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Free Live Demo</span>
+                Request a{" "}
+                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  Free Live Demo
+                </span>
               </h2>
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
-                Discover how PirisaHR can automate your team&apos;s daily attendance, EPF/ETF compliant payroll runs, and employee self-service.
+                Discover how PirisaHR can automate your team&apos;s daily
+                attendance, EPF/ETF compliant payroll runs, and employee
+                self-service.
               </p>
 
               <div className="space-y-4 text-xs sm:text-sm text-slate-300">
@@ -826,8 +933,13 @@ const Landing: React.FC = () => {
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">Tailored to Your Organization:</span>
-                    <p className="text-slate-400 text-xs">We customize the walkthrough to fit your business size, industry, and HR workflows.</p>
+                    <span className="font-semibold text-white">
+                      Tailored to Your Organization:
+                    </span>
+                    <p className="text-slate-400 text-xs">
+                      We customize the walkthrough to fit your business size,
+                      industry, and HR workflows.
+                    </p>
                   </div>
                 </div>
 
@@ -836,8 +948,13 @@ const Landing: React.FC = () => {
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">Full Feature Preview:</span>
-                    <p className="text-slate-400 text-xs">Explore employee database, shift attendance, leaves, loans, and 1-click payslips.</p>
+                    <span className="font-semibold text-white">
+                      Full Feature Preview:
+                    </span>
+                    <p className="text-slate-400 text-xs">
+                      Explore employee database, shift attendance, leaves,
+                      loans, and 1-click payslips.
+                    </p>
                   </div>
                 </div>
 
@@ -846,8 +963,13 @@ const Landing: React.FC = () => {
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">No Obligation & Zero Pressure:</span>
-                    <p className="text-slate-400 text-xs">Free expert consultation to see if PirisaHR is the right fit for your team.</p>
+                    <span className="font-semibold text-white">
+                      No Obligation & Zero Pressure:
+                    </span>
+                    <p className="text-slate-400 text-xs">
+                      Free expert consultation to see if PirisaHR is the right
+                      fit for your team.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -858,8 +980,12 @@ const Landing: React.FC = () => {
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Fast Callback Support</p>
-                  <p className="text-sm font-semibold text-white">We contact you within 24 hours</p>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                    Fast Callback Support
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    We contact you within 24 hours
+                  </p>
                 </div>
               </div>
             </div>
@@ -868,11 +994,17 @@ const Landing: React.FC = () => {
             <div className="lg:col-span-7">
               <div className="bg-white text-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200">
                 {demoSuccess ? (
-                  <div className="py-8 text-center animate-in fade-in duration-300">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="py-8 text-center animate-in fade-in duration-300"
+                  >
                     <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                      Demo Request Received!
+                    </h3>
                     <p className="text-slate-600 text-sm max-w-md mx-auto mb-4 leading-relaxed">
                       Thank you,{" "}
                       <strong className="text-slate-900">
@@ -895,12 +1027,21 @@ const Landing: React.FC = () => {
                 ) : (
                   <form onSubmit={handleDemoSubmit} className="space-y-4">
                     <div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-1">Book Your Demo Session</h3>
-                      <p className="text-slate-500 text-xs">Fill in your information below and we&apos;ll get in touch with you promptly.</p>
+                      <h3 className="text-xl font-bold text-slate-900 mb-1">
+                        Book Your Demo Session
+                      </h3>
+                      <p className="text-slate-500 text-xs">
+                        Fill in your information below and we&apos;ll get in
+                        touch with you promptly.
+                      </p>
                     </div>
 
                     {demoError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700">
+                      <div
+                        role="alert"
+                        aria-live="assertive"
+                        className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700"
+                      >
                         <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                         <span>{demoError}</span>
                       </div>
@@ -916,9 +1057,15 @@ const Landing: React.FC = () => {
                           <input
                             type="text"
                             required
+                            maxLength={120}
                             placeholder="e.g. Kasun Perera"
                             value={demoForm.fullName}
-                            onChange={(e) => setDemoForm({ ...demoForm, fullName: e.target.value })}
+                            onChange={(e) =>
+                              setDemoForm({
+                                ...demoForm,
+                                fullName: e.target.value,
+                              })
+                            }
                             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                           />
                         </div>
@@ -933,9 +1080,15 @@ const Landing: React.FC = () => {
                           <input
                             type="email"
                             required
+                            maxLength={254}
                             placeholder="e.g. kasun@company.com"
                             value={demoForm.email}
-                            onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
+                            onChange={(e) =>
+                              setDemoForm({
+                                ...demoForm,
+                                email: e.target.value,
+                              })
+                            }
                             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                           />
                         </div>
@@ -952,9 +1105,15 @@ const Landing: React.FC = () => {
                           <input
                             type="tel"
                             required
+                            maxLength={40}
                             placeholder="e.g. +94 77 123 4567"
                             value={demoForm.phone}
-                            onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                            onChange={(e) =>
+                              setDemoForm({
+                                ...demoForm,
+                                phone: e.target.value,
+                              })
+                            }
                             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                           />
                         </div>
@@ -968,9 +1127,15 @@ const Landing: React.FC = () => {
                         <div className="relative">
                           <input
                             type="text"
+                            maxLength={160}
                             placeholder="e.g. Acme Lanka Ltd"
                             value={demoForm.companyName}
-                            onChange={(e) => setDemoForm({ ...demoForm, companyName: e.target.value })}
+                            onChange={(e) =>
+                              setDemoForm({
+                                ...demoForm,
+                                companyName: e.target.value,
+                              })
+                            }
                             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                           />
                         </div>
@@ -985,12 +1150,23 @@ const Landing: React.FC = () => {
                         </label>
                         <select
                           value={demoForm.teamSize}
-                          onChange={(e) => setDemoForm({ ...demoForm, teamSize: e.target.value })}
+                          onChange={(e) =>
+                            setDemoForm({
+                              ...demoForm,
+                              teamSize: e.target.value,
+                            })
+                          }
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all cursor-pointer"
                         >
-                          <option value="1-10 employees">1 - 10 employees</option>
-                          <option value="11-50 employees">11 - 50 employees</option>
-                          <option value="51-200 employees">51 - 200 employees</option>
+                          <option value="1-10 employees">
+                            1 - 10 employees
+                          </option>
+                          <option value="11-50 employees">
+                            11 - 50 employees
+                          </option>
+                          <option value="51-200 employees">
+                            51 - 200 employees
+                          </option>
                           <option value="200+ employees">200+ employees</option>
                         </select>
                       </div>
@@ -1002,9 +1178,15 @@ const Landing: React.FC = () => {
                         </label>
                         <input
                           type="text"
+                          maxLength={2000}
                           placeholder="e.g. Payroll & EPF or Attendance"
                           value={demoForm.message}
-                          onChange={(e) => setDemoForm({ ...demoForm, message: e.target.value })}
+                          onChange={(e) =>
+                            setDemoForm({
+                              ...demoForm,
+                              message: e.target.value,
+                            })
+                          }
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                         />
                       </div>
@@ -1043,11 +1225,20 @@ const Landing: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto relative z-10">
+      <section
+        id="faq"
+        className="scroll-mt-24 py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto relative z-10"
+      >
         <div className="text-center mb-8">
-          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Got Questions?</h2>
-          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">Frequently Asked Questions</p>
-          <p className="text-slate-600 text-sm">Everything you need to know about starting with PirisaHR.</p>
+          <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+            Got Questions?
+          </h2>
+          <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">
+            Frequently Asked Questions
+          </p>
+          <p className="text-slate-600 text-sm">
+            Everything you need to know about starting with PirisaHR.
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -1102,7 +1293,9 @@ const Landing: React.FC = () => {
                 <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full uppercase tracking-wider">
                   FAQ Knowledgebase
                 </span>
-                <h3 className="text-2xl font-bold text-slate-900 mt-2">Extended Customer Questions</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mt-2">
+                  Extended Customer Questions
+                </h3>
               </div>
               <button
                 onClick={() => setIsFaqModalOpen(false)}
@@ -1128,15 +1321,21 @@ const Landing: React.FC = () => {
             <div className="overflow-y-auto space-y-3 pr-1 flex-1">
               {filteredMoreFaqs.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-xs">
-                  No matching questions found for "{faqSearchQuery}". Try searching another term.
+                  No matching questions found for "{faqSearchQuery}". Try
+                  searching another term.
                 </div>
               ) : (
                 filteredMoreFaqs.map((faq, idx) => {
                   const isOpen = modalFaqOpenIndex === idx;
                   return (
-                    <div key={idx} className="bg-slate-50 border border-slate-200/90 rounded-2xl overflow-hidden">
+                    <div
+                      key={idx}
+                      className="bg-slate-50 border border-slate-200/90 rounded-2xl overflow-hidden"
+                    >
                       <button
-                        onClick={() => setModalFaqOpenIndex(isOpen ? null : idx)}
+                        onClick={() =>
+                          setModalFaqOpenIndex(isOpen ? null : idx)
+                        }
                         className="w-full p-4 text-left flex justify-between items-center gap-3 text-xs font-bold text-slate-900 hover:text-blue-600 transition-colors"
                       >
                         <span className="flex items-center gap-2">
@@ -1162,7 +1361,9 @@ const Landing: React.FC = () => {
 
             {/* Modal Footer */}
             <div className="pt-4 mt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
-              <span className="text-slate-500">Have more questions? Our support team is ready to help.</span>
+              <span className="text-slate-500">
+                Have more questions? Our support team is ready to help.
+              </span>
               <button
                 onClick={() => setIsFaqModalOpen(false)}
                 className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-sm"
@@ -1187,11 +1388,17 @@ const Landing: React.FC = () => {
             </button>
 
             {demoSuccess ? (
-              <div className="py-8 text-center animate-in fade-in duration-300">
+              <div
+                role="status"
+                aria-live="polite"
+                className="py-8 text-center animate-in fade-in duration-300"
+              >
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  Demo Request Received!
+                </h3>
                 <p className="text-slate-600 text-sm max-w-md mx-auto mb-6 leading-relaxed">
                   Thank you,{" "}
                   <strong className="text-slate-900">
@@ -1215,13 +1422,21 @@ const Landing: React.FC = () => {
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">Request a Free Live Demo</h3>
-                    <p className="text-slate-500 text-xs">Experience the power of PirisaHR tailored for your team.</p>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Request a Free Live Demo
+                    </h3>
+                    <p className="text-slate-500 text-xs">
+                      Experience the power of PirisaHR tailored for your team.
+                    </p>
                   </div>
                 </div>
 
                 {demoError && (
-                  <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700">
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700"
+                  >
                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                     <span>{demoError}</span>
                   </div>
@@ -1235,9 +1450,12 @@ const Landing: React.FC = () => {
                     <input
                       type="text"
                       required
+                      maxLength={120}
                       placeholder="e.g. Kasun Perera"
                       value={demoForm.fullName}
-                      onChange={(e) => setDemoForm({ ...demoForm, fullName: e.target.value })}
+                      onChange={(e) =>
+                        setDemoForm({ ...demoForm, fullName: e.target.value })
+                      }
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                     />
                   </div>
@@ -1251,9 +1469,12 @@ const Landing: React.FC = () => {
                         <input
                           type="email"
                           required
+                          maxLength={254}
                           placeholder="e.g. kasun@company.com"
                           value={demoForm.email}
-                          onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
+                          onChange={(e) =>
+                            setDemoForm({ ...demoForm, email: e.target.value })
+                          }
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                         />
                       </div>
@@ -1267,9 +1488,12 @@ const Landing: React.FC = () => {
                         <input
                           type="tel"
                           required
+                          maxLength={40}
                           placeholder="e.g. +94 77 123 4567"
                           value={demoForm.phone}
-                          onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                          onChange={(e) =>
+                            setDemoForm({ ...demoForm, phone: e.target.value })
+                          }
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                         />
                       </div>
@@ -1283,9 +1507,15 @@ const Landing: React.FC = () => {
                       </label>
                       <input
                         type="text"
+                        maxLength={160}
                         placeholder="e.g. Acme Lanka"
                         value={demoForm.companyName}
-                        onChange={(e) => setDemoForm({ ...demoForm, companyName: e.target.value })}
+                        onChange={(e) =>
+                          setDemoForm({
+                            ...demoForm,
+                            companyName: e.target.value,
+                          })
+                        }
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                       />
                     </div>
@@ -1296,12 +1526,18 @@ const Landing: React.FC = () => {
                       </label>
                       <select
                         value={demoForm.teamSize}
-                        onChange={(e) => setDemoForm({ ...demoForm, teamSize: e.target.value })}
+                        onChange={(e) =>
+                          setDemoForm({ ...demoForm, teamSize: e.target.value })
+                        }
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                       >
                         <option value="1-10 employees">1 - 10 employees</option>
-                        <option value="11-50 employees">11 - 50 employees</option>
-                        <option value="51-200 employees">51 - 200 employees</option>
+                        <option value="11-50 employees">
+                          11 - 50 employees
+                        </option>
+                        <option value="51-200 employees">
+                          51 - 200 employees
+                        </option>
                         <option value="200+ employees">200+ employees</option>
                       </select>
                     </div>
@@ -1313,9 +1549,12 @@ const Landing: React.FC = () => {
                     </label>
                     <textarea
                       rows={2}
+                      maxLength={2000}
                       placeholder="e.g. Automated salary slips, biometric machine integration"
                       value={demoForm.message}
-                      onChange={(e) => setDemoForm({ ...demoForm, message: e.target.value })}
+                      onChange={(e) =>
+                        setDemoForm({ ...demoForm, message: e.target.value })
+                      }
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
                     />
                   </div>
@@ -1358,14 +1597,15 @@ const Landing: React.FC = () => {
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>Start Your 14-Day Free Trial</span>
             </div>
-            
+
             <h3 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
               Ready to Modernize Your HR Department?
             </h3>
             <p className="text-blue-100 max-w-2xl mx-auto text-base sm:text-lg mb-8 leading-relaxed">
-              Join high-performing teams automating attendance, leave management, and statutory payroll with PirisaHR today.
+              Join high-performing teams automating attendance, leave
+              management, and statutory payroll with PirisaHR today.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={() => setIsDemoModalOpen(true)}
@@ -1398,38 +1638,101 @@ const Landing: React.FC = () => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <span className="text-lg font-bold text-white tracking-tight">PirisaHR System</span>
+              <span className="text-lg font-bold text-white tracking-tight">
+                PirisaHR System
+              </span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              All-in-one Human Resource & Workforce Management platform engineered for speed, accuracy, and operational excellence.
+              All-in-one Human Resource & Workforce Management platform
+              engineered for speed, accuracy, and operational excellence.
             </p>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">Quick Links</h4>
+            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">
+              Quick Links
+            </h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><button onClick={() => scrollToSection("features")} className="hover:text-white">Features</button></li>
-              <li><button onClick={() => scrollToSection("pricing")} className="hover:text-white">Pricing Plans</button></li>
-              <li><button onClick={() => scrollToSection("demo-section")} className="hover:text-white">Request a Demo</button></li>
-              <li><button onClick={() => scrollToSection("faq")} className="hover:text-white">FAQ</button></li>
-              <li><button onClick={() => navigate("/login")} className="hover:text-white">Sign In</button></li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("features")}
+                  className="hover:text-white"
+                >
+                  Features
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("pricing")}
+                  className="hover:text-white"
+                >
+                  Pricing Plans
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("demo-section")}
+                  className="hover:text-white"
+                >
+                  Request a Demo
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("faq")}
+                  className="hover:text-white"
+                >
+                  FAQ
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="hover:text-white"
+                >
+                  Sign In
+                </button>
+              </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">Support & Legal</h4>
+            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">
+              Support & Legal
+            </h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white">Security Whitepaper</a></li>
-              <li><a href="#" className="hover:text-white">Help Center</a></li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Terms of Service
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Security Whitepaper
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Help Center
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto pt-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} PirisaHR System. All rights reserved.</p>
-          <p className="mt-2 sm:mt-0">Built with precision for modern workplaces.</p>
+          <p>
+            &copy; {new Date().getFullYear()} PirisaHR System. All rights
+            reserved.
+          </p>
+          <p className="mt-2 sm:mt-0">
+            Built with precision for modern workplaces.
+          </p>
         </div>
       </footer>
 
