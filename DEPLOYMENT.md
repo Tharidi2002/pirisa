@@ -4,14 +4,71 @@ The repository uses the same source code for local testing and production hostin
 
 ## Local testing
 
-Create the machine-local environment file once. `.env` is ignored by Git and Compose loads it automatically:
+Use the VS Code task `HRM: Create local environment file` once. It copies `.env.example` to `.env` only when `.env` does not already exist, so it will not overwrite this machine's settings. Open `.env` from the Explorer and fill in your own local values. `.env` is ignored by Git and Compose loads it automatically.
+
+Open the task picker with `Ctrl+Shift+P`, choose `Tasks: Run Task`, then select one of the `HRM:` tasks:
+
+- `HRM: Start full Docker stack` builds and starts MySQL, backend, and frontend.
+- `HRM: Start frontend and dependencies` builds and starts the frontend plus its backend and MySQL dependencies.
+- `HRM: Stop frontend only` leaves backend and MySQL running.
+- `HRM: Stop all Docker services` stops/removes containers but keeps the database volume.
+
+You can also create the file manually in PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
-notepad .env
 ```
 
 Set the local database values to match the existing MySQL volume, and set a private `JWT_SECRET`. Keep real SMTP and Stripe credentials in this file only; rotate any credential that was previously committed. Do not commit `.env`.
+
+Website demo requests are recorded in the private Google spreadsheet instead of being sent by email. Set up the spreadsheet and Apps Script once, then configure `DEMO_SHEETS_WEB_APP_URL` and `DEMO_SHEETS_SHARED_SECRET` in `.env`. Keep the shared secret private and never commit it. SMTP settings remain available for other HRM email notifications.
+
+### Google Sheets demo-request setup
+
+1. Open the `PirisaHR Demo Requests` spreadsheet and confirm the tab is named `Demo Requests`. Row 1 must contain these headers in this exact order: `Submitted At`, `Request ID`, `Full Name`, `Work Email`, `Phone`, `Company`, `Team Size`, `Area of Interest`, `Status`, `Source`.
+2. In that spreadsheet, open **Extensions > Apps Script**. Replace the editor contents with `google-apps-script/Code.gs` from this repository and save.
+3. In Apps Script, open **Project Settings > Script Properties** and add `SHEET_ID` with the ID from the spreadsheet URL. Add `SHARED_SECRET` with a new random value. On Windows PowerShell, generate one with `[guid]::NewGuid().ToString('N')`; use the same value in both Script Properties and the root `.env`.
+4. Select `testAppendDemoRequest` in the Apps Script editor and click **Run**. Approve the requested spreadsheet access. Confirm a test row appears, then delete that test row. This verifies Sheet access without deploying a web app.
+5. For the Postman/backend test, choose **Deploy > New deployment > Web app**. Set **Execute as** to your account. Allow web-app access required by your setup (typically **Anyone** for an unauthenticated backend request); the spreadsheet itself stays Restricted. The endpoint checks the shared secret on every request. Copy the URL ending in `/exec`.
+6. Put that URL in `.env` as `DEMO_SHEETS_WEB_APP_URL` and the same secret as `DEMO_SHEETS_SHARED_SECRET`. Restart the native backend, or recreate the Docker backend after setting the values.
+7. In Postman, send `POST http://localhost:8080/email/request-demo`, with `Content-Type: application/json` and a raw JSON body containing `fullName`, `email`, `phone`, `companyName`, `teamSize`, and `message`. A `200` response with `success: true` means Apps Script confirmed the row write. Confirm the new row in the spreadsheet. Missing settings return `503`; Apps Script/write failures return `502`.
+
+Do not put the Apps Script URL or shared secret in frontend variables. Keep the spreadsheet Restricted and share it only with staff who need to view demo requests.
+
+### Run backend and frontend directly
+
+For the usual development loop, run only MySQL in Docker and run Spring Boot and Vite from their own project folders. Spring Boot and Vite load the root `.env` automatically; Docker uses its internal `mysql` hostname while the native backend connects through `127.0.0.1`.
+
+Choose either this native development mode or the full Docker stack below. Do not run both at once: both modes use ports `8080` and `5174`. Stop a running native app with `Ctrl+C` before starting the full Docker stack, or stop the Docker backend/frontend before starting the native apps.
+
+Start MySQL once:
+
+```powershell
+docker compose up -d mysql
+```
+
+In a backend terminal:
+
+```powershell
+cd hrm-backend
+mvn spring-boot:run
+```
+
+In a separate frontend terminal:
+
+```powershell
+cd hrm-frontend
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5174`. Keep both application terminals running while developing. Stop them with `Ctrl+C`; stop the database when finished with `docker compose stop mysql`.
+
+After saving SMTP settings in `.env`, restart the native backend so it reloads them. For Docker development, rebuild/recreate the backend after changing environment values:
+
+```powershell
+docker compose up -d --build backend
+```
 
 Start the full local stack, including an isolated MySQL database:
 
@@ -87,7 +144,7 @@ cp .env.production.example .env.production
 nano .env.production
 ```
 
-Set the real production values in `.env.production`, especially `DB_PASSWORD` and `JWT_SECRET`. Do not commit that file.
+Set the real production values in `.env.production`, especially `DB_PASSWORD`, `JWT_SECRET`, `DEMO_SHEETS_WEB_APP_URL`, and `DEMO_SHEETS_SHARED_SECRET`. Configure SMTP credentials only if other HRM email notifications need them. Do not commit that file.
 
 Verify the database before starting the application:
 

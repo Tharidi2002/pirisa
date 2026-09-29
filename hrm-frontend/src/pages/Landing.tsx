@@ -874,7 +874,16 @@ const Landing: React.FC = () => {
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
                     <p className="text-slate-600 text-sm max-w-md mx-auto mb-4 leading-relaxed">
-                      Thank you, <strong className="text-slate-900">{demoForm.fullName}</strong>. A confirmation email has been sent to <strong className="text-blue-600">{demoForm.email}</strong>. Our specialist will call you at <strong className="text-slate-900">{demoForm.phone}</strong> to schedule your demo.
+                      Thank you,{" "}
+                      <strong className="text-slate-900">
+                        {demoForm.fullName}
+                      </strong>
+                      . Your request has been recorded. Our specialist will call
+                      you at{" "}
+                      <strong className="text-slate-900">
+                        {demoForm.phone}
+                      </strong>{" "}
+                      to schedule your demo.
                     </p>
                     <button
                       onClick={resetDemoModal}
@@ -1184,7 +1193,13 @@ const Landing: React.FC = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Demo Request Received!</h3>
                 <p className="text-slate-600 text-sm max-w-md mx-auto mb-6 leading-relaxed">
-                  Thank you, <strong className="text-slate-900">{demoForm.fullName}</strong>. A confirmation email has been sent to <strong className="text-blue-600">{demoForm.email}</strong>. Our team will contact you at <strong className="text-slate-900">{demoForm.phone}</strong> shortly.
+                  Thank you,{" "}
+                  <strong className="text-slate-900">
+                    {demoForm.fullName}
+                  </strong>
+                  . Your request has been recorded. Our team will contact you at{" "}
+                  <strong className="text-slate-900">{demoForm.phone}</strong>{" "}
+                  shortly.
                 </p>
                 <button
                   onClick={resetDemoModal}
