@@ -1,7 +1,8 @@
 export const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.DEV ? "http://localhost:8080" : "");
-export const WS_BASE = import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+export const WS_BASE =
+  import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
 
 export const ENDPOINTS = {
   AUTH: {
@@ -26,10 +27,12 @@ export const ENDPOINTS = {
   USER: {
     GET_PROFILE: "/api/user/profile",
     UPDATE_PROFILE: "/api/user/update",
-  },  ATTENDANCE: {
+  },
+  ATTENDANCE: {
     BASE: "/api/attendance",
     BULK_MARK: "/api/attendance/bulk-mark",
     BULK_DATA: "/api/attendance/bulk-data",
     IMPORT_EXCEL: "/api/attendance/import-excel",
     DOWNLOAD_EXCEL: "/api/attendance/download-excel",
-  },} as const;
+  },
+} as const;

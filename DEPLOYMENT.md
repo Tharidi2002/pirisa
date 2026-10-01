@@ -27,13 +27,39 @@ Website demo requests are recorded in the private Google spreadsheet instead of 
 
 1. Open the `PirisaHR Demo Requests` spreadsheet and confirm the tab is named `Demo Requests`. Row 1 must contain these headers in this exact order: `Submitted At`, `Request ID`, `Full Name`, `Work Email`, `Phone`, `Company`, `Team Size`, `Area of Interest`, `Status`, `Source`.
 2. In that spreadsheet, open **Extensions > Apps Script**. Replace the editor contents with `google-apps-script/Code.gs` from this repository and save.
-3. In Apps Script, open **Project Settings > Script Properties** and add `SHEET_ID` with the ID from the spreadsheet URL. Add `SHARED_SECRET` with a new random value. On Windows PowerShell, generate one with `[guid]::NewGuid().ToString('N')`; use the same value in both Script Properties and the root `.env`.
+3. In Apps Script, open **Project Settings > Script Properties** and add `SHEET_ID` with the ID from the spreadsheet URL (the text between `/d/` and `/edit`). This is the spreadsheet ID, not the Apps Script deployment ID from the web-app URL. Add `SHARED_SECRET` with a new random value. On Windows PowerShell, generate one with `[guid]::NewGuid().ToString('N')`; use the same value in both Script Properties and the root `.env`.
 4. Select `testAppendDemoRequest` in the Apps Script editor and click **Run**. Approve the requested spreadsheet access. Confirm a test row appears, then delete that test row. This verifies Sheet access without deploying a web app.
 5. For the Postman/backend test, choose **Deploy > New deployment > Web app**. Set **Execute as** to your account. Allow web-app access required by your setup (typically **Anyone** for an unauthenticated backend request); the spreadsheet itself stays Restricted. The endpoint checks the shared secret on every request. Copy the URL ending in `/exec`.
 6. Put that URL in `.env` as `DEMO_SHEETS_WEB_APP_URL` and the same secret as `DEMO_SHEETS_SHARED_SECRET`. Restart the native backend, or recreate the Docker backend after setting the values.
 7. In Postman, send `POST http://localhost:8080/email/request-demo`, with `Content-Type: application/json` and a raw JSON body containing `fullName`, `email`, `phone`, `companyName`, `teamSize`, and `message`. A `200` response with `success: true` means Apps Script confirmed the row write. Confirm the new row in the spreadsheet. Missing settings return `503`; Apps Script/write failures return `502`.
 
 Do not put the Apps Script URL or shared secret in frontend variables. Keep the spreadsheet Restricted and share it only with staff who need to view demo requests.
+
+### Google Sheets settings on the systemd server
+
+The current `/root/app.jar` systemd deployment reads `/root/config/application.properties`. In that external file, use the Spring property names below; `DEMO_SHEETS_*` are environment-variable names used by Docker, not the property names bound by the backend when an external config file is selected. The spreadsheet ID belongs only in Apps Script' `SHEET_ID` Script Property.
+
+After pulling the repository to `/root/hrm`, back up both server files, install the repository's systemd unit, and add the settings without printing the secret:
+
+```bash
+cd /root/hrm
+cp /root/config/application.properties /root/config/application.properties.bak.$(date +%Y%m%d%H%M%S)
+cp /etc/systemd/system/hrm-backend.service /etc/systemd/system/hrm-backend.service.bak.$(date +%Y%m%d%H%M%S)
+cp deploy/systemd/hrm-backend.service /etc/systemd/system/hrm-backend.service
+
+read -rsp 'Apps Script shared secret: ' DEMO_SHEETS_SHARED_SECRET
+printf '\n'
+test "${#DEMO_SHEETS_SHARED_SECRET}" -ge 32 || { echo 'Secret must be at least 32 characters.'; unset DEMO_SHEETS_SHARED_SECRET; exit 1; }
+printf '\n# Google Sheets demo-request integration\napp.demo-request.sheets.web-app-url=https://script.google.com/macros/s/AKfycbytbGIM92HWwMZVj4MVpKwQHLTr8NM3BvCcVEnNmvT3Rjcw0aXz0AGN3yYTw-WoQFJs/exec\napp.demo-request.sheets.shared-secret=%s\n' "$DEMO_SHEETS_SHARED_SECRET" >> /root/config/application.properties
+unset DEMO_SHEETS_SHARED_SECRET
+
+systemctl daemon-reload
+systemctl restart hrm-backend
+systemctl --no-pager --full status hrm-backend
+curl -fsS http://127.0.0.1:8080/actuator/health
+```
+
+The unit file must put `-Dspring.config.location=/root/config/application.properties` before `-jar /root/app.jar`; JVM options placed after `-jar` are passed to the application instead. Do not run `cat` on the properties file or paste its secret-bearing lines into support chats. To confirm the URL without exposing the secret, run `grep -n '^app.demo-request.sheets.web-app-url=' /root/config/application.properties`; check the secret only by length/presence. For local Docker, configure `DEMO_SHEETS_WEB_APP_URL` and `DEMO_SHEETS_SHARED_SECRET` in the ignored root `.env` instead.
 
 ### Run backend and frontend directly
 
