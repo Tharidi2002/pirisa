@@ -490,11 +490,8 @@ const Landing: React.FC = () => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
-            <div>
-              <span className="text-xl font-bold tracking-tight text-slate-900">
-                Pirisa<span className="text-blue-600">HR</span>
-              </span>
-              <span className="hidden sm:block text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
+            <div className="hidden sm:block">
+              <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
                 Enterprise HR Suite
               </span>
             </div>
@@ -547,7 +544,7 @@ const Landing: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative pt-28 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10 text-center">
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.15] max-w-5xl mx-auto mb-6">
+        <h1 className="text-3xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.12] max-w-5xl mx-auto mb-6">
           Empower Your Workforce with{" "}
           <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent">
             Smart HR Automation

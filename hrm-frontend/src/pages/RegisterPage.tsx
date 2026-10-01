@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading/Loading";
 import { ENDPOINTS } from "../api/endpoints";
 import { axiosInstance } from "../api/config/axios";
+import backgroundImage from "../assets/images/loginBackground.jpg";
 
 interface CompanyRegistrationData {
   companyName: string;
@@ -71,22 +73,17 @@ const RegisterPage: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof CompanyRegistrationData]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
-
     try {
       const requestData = {
         cmpName: formData.companyName,
@@ -96,20 +93,24 @@ const RegisterPage: React.FC = () => {
         username: formData.username,
         password: formData.password,
       };
-      
-      console.log("DEBUG - Sending registration data:", requestData);
-      
-      const response = await axiosInstance.post(ENDPOINTS.AUTH.REGISTER, requestData);
 
-      console.log("DEBUG - Registration response:", response.data);
+      const response = await axiosInstance.post(
+        ENDPOINTS.AUTH.REGISTER,
+        requestData,
+      );
 
-      toast.success("Registration successful! Please login with your credentials.");
+      toast.success(
+        "Registration successful! Please login with your credentials.",
+      );
       setTimeout(() => {
         navigate("/login");
       }, 2000);
+      return response;
     } catch (error: any) {
       console.error("Registration error:", error);
-      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      const errorMessage =
+        error.response?.data?.message ||
+        "Registration failed. Please try again.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -117,271 +118,253 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      {/* Left Side: Welcome Banner */}
-      <div
-        className="hidden md:flex flex-1 items-center justify-center bg-cover bg-center bg-no-repeat h-screen w-full"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.9)), url(/loginBackground.jpg)`,
-        }}
-      >
-        <div className="text-center px-5 pt-24">
-          <h2 className="text-6xl font-bold mb-4 text-zinc-300">
-            Join PirisaHR
-          </h2>
-          <p className="text-gray-400 text mb-2">
-            Register your company for HR Management
-          </p>
-        </div>
-      </div>
-
-      {/* Right Side: Registration Form */}
-      <div className="flex flex-col flex-1 justify-center items-center px-8 md:px-0">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col justify-center items-center mb-6">
-            <img src="/logo.png" alt="PirisaHR Logo" className="h-20" />
-            <p className="text-gray-400 text mb-2">HR Management Software</p>
-          </div>
-
-          <h1 className="text-2xl font-semibold text-gray-700 mb-2 items-center text-center">
-            Company Registration
-          </h1>
-
-          {selectedPlanParam && (
-            <div className="mb-4 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold rounded-lg text-center uppercase tracking-wider">
-              Selected Subscription Plan: <span className="font-bold text-blue-800">{selectedPlanParam}</span>
-            </div>
-          )}
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Company Name */}
-            <div>
-              <label
-                htmlFor="companyName"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Company Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="companyName"
-                name="companyName"
-                placeholder="Enter your company name"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.companyName ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.companyName}
-                onChange={handleInputChange}
-              />
-              {errors.companyName && (
-                <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Enter your email address"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                placeholder="Enter your phone number"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div>
-              <label
-                htmlFor="address"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                placeholder="Enter your company address"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.address ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.address}
-                onChange={handleInputChange}
-              />
-              {errors.address && (
-                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-              )}
-            </div>
-
-            {/* Username */}
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Username <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                placeholder="Choose a username"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 ${
-                  errors.username ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.username}
-                onChange={handleInputChange}
-              />
-              {errors.username && (
-                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="relative">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Password <span className="text-red-500">*</span>
-              </label>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                placeholder="Create a password"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                style={{ top: '2.5rem' }}
-              >
-                {showPassword ? "👁️" : "👁️‍🗨️"}
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="relative">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm your password"
-                required
-                className={`w-full mt-1 p-3 border rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10 ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                style={{ top: '2.5rem' }}
-              >
-                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
-              </button>
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md focus:ring focus:ring-green-300 relative disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loading
-                    size="xs"
-                    color="border-white"
-                    className="inline mr-2"
-                  />
-                  <span>Registering...</span>
-                </>
-              ) : (
-                "Register Company"
-              )}
-            </button>
-          </form>
-
-          {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Already have an account?{" "}
-              <button
-                onClick={() => navigate("/login")}
-                className="text-green-500 hover:text-green-600 font-medium"
-              >
-                Login here
-              </button>
+    <>
+      <main className="auth-page">
+        <section
+          className="auth-visual"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+          aria-label="Join PirisaHR"
+        >
+          <div className="auth-visual-content">
+            <p className="auth-kicker">A BETTER WAY TO WORK</p>
+            <h2>
+              Build a stronger <span>workplace.</span>
+            </h2>
+            <p>
+              Set up your organization and give your team a better HR
+              experience.
             </p>
           </div>
-        </div>
-      </div>
+        </section>
+
+        <section className="auth-content auth-content--register">
+          <div className="auth-form-wrap auth-form-wrap--register">
+            <div className="auth-brand">
+              <img src="/logo.png" alt="PirisaHR" className="auth-logo" />
+              <p>HR Management Software</p>
+            </div>
+
+            <h1>Create your company account</h1>
+            <p className="auth-intro">
+              Add your organization details to get started.
+            </p>
+
+            {selectedPlanParam && (
+              <div className="auth-plan-chip">
+                Selected plan <strong>{selectedPlanParam}</strong>
+              </div>
+            )}
+
+            <form
+              className="auth-form auth-register-form"
+              onSubmit={handleSubmit}
+            >
+              <div className="auth-field">
+                <label htmlFor="companyName" className="auth-label">
+                  Company name <span>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="companyName"
+                  name="companyName"
+                  autoComplete="organization"
+                  placeholder="Enter your company name"
+                  required
+                  className={`auth-input ${errors.companyName ? "auth-input--error" : ""}`}
+                  value={formData.companyName}
+                  onChange={handleInputChange}
+                />
+                {errors.companyName && (
+                  <p className="auth-field-error">{errors.companyName}</p>
+                )}
+              </div>
+
+              <div className="auth-field">
+                <label htmlFor="email" className="auth-label">
+                  Work email <span>*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  autoComplete="email"
+                  placeholder="name@company.com"
+                  required
+                  className={`auth-input ${errors.email ? "auth-input--error" : ""}`}
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+                {errors.email && (
+                  <p className="auth-field-error">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="auth-field">
+                <label htmlFor="phone" className="auth-label">
+                  Phone number <span>*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  autoComplete="tel"
+                  placeholder="Enter your phone number"
+                  required
+                  className={`auth-input ${errors.phone ? "auth-input--error" : ""}`}
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+                {errors.phone && (
+                  <p className="auth-field-error">{errors.phone}</p>
+                )}
+              </div>
+
+              <div className="auth-field">
+                <label htmlFor="address" className="auth-label">
+                  Company address <span>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  autoComplete="street-address"
+                  placeholder="Enter your company address"
+                  required
+                  className={`auth-input ${errors.address ? "auth-input--error" : ""}`}
+                  value={formData.address}
+                  onChange={handleInputChange}
+                />
+                {errors.address && (
+                  <p className="auth-field-error">{errors.address}</p>
+                )}
+              </div>
+
+              <div className="auth-field auth-field--wide">
+                <label htmlFor="username" className="auth-label">
+                  Admin username <span>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  placeholder="Choose a username"
+                  required
+                  className={`auth-input ${errors.username ? "auth-input--error" : ""}`}
+                  value={formData.username}
+                  onChange={handleInputChange}
+                />
+                {errors.username && (
+                  <p className="auth-field-error">{errors.username}</p>
+                )}
+              </div>
+
+              <div className="auth-field auth-password-field">
+                <label htmlFor="password" className="auth-label">
+                  Password <span>*</span>
+                </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
+                  required
+                  className={`auth-input auth-input--password ${errors.password ? "auth-input--error" : ""}`}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="auth-password-toggle"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+                {errors.password && (
+                  <p className="auth-field-error">{errors.password}</p>
+                )}
+              </div>
+
+              <div className="auth-field auth-password-field">
+                <label htmlFor="confirmPassword" className="auth-label">
+                  Confirm password <span>*</span>
+                </label>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  autoComplete="new-password"
+                  placeholder="Re-enter your password"
+                  required
+                  className={`auth-input auth-input--password ${errors.confirmPassword ? "auth-input--error" : ""}`}
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="auth-password-toggle"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  aria-pressed={showConfirmPassword}
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+                {errors.confirmPassword && (
+                  <p className="auth-field-error">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="auth-submit auth-field--wide"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loading
+                      size="xs"
+                      color="border-white"
+                      className="inline mr-2"
+                    />
+                    <span>Creating account...</span>
+                  </>
+                ) : (
+                  "Create company account"
+                )}
+              </button>
+            </form>
+
+            <div className="auth-account-link">
+              <p>
+                Already have an account?{" "}
+                <button
+                  onClick={() => navigate("/login")}
+                  className="auth-text-button"
+                >
+                  Sign in
+                </button>
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
       <ToastContainer />
-    </div>
+    </>
   );
 };
 

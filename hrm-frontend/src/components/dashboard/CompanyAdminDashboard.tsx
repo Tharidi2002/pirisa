@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  BarChart3,
-  FileText,
-  TrendingUp,
-  User,
-  Users,
-} from "lucide-react";
+import { BarChart3, FileText, TrendingUp, User, Users } from "lucide-react";
 import { API_BASE } from "../../api/endpoints";
 
 interface CompanyMetrics {
@@ -36,14 +30,16 @@ const CompanyAdminDashboard = () => {
           {
             headers: { Authorization: `Bearer ${token}` },
             signal: controller.signal,
-          }
+          },
         );
 
         if (res.ok) {
           const data = await res.json();
-          const empList = Array.isArray(data?.EmployeeList) ? data.EmployeeList : [];
+          const empList = Array.isArray(data?.EmployeeList)
+            ? data.EmployeeList
+            : [];
           const empCount = empList.length;
-          
+
           let pendingLeaveCount = 0;
           for (const emp of empList) {
             const leaves = Array.isArray(emp.leaveList) ? emp.leaveList : [];
@@ -103,8 +99,12 @@ const CompanyAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Company Admin Dashboard</h1>
-        <p className="mt-2 text-gray-600">Manage organization, compliance, and governance</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Company Admin Dashboard
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Manage organization, compliance, and governance
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -134,7 +134,9 @@ const CompanyAdminDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Recent activity</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Recent activity
+            </h2>
             <BarChart3 className="h-5 w-5 text-gray-400" />
           </div>
           <div className="py-8 text-center">
@@ -146,15 +148,26 @@ const CompanyAdminDashboard = () => {
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Quick links</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Quick links
+          </h2>
           <div className="space-y-2">
-            <a href="/reports" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded">
+            <a
+              href="/reports"
+              className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            >
               View reports
             </a>
-            <a href="/company-settings" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded">
+            <a
+              href="/company-settings"
+              className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            >
               Company settings
             </a>
-            <a href="/companyProfile" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded">
+            <a
+              href="/companyProfile"
+              className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            >
               View profile
             </a>
           </div>

@@ -10,7 +10,10 @@ import { TranslatableText } from "../languages/TranslatableText";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageProvider";
 import DynamicAvatar from "../DynamicAvatar";
-import { subscribeCompanyLogoUpdates, subscribeCompanyLogoWebSocket } from "../../utils/companyLogoSync";
+import {
+  subscribeCompanyLogoUpdates,
+  subscribeCompanyLogoWebSocket,
+} from "../../utils/companyLogoSync";
 import { API_BASE } from "../../api/endpoints";
 
 interface HeaderProps {
@@ -20,7 +23,7 @@ interface HeaderProps {
 interface LanguageOption {
   code: string;
   name: string;
-  flag: string;
+  mark: string;
 }
 
 type NotificationItem = {
@@ -59,17 +62,17 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
   {
     code: "en",
     name: "English",
-    flag: "https://uxwing.com/wp-content/themes/uxwing/download/flags-landmarks/uk-flag-round-circle-icon.png",
+    mark: "EN",
   },
   {
     code: "si",
     name: "සිංහල",
-    flag: "https://uxwing.com/wp-content/themes/uxwing/download/flags-landmarks/sri-lanka-flag-round-circle-icon.png",
+    mark: "SI",
   },
   {
     code: "ta",
     name: "தமிழ்",
-    flag: "https://uxwing.com/wp-content/themes/uxwing/download/flags-landmarks/india-flag-round-circle-icon.png",
+    mark: "TA",
   },
 ];
 
@@ -127,19 +130,24 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               `${API_BASE}/api/profile-image/exists/${empId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
-              }
+              },
             );
 
             if (existsResp.ok) {
-              const existsData: { hasProfileImage?: boolean; exists?: boolean } = await existsResp.json();
-              const hasImage = Boolean(existsData?.hasProfileImage ?? existsData?.exists);
+              const existsData: {
+                hasProfileImage?: boolean;
+                exists?: boolean;
+              } = await existsResp.json();
+              const hasImage = Boolean(
+                existsData?.hasProfileImage ?? existsData?.exists,
+              );
 
               if (hasImage) {
                 const response = await fetch(
                   `${API_BASE}/api/profile-image/view/${empId}`,
                   {
                     headers: { Authorization: `Bearer ${token}` },
-                  }
+                  },
                 );
 
                 if (response.ok) {
@@ -148,7 +156,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     const imageUrl = URL.createObjectURL(blob);
                     setLogoUrl((prev) => {
                       if (prev) {
-                        { URL.revokeObjectURL(prev); } 
+                        {
+                          URL.revokeObjectURL(prev);
+                        }
                       }
                       return imageUrl;
                     });
@@ -163,12 +173,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         }
 
         if (cmpId) {
-          const logoResponse = await fetch(
-            `${API_BASE}/logo/view/${cmpId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+          const logoResponse = await fetch(`${API_BASE}/logo/view/${cmpId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
           if (logoResponse.ok) {
             const blob = await logoResponse.blob();
@@ -182,7 +189,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             setLogoUrl(null);
             return;
           } else {
-            console.warn(`Logo fetch failed with status: ${logoResponse.status}`);
+            console.warn(
+              `Logo fetch failed with status: ${logoResponse.status}`,
+            );
             setLogoUrl(null);
             return;
           }
@@ -199,13 +208,19 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     void fetchLogo();
 
-    const stopSync = subscribeCompanyLogoUpdates(localStorage.getItem("cmpnyId"), () => {
-      void fetchLogo();
-    });
+    const stopSync = subscribeCompanyLogoUpdates(
+      localStorage.getItem("cmpnyId"),
+      () => {
+        void fetchLogo();
+      },
+    );
 
-    const stopSocket = subscribeCompanyLogoWebSocket(localStorage.getItem("cmpnyId"), () => {
-      void fetchLogo();
-    });
+    const stopSocket = subscribeCompanyLogoWebSocket(
+      localStorage.getItem("cmpnyId"),
+      () => {
+        void fetchLogo();
+      },
+    );
 
     return () => {
       stopSync();
@@ -272,7 +287,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!res.ok) return { decided: [] as EmployeeLeaveItem[] };
@@ -314,17 +329,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const getEmployeeLatestPayslip = async () => {
     const token = localStorage.getItem("token");
     const empId = localStorage.getItem("empId");
-    if (!token || !empId) return null as null | { year: number; month: string; key: string };
+    if (!token || !empId)
+      return null as null | { year: number; month: string; key: string };
 
     try {
-      const res = await fetch(
-        `${API_BASE}/employee/payroleListEmp/${empId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${API_BASE}/employee/payroleListEmp/${empId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) return null;
       const json: EmployeePayrollApiResponse = await res.json();
@@ -342,7 +355,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           best = { year, month, monthIdx };
           continue;
         }
-        if (year > best.year || (year === best.year && monthIdx > best.monthIdx)) {
+        if (
+          year > best.year ||
+          (year === best.year && monthIdx > best.monthIdx)
+        ) {
           best = { year, month, monthIdx };
         }
       }
@@ -368,7 +384,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!res.ok) return 0;
@@ -379,7 +395,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       for (const emp of list) {
         const leaves = Array.isArray(emp?.leaveList) ? emp.leaveList : [];
         for (const leave of leaves) {
-          const status = (leave?.leaveStatus ?? "").toString().toUpperCase().trim();
+          const status = (leave?.leaveStatus ?? "")
+            .toString()
+            .toUpperCase()
+            .trim();
           if (!status || status === "PENDING") count += 1;
         }
       }
@@ -430,11 +449,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       const leaveKey = `notif_emp_seen_leave_decision_count_${empId}`;
       const seenLeaveRaw = localStorage.getItem(leaveKey);
       const seenLeave = seenLeaveRaw ? Number(seenLeaveRaw) : 0;
-      const unreadLeaves = decidedCount > seenLeave ? decidedCount - seenLeave : 0;
+      const unreadLeaves =
+        decidedCount > seenLeave ? decidedCount - seenLeave : 0;
 
       const payslipKey = `notif_emp_seen_payslip_key_${empId}`;
       const seenPayslip = localStorage.getItem(payslipKey) || "";
-      const unreadPayslip = latestPayslip && latestPayslip.key && latestPayslip.key !== seenPayslip ? 1 : 0;
+      const unreadPayslip =
+        latestPayslip && latestPayslip.key && latestPayslip.key !== seenPayslip
+          ? 1
+          : 0;
 
       const now = Date.now();
 
@@ -470,7 +493,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const markAllAsRead = async () => {
     if (role === "CMPNY") {
       const pendingCount = await getPendingLeaveCount();
-      localStorage.setItem("notif_seen_pending_leave_count", String(pendingCount));
+      localStorage.setItem(
+        "notif_seen_pending_leave_count",
+        String(pendingCount),
+      );
       setUnreadCount(0);
       return;
     }
@@ -480,13 +506,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       const leave = await getEmployeeLeaveDecisions();
       localStorage.setItem(
         `notif_emp_seen_leave_decision_count_${empId}`,
-        String(leave.decided.length)
+        String(leave.decided.length),
       );
       const latestPayslip = await getEmployeeLatestPayslip();
       if (latestPayslip?.key) {
         localStorage.setItem(
           `notif_emp_seen_payslip_key_${empId}`,
-          latestPayslip.key
+          latestPayslip.key,
         );
       }
       setUnreadCount(0);
@@ -514,14 +540,21 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              }
+              },
             );
 
             if (empResponse.ok) {
               const empData = await empResponse.json();
-              if (empData.resultCode === 100 && empData.EmployeeLeaveList?.[0]) {
-                setEmployeeFirstName(empData.EmployeeLeaveList[0].firstName || "");
-                setEmployeeGender(empData.EmployeeLeaveList[0].gender || "male");
+              if (
+                empData.resultCode === 100 &&
+                empData.EmployeeLeaveList?.[0]
+              ) {
+                setEmployeeFirstName(
+                  empData.EmployeeLeaveList[0].firstName || "",
+                );
+                setEmployeeGender(
+                  empData.EmployeeLeaveList[0].gender || "male",
+                );
               }
             }
 
@@ -531,14 +564,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              }
+              },
             );
 
             if (existsResp.ok) {
-              const existsData: { hasProfileImage?: boolean; exists?: boolean } =
-                await existsResp.json();
+              const existsData: {
+                hasProfileImage?: boolean;
+                exists?: boolean;
+              } = await existsResp.json();
               const hasImage = Boolean(
-                existsData?.hasProfileImage ?? existsData?.exists
+                existsData?.hasProfileImage ?? existsData?.exists,
               );
 
               if (hasImage) {
@@ -548,7 +583,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     headers: {
                       Authorization: `Bearer ${token}`,
                     },
-                  }
+                  },
                 );
 
                 if (response.ok) {
@@ -576,14 +611,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         }
 
         if (cmpId) {
-          const logoResponse = await fetch(
-            `${API_BASE}/logo/view/${cmpId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const logoResponse = await fetch(`${API_BASE}/logo/view/${cmpId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
           if (logoResponse.ok) {
             const blob = await logoResponse.blob();
@@ -595,7 +627,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           } else if (logoResponse.status === 404) {
             console.log("No company logo found, using default");
           } else {
-            console.warn(`Logo fetch failed with status: ${logoResponse.status}`);
+            console.warn(
+              `Logo fetch failed with status: ${logoResponse.status}`,
+            );
           }
         }
 
@@ -608,13 +642,19 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     void fetchLogo();
 
-    const stopSync = subscribeCompanyLogoUpdates(localStorage.getItem("cmpnyId"), () => {
-      void fetchLogo();
-    });
+    const stopSync = subscribeCompanyLogoUpdates(
+      localStorage.getItem("cmpnyId"),
+      () => {
+        void fetchLogo();
+      },
+    );
 
-    const stopSocket = subscribeCompanyLogoWebSocket(localStorage.getItem("cmpnyId"), () => {
-      void fetchLogo();
-    });
+    const stopSocket = subscribeCompanyLogoWebSocket(
+      localStorage.getItem("cmpnyId"),
+      () => {
+        void fetchLogo();
+      },
+    );
 
     return () => {
       stopSync();
@@ -651,13 +691,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   }, [role]);
 
   return (
-    <div className="bg-white shadow px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center w-full">
+    <div className="hrm-topbar px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center w-full">
       {/* Left: Sidebar Toggle and Search */}
       <div className="flex items-center min-w-0 flex-1">
         <button
           onClick={toggleSidebar}
           className="text-gray-600 mr-3 sm:mr-4 focus:outline-none cursor-pointer lg:hidden"
-          aria-label="Toggle sidebar">
+          aria-label="Toggle sidebar"
+        >
           <FaBars className="text-xl" />
         </button>
 
@@ -676,11 +717,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center space-x-2 focus:outline-none cursor-pointer"
           >
-            <img
-              src={currentLanguage.flag}
-              alt={currentLanguage.name}
-              className="w-4 h-4 rounded-full"
-            />
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-[9px] font-bold text-blue-800">
+              {currentLanguage.mark}
+            </span>
             <span className="text-sm">{currentLanguage.name}</span>
             <svg
               className={`w-4 h-4 transition-transform ${
@@ -707,11 +746,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   onClick={() => handleLanguageSelect(option.code)}
                   className="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  <img
-                    src={option.flag}
-                    alt={option.name}
-                    className="w-4 h-4 rounded-full"
-                  />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-[9px] font-bold text-blue-800">
+                    {option.mark}
+                  </span>
                   <span>{option.name}</span>
                 </button>
               ))}
@@ -742,7 +779,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           {isNotificationOpen ? (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <div className="text-sm font-semibold text-gray-800">Notifications</div>
+                <div className="text-sm font-semibold text-gray-800">
+                  Notifications
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsNotificationOpen(false)}
@@ -764,9 +803,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
                     >
-                      <div className="text-sm font-medium text-gray-900">{n.title}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {n.title}
+                      </div>
                       {n.description ? (
-                        <div className="text-xs text-gray-500 mt-1">{n.description}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {n.description}
+                        </div>
                       ) : null}
                     </button>
                   ))
@@ -801,7 +844,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             {role === "EMPLOYEE" && !logoUrl ? (
               <DynamicAvatar
                 firstName={employeeFirstName}
-                gender={employeeGender?.toLowerCase() === 'female' ? 'female' : 'male'}
+                gender={
+                  employeeGender?.toLowerCase() === "female" ? "female" : "male"
+                }
                 size="md"
                 className="w-9 h-9 sm:w-10 sm:h-10 cursor-pointer"
               />

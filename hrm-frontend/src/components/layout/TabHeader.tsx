@@ -47,7 +47,7 @@ const TabHeader: React.FC<TabHeaderProps> = ({ pathname }) => {
       case "pay-role-list":
         return <FaDollarSign className="text-xl mr-2" />;
       case "employee-dashboard":
-        return <FaTachometerAlt className="text-xl mr-2" />; 
+        return <FaTachometerAlt className="text-xl mr-2" />;
       default:
         return null;
     }
@@ -72,11 +72,11 @@ const TabHeader: React.FC<TabHeaderProps> = ({ pathname }) => {
       case "reports":
         return "Reports";
       case "pay-role-list":
-        return "Payrole List";    
+        return "Payrole List";
       case "employee-dashboard":
         return "Employee Dashboard";
       case "emp-leave":
-        return "Employee Leave";  
+        return "Employee Leave";
       default:
         return "";
     }
@@ -120,8 +120,8 @@ const TabHeader: React.FC<TabHeaderProps> = ({ pathname }) => {
   };
 
   return (
-    <div className="flex items-center p-4 mt-20">
-      <div className="text-sky-500 flex items-center font-bold">
+    <div className="hrm-page-heading flex items-center">
+      <div className="text-blue-800 flex items-center font-bold">
         {getTabIcon(activeTab)}
         <span className="font-semibold text-lg">
           <TranslatableText text={getTabLabel(activeTab)} />

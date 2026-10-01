@@ -264,19 +264,24 @@ const EmployeeEvaluationForm: React.FC = () => {
 
   const [selectedTab, setSelectedTab] = useState<string>("Software");
   const [selectedDepartment, setSelectedDepartment] = useState<DepartmentData>(
-    departments.find((dept) => dept.name === "Software") || departments[0]
+    departments.find((dept) => dept.name === "Software") || departments[0],
   );
-  const [selectedDesignationName, setSelectedDesignationName] = useState<string>(
-    departments.find((dept) => dept.name === "Software")?.designations[0].name || ""
-  );
+  const [selectedDesignationName, setSelectedDesignationName] =
+    useState<string>(
+      departments.find((dept) => dept.name === "Software")?.designations[0]
+        .name || "",
+    );
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
+    null,
+  );
   const navigate = useNavigate();
 
   const handleTabChange = (tabName: string) => {
     setSelectedTab(tabName);
-    const newDept = departments.find((dept) => dept.name === tabName) || departments[0];
+    const newDept =
+      departments.find((dept) => dept.name === tabName) || departments[0];
     setSelectedDepartment(newDept);
     setSelectedDesignationName(newDept.designations[0].name);
   };
@@ -293,7 +298,7 @@ const EmployeeEvaluationForm: React.FC = () => {
   const handleSave = (updatedText: string) => {
     if (selectedQuestion) {
       const updatedQuestions = currentQuestions.map((q) =>
-        q.id === selectedQuestion.id ? { ...q, text: updatedText } : q
+        q.id === selectedQuestion.id ? { ...q, text: updatedText } : q,
       );
       setCurrentQuestions(updatedQuestions);
       setIsModalOpen(false);
@@ -302,11 +307,11 @@ const EmployeeEvaluationForm: React.FC = () => {
 
   const handleNewForm = () => {
     navigate("/performance/newForm");
-  }
+  };
 
   useEffect(() => {
     const designation = selectedDepartment.designations.find(
-      (d) => d.name === selectedDesignationName
+      (d) => d.name === selectedDesignationName,
     );
     if (designation) {
       setCurrentQuestions(designation.questions);
@@ -339,7 +344,10 @@ const EmployeeEvaluationForm: React.FC = () => {
 
       {/* New Form Button */}
       <div className="mb-6">
-        <button onClick={handleNewForm} className="bg-sky-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-sky-600 hover:scale-105 cursor-pointer">
+        <button
+          onClick={handleNewForm}
+          className="bg-sky-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-sky-600 hover:scale-105 cursor-pointer"
+        >
           <span className="mr-2">+</span>
           New Form
         </button>
@@ -385,8 +393,12 @@ const EmployeeEvaluationForm: React.FC = () => {
         <table className="min-w-full bg-white border-gray-200">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-3 px-4 text-left text-gray-500 w-1/3">Question</th>
-              <th className="py-3 px-4 text-center text-gray-500">Strongly Disagree</th>
+              <th className="py-3 px-4 text-left text-gray-500 w-1/3">
+                Question
+              </th>
+              <th className="py-3 px-4 text-center text-gray-500">
+                Strongly Disagree
+              </th>
               <th className="py-3 px-4 text-center text-gray-500">Disagree</th>
               <th className="py-3 px-4 text-center text-gray-500">Neutral</th>
               <th className="py-3 px-4 text-center text-gray-500">Agree</th>
@@ -402,19 +414,39 @@ const EmployeeEvaluationForm: React.FC = () => {
               >
                 <td className="py-4 px-4">{question.text}</td>
                 <td className="py-4 px-4 text-center">
-                  <input type="radio" name={`question-${question.id}`} className="h-4 w-4" />
+                  <input
+                    type="radio"
+                    name={`question-${question.id}`}
+                    className="h-4 w-4"
+                  />
                 </td>
                 <td className="py-4 px-4 text-center">
-                  <input type="radio" name={`question-${question.id}`} className="h-4 w-4" />
+                  <input
+                    type="radio"
+                    name={`question-${question.id}`}
+                    className="h-4 w-4"
+                  />
                 </td>
                 <td className="py-4 px-4 text-center">
-                  <input type="radio" name={`question-${question.id}`} className="h-4 w-4" />
+                  <input
+                    type="radio"
+                    name={`question-${question.id}`}
+                    className="h-4 w-4"
+                  />
                 </td>
                 <td className="py-4 px-4 text-center">
-                  <input type="radio" name={`question-${question.id}`} className="h-4 w-4" />
+                  <input
+                    type="radio"
+                    name={`question-${question.id}`}
+                    className="h-4 w-4"
+                  />
                 </td>
                 <td className="py-4 px-4 text-center">
-                  <input type="radio" name={`question-${question.id}`} className="h-4 w-4" />
+                  <input
+                    type="radio"
+                    name={`question-${question.id}`}
+                    className="h-4 w-4"
+                  />
                 </td>
                 <td className="py-4 px-4 text-center">
                   <div className="flex justify-center space-x-2">
@@ -441,35 +473,42 @@ const EmployeeEvaluationForm: React.FC = () => {
 
       {/* Modal */}
       {isModalOpen && selectedQuestion && (
-  <div className="fixed inset-0 backdrop-blur-xl flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg w-1/3 shadow-2xl">
-      <div className="flex items-center mb-4">
-        <img src="/public/logo.png" alt="Logo" className="h-6 w-28 mr-8" />
-        <h2 className="text-xl font-bold text-neutral-400">Edit Question</h2>
-      </div>
-      <hr className="text-neutral-300 mb-4" />
-      <textarea
-        className="w-full p-2 border border-gray-300 rounded mb-4"
-        value={selectedQuestion.text}
-        onChange={(e) => setSelectedQuestion({ ...selectedQuestion, text: e.target.value })}
-      />
-      <div className="flex justify-end">
-        <button
-          className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition-colors cursor-pointer hover:scale-105"
-          onClick={() => setIsModalOpen(false)}
-        >
-          Cancel
-        </button>
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors cursor-pointer hover:scale-105"
-          onClick={() => handleSave(selectedQuestion.text)}
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 backdrop-blur-xl flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-1/3 shadow-2xl">
+            <div className="flex items-center mb-4">
+              <img src="/logo.png" alt="Logo" className="h-6 w-28 mr-8" />
+              <h2 className="text-xl font-bold text-neutral-400">
+                Edit Question
+              </h2>
+            </div>
+            <hr className="text-neutral-300 mb-4" />
+            <textarea
+              className="w-full p-2 border border-gray-300 rounded mb-4"
+              value={selectedQuestion.text}
+              onChange={(e) =>
+                setSelectedQuestion({
+                  ...selectedQuestion,
+                  text: e.target.value,
+                })
+              }
+            />
+            <div className="flex justify-end">
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition-colors cursor-pointer hover:scale-105"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors cursor-pointer hover:scale-105"
+                onClick={() => handleSave(selectedQuestion.text)}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

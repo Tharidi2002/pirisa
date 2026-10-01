@@ -23,7 +23,7 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
 
   // Detect screen size
   const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
   );
 
   // ============ Effects ============
@@ -81,7 +81,7 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
     : "pl-0";
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="hrm-app-shell min-h-screen">
       {/* ============ SIDEBAR ============ */}
       <Sidebar
         isMobileOpen={isMobileSidebarOpen}
@@ -118,7 +118,7 @@ export const MainLayout: React.FC<MainLayoutProps> = () => {
         <TabHeader pathname={location.pathname} />
 
         {/* Page Content */}
-        <main className="p-3 sm:p-4 lg:p-6">
+        <main className="hrm-page-content">
           <Outlet />
         </main>
       </div>

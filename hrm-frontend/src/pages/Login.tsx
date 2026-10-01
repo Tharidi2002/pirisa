@@ -202,166 +202,146 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-        {/* Left Side: Welcome Banner */}
-        <div
-          className="hidden md:flex flex-1 items-center justify-center bg-cover bg-center bg-no-repeat h-screen w-full "
-          style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.9)), url(${backgroundImage})`,
-          }}
-        >
-          <div className="text-center px-5 pt-24">
-            <h2 className="text-6xl font-bold mb-4 text-zinc-300">
-              Welcome to PirisaHR
-            </h2>
-            <p className="text-gray-400 text mb-2">HR Management Software</p>
-          </div>
+    <main className="auth-page">
+      <section
+        className="auth-visual"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+        }}
+        aria-label="PirisaHR welcome"
+      >
+        <div className="auth-visual-content">
+          <p className="auth-kicker">PEOPLE OPERATIONS, MADE CLEAR</p>
+          <h2>
+            Welcome to <span>PirisaHR</span>
+          </h2>
+          <p>
+            Bring your people, attendance and payroll together in one place.
+          </p>
         </div>
-        {/* Right Side: Login Form */}
-        <div className="flex flex-col flex-1 justify-center items-center px-8 md:px-0">
-          <div className="w-full max-w-md">
-            <div className="flex flex-col justify-center items-center mb-6">
-              {/* Logo */}
-              <img src="/logo.png" alt="PirisaHR Logo" className="h-20" />
-              <p className="text-gray-400 text mb-2">HR Management Software</p>
+      </section>
+
+      <section className="auth-content auth-content--login">
+        <div className="auth-form-wrap">
+          <div className="auth-brand">
+            <img src="/logo.png" alt="PirisaHR" className="auth-logo" />
+            <p>HR Management Software</p>
+          </div>
+
+          <h1>Welcome back</h1>
+          <p className="auth-intro">Sign in to continue to your workspace.</p>
+          {error && (
+            <div className="auth-alert" role="alert">
+              {error}
+            </div>
+          )}
+
+          <form className="auth-form" onSubmit={handleLogin}>
+            <div className="auth-field">
+              <label htmlFor="email" className="auth-label">
+                Username or email <span>*</span>
+              </label>
+              <input
+                type="text"
+                id="email"
+                name="email"
+                autoComplete="username"
+                placeholder="Enter your username or email"
+                required
+                className="auth-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <p className="auth-helper">
+                You can use either your username or email address.
+              </p>
             </div>
 
-            {/* Login Form */}
-            <h1 className="text-2xl font-semibold text-gray-700 mb-4 items-center text-center">
-              Login
-            </h1>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <form className="space-y-6" onSubmit={handleLogin}>
-              {/* Email Field */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-600"
-                >
-                  Username or Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your username or email"
-                  required
-                  className="w-full mt-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-green-200"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  You can login with either your username or email address
-                </p>
-              </div>
-
-              {/* Password Field with Toggle */}
-              <div className="relative">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-600"
-                >
-                  Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  placeholder="Input your account password "
-                  required
-                  className="w-full mt-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-green-200 pr-10"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-600 hover:text-gray-800"
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-
-              {/* Options */}
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="remember-me"
-                    className="h-4 w-4 text-green-500 focus:ring-green-400 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 text-gray-600">
-                    Remember me
-                  </label>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotModal(true)}
-                  className="text-gray-600 hover:underline"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              {/* Submit Button with Loading */}
+            <div className="auth-field auth-password-field">
+              <label htmlFor="password" className="auth-label">
+                Password <span>*</span>
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                required
+                className="auth-input auth-input--password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <button
-                type="submit"
-                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md focus:ring focus:ring-green-300 relative disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center"
-                disabled={loading}
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="auth-password-toggle"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
               >
-                {loading ? (
-                  <>
-                    <Loading
-                      size="xs"
-                      color="border-white"
-                      className="inline mr-2"
-                    />
-                    <span>Loging...</span>
-                  </>
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
                 ) : (
-                  "Login"
+                  <EyeIcon className="h-5 w-5" />
                 )}
               </button>
-            </form>
-          </div>
-          {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Don't have an account?{" "}
+            </div>
+
+            <div className="auth-form-options">
+              <label className="auth-checkbox" htmlFor="remember-me">
+                <input type="checkbox" id="remember-me" />
+                <span>Remember me</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="auth-text-button"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loading
+                    size="xs"
+                    color="border-white"
+                    className="inline mr-2"
+                  />
+                  <span>Logging in...</span>
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+          </form>
+
+          <div className="auth-account-link">
+            <p>
+              New to PirisaHR?{" "}
               <button
                 onClick={() => navigate("/register")}
-                className="text-green-500 hover:text-green-600 font-medium"
+                className="auth-text-button"
               >
-                Register here
+                Create an account
               </button>
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Password Reset Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Reset Password
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Enter your email address and we'll send you a new password.
-            </p>
+        <div className="auth-modal-backdrop">
+          <div className="auth-modal">
+            <h2>Reset password</h2>
+            <p>Enter your email address and we'll send you a new password.</p>
 
-            <div className="space-y-4">
+            <div className="auth-form">
               <div>
-                <label
-                  htmlFor="reset-email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email Address <span className="text-red-500">*</span>
+                <label htmlFor="reset-email" className="auth-label">
+                  Email address <span>*</span>
                 </label>
                 <input
                   type="email"
@@ -370,19 +350,19 @@ const LoginPage: React.FC = () => {
                   placeholder="Enter your email address"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-green-200 focus:border-green-500"
+                  className="auth-input"
                   required
                 />
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="auth-modal-actions">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForgotModal(false);
                     setResetEmail("");
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="auth-secondary-button"
                 >
                   Cancel
                 </button>
@@ -390,7 +370,7 @@ const LoginPage: React.FC = () => {
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={isForgotLoading}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="auth-submit"
                 >
                   {isForgotLoading ? (
                     <>
@@ -412,7 +392,7 @@ const LoginPage: React.FC = () => {
       )}
 
       <ToastContainer />
-    </div>
+    </main>
   );
 };
 

@@ -9,7 +9,6 @@ import {
 import { navItems } from "../config/navigation";
 import { NavItem, SubNavItem } from "../../types/navigation";
 
-
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -41,8 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           (sub) =>
             currentPath === sub.path ||
             (sub.path.includes(":") &&
-              currentPath.startsWith(sub.path.split(":")[0]))
-        )
+              currentPath.startsWith(sub.path.split(":")[0])),
+        ),
     );
     return activeParent ? new Set([activeParent.id]) : new Set();
   });
@@ -62,8 +61,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           (sub) =>
             currentPath === sub.path ||
             (sub.path.includes(":") &&
-              currentPath.startsWith(sub.path.split(":")[0]))
-        )
+              currentPath.startsWith(sub.path.split(":")[0])),
+        ),
     );
 
     if (activeParent) {
@@ -187,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <aside
         className={`
           fixed left-0 top-0 z-50 h-dvh
-          bg-white
+          hrm-sidebar
           border-r border-slate-200
           shadow-lg lg:shadow-none
           transition-all duration-300 ease-in-out
@@ -208,7 +207,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <img
               src="/logo.png"
               alt="PirisaHR"
-              className="w-8 h-8 object-contain flex-shrink-0"
+              className="w-8 h-8 object-contain flex-shrink-0 brightness-0 invert"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
@@ -223,7 +222,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <img
               src="/logo.png"
               alt="PirisaHR"
-              className="w-8 h-8 object-contain mx-auto"
+              className="w-8 h-8 object-contain mx-auto brightness-0 invert"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
@@ -275,7 +274,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <ul className={`space-y-1 ${showCollapsedStyle ? "px-2" : "px-3"}`}>
             {filteredNavItems.map((item) => {
               const filteredSubItems = item.subItems.filter((sub) =>
-                hasAccess(sub.roles)
+                hasAccess(sub.roles),
               );
 
               if (
@@ -364,7 +363,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           const isDynamic = subItem.path.includes(":");
                           if (isDynamic) {
                             const isDynamicActive = isSubItemActive(
-                              subItem.path
+                              subItem.path,
                             );
                             if (!isDynamicActive) return null;
                           }
@@ -392,11 +391,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <span
                                   className={`
                                     w-1.5 h-1.5 rounded-full flex-shrink-0
-                                    ${
-                                      subActive
-                                        ? "bg-sky-500"
-                                        : "bg-slate-300"
-                                    }
+                                    ${subActive ? "bg-sky-500" : "bg-slate-300"}
                                   `}
                                 />
                                 <span className="truncate">
@@ -434,7 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           const isDynamic = subItem.path.includes(":");
                           if (isDynamic) {
                             const isDynamicActive = isSubItemActive(
-                              subItem.path
+                              subItem.path,
                             );
                             if (!isDynamicActive) return null;
                           }
@@ -465,11 +460,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <span
                                   className={`
                                     w-1.5 h-1.5 rounded-full flex-shrink-0
-                                    ${
-                                      subActive
-                                        ? "bg-sky-500"
-                                        : "bg-slate-300"
-                                    }
+                                    ${subActive ? "bg-sky-500" : "bg-slate-300"}
                                   `}
                                 />
                                 <span className="truncate">
