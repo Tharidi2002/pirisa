@@ -18,6 +18,7 @@ import {
 import Loading from "../Loading/Loading";
 import DynamicAvatar from "../DynamicAvatar";
 import { API_BASE } from "../../api/endpoints";
+import { formatLkr } from "../../utils/currency";
 //import profile from "../../../public/profile.jpg";
 
 interface EmployeeDetails {
@@ -131,7 +132,8 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
         try {
           const token = localStorage.getItem("token");
           const cmpnyId =
-            localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
+            localStorage.getItem("cmpnyId") ||
+            localStorage.getItem("companyId");
           if (!token) {
             throw new Error("No token found");
           }
@@ -580,7 +582,9 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                         <div>
                           <p className="text-sm text-gray-500">Basic Salary</p>
                           <p className="font-semibold text-gray-900">
-                            LKR {employee.basic_salary ? employee.basic_salary.toLocaleString() : 'N/A'}
+                            {employee.basic_salary == null
+                              ? "N/A"
+                              : formatLkr(employee.basic_salary)}
                           </p>
                         </div>
                       </div>

@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Getter
@@ -41,8 +43,8 @@ public class Employee implements Serializable {
     private String lastName;
 
     @JsonProperty("basic_salary")
-    @Column(name = "basic_salary")
-    private Double basicSalary;
+    @Column(name = "basic_salary", precision = 19, scale = 2)
+    private BigDecimal basicSalary;
 
     @Column(unique = true)
     private String email;
@@ -121,5 +123,13 @@ public class Employee implements Serializable {
     @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
     @JsonIgnore
     private List<EmployeeLeave> employeeLeaves;
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeBasicSalary() {
+        if (basicSalary != null) {
+            basicSalary = basicSalary.setScale(2, RoundingMode.HALF_UP);
+        }
+    }
 
 }

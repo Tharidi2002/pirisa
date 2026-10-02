@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -40,11 +40,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     };
   }, [profileImage]);
 
-  useEffect(() => {
-    checkProfileImageExists();
-  }, [employeeId, token]);
-
-  const loadProfileImage = async () => {
+  const loadProfileImage = useCallback(async () => {
     try {
       const resp = await fetch(
         `${API_BASE}/api/profile-image/view/${employeeId}`,
@@ -77,9 +73,9 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     } catch {
       // ignore image failures
     }
-  };
+  }, [employeeId, token]);
 
-  const checkProfileImageExists = async () => {
+  const checkProfileImageExists = useCallback(async () => {
     try {
       const response = await fetch(
         `${API_BASE}/api/profile-image/exists/${employeeId}`,
@@ -115,7 +111,11 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     } catch (error) {
       console.error('Error checking profile image:', error);
     }
-  };
+  }, [employeeId, loadProfileImage, onImageChange, token]);
+
+  useEffect(() => {
+    void checkProfileImageExists();
+  }, [checkProfileImageExists]);
 
   // Helper function to get cropped image
   const getCroppedImg = (

@@ -53,6 +53,47 @@ interface EmployeeOnLeave {
   leaveStatus: string;
 }
 
+const fetchEmployeePhotos = async (
+  employeeList: Employee[],
+  token: string,
+): Promise<Record<number, string>> => {
+  const photoUrlMap: Record<number, string> = {};
+
+  await Promise.all(
+    employeeList.map(async (employee) => {
+      try {
+        const existsResponse = await fetch(
+          `${API_BASE}/api/profile-image/exists/${employee.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!existsResponse.ok) return;
+
+        const existsData: { hasProfileImage?: boolean; exists?: boolean } =
+          await existsResponse.json();
+        if (!(existsData.hasProfileImage ?? existsData.exists)) return;
+
+        const imageResponse = await fetch(
+          `${API_BASE}/api/profile-image/view/${employee.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!imageResponse.ok) return;
+
+        const blob = await imageResponse.blob();
+        if (blob.size > 0) {
+          photoUrlMap[employee.id] = URL.createObjectURL(blob);
+        }
+      } catch (error) {
+        console.error(
+          `Failed to fetch profile image for employee ${employee.id}:`,
+          error,
+        );
+      }
+    }),
+  );
+
+  return photoUrlMap;
+};
+
 const AttendanceMarkTable = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
@@ -147,7 +188,7 @@ const AttendanceMarkTable = () => {
           setDepartments(uniqueDepts);
           
           if (list.length > 0) {
-            await fetchEmployeePhotos(list, token);
+            setPhotoUrls(await fetchEmployeePhotos(list, token));
           }
         } else {
           throw new Error(data.resultDesc);
@@ -200,10 +241,17 @@ const AttendanceMarkTable = () => {
   }, []);
 
   useEffect(() => {
-    // Apply filtering when employees or employeesOnLeave data changes
-    if (employees.length > 0) {
-      applyDepartmentFilter(employees, selectedDepartment);
-    }
+    const filtered = employees.filter((employee) => {
+      const inSelectedDepartment =
+        selectedDepartment === 0 ||
+        employee.department?.id === selectedDepartment;
+      const onLeave = employeesOnLeave.some(
+        (leave) => leave.empId === employee.id,
+      );
+      return inSelectedDepartment && !onLeave;
+    });
+    setFilteredEmployees(filtered);
+    setCurrentPage(1);
   }, [employees, employeesOnLeave, selectedDepartment]);
 
   useEffect(() => {
@@ -218,7 +266,10 @@ const AttendanceMarkTable = () => {
     };
   }, [photoUrls]);
 
-  const fetchEmployeePhotos = async (employeeList: Employee[], token: string) => {
+  const fetchAndSetEmployeePhotos = async (
+    employeeList: Employee[],
+    token: string,
+  ) => {
     // Cleanup previous URLs
     Object.values(photoUrls).forEach((url) => {
       try {
@@ -555,7 +606,7 @@ const AttendanceMarkTable = () => {
         setDepartments(uniqueDepts);
         
         if (list.length > 0) {
-          await fetchEmployeePhotos(list, token);
+          await fetchAndSetEmployeePhotos(list, token);
         }
       } else {
         throw new Error(data.resultDesc);

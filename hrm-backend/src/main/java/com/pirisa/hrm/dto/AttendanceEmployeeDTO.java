@@ -2,6 +2,7 @@ package com.pirisa.hrm.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -14,7 +15,7 @@ public class AttendanceEmployeeDTO {
     private String epfNo;
     private String firstName;
     private String lastName;
-    private double basicSalary;
+    private BigDecimal basicSalary;
     private String email;
     private String gender;
     private String phone;

@@ -9,6 +9,9 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading/Loading";
 import ProfileImageEditor from "../../components/ProfileImageEditor";
 import { API_BASE } from "../../api/endpoints";
+import LkrInput from "../../components/PayRole/LkrInput";
+import { useTranslation } from "../../context/LanguageProvider";
+import { isNonNegativeNumber } from "../../utils/validation";
 
 interface EmployeeDetails {
   epf_no: string;
@@ -17,7 +20,7 @@ interface EmployeeDetails {
   last_name: string;
   designation: string;
   department: string;
-  basic_salary: number;
+  basic_salary: string;
   email: string;
   gender: string;
   DOB: string;
@@ -52,6 +55,7 @@ interface Designation {
 }
 
 const EmployeeRegistration: React.FC = () => {
+  const { language } = useTranslation();
   const [step, setStep] = useState(1);
   const [employeeDetails, setEmployeeDetails] = useState<EmployeeDetails>({
     epf_no: "",
@@ -60,7 +64,7 @@ const EmployeeRegistration: React.FC = () => {
     last_name: "",
     department: "",
     designation: "",
-    basic_salary: 0,
+    basic_salary: "",
     email: "",
     gender: "",
     DOB: "",
@@ -82,7 +86,9 @@ const EmployeeRegistration: React.FC = () => {
     appointmentLetter: null,
   });
 
-  const [selectedProfileImage, setSelectedProfileImage] = useState<File | null>(null);
+  const [selectedProfileImage, setSelectedProfileImage] = useState<File | null>(
+    null,
+  );
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [token, setToken] = useState<string | null>(null);
@@ -130,7 +136,10 @@ const EmployeeRegistration: React.FC = () => {
         }
       }
     } catch (error) {
-      console.warn("Could not fetch next-numbers directly, falling back to employee list calculation:", error);
+      console.warn(
+        "Could not fetch next-numbers directly, falling back to employee list calculation:",
+        error,
+      );
     }
 
     // Fallback: calculate directly from existing employees if endpoint returned error or not yet reloaded
@@ -144,7 +153,11 @@ const EmployeeRegistration: React.FC = () => {
         });
         if (listRes.ok) {
           const listData = await listRes.json();
-          const list: Array<{ empNo?: string; epfNo?: string }> = Array.isArray(listData.EmployeeList) ? listData.EmployeeList : [];
+          const list: Array<{ empNo?: string; epfNo?: string }> = Array.isArray(
+            listData.EmployeeList,
+          )
+            ? listData.EmployeeList
+            : [];
           let maxEmp = 0;
           let maxEpf = 0;
           list.forEach((emp) => {
@@ -194,15 +207,12 @@ const EmployeeRegistration: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE}/department/company/${cmpId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_BASE}/department/company/${cmpId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -299,7 +309,10 @@ const EmployeeRegistration: React.FC = () => {
       return;
     }
 
-    if (!employeeDetails.email.trim() || !/^\S+@\S+\.\S+$/.test(employeeDetails.email)) {
+    if (
+      !employeeDetails.email.trim() ||
+      !/^\S+@\S+\.\S+$/.test(employeeDetails.email)
+    ) {
       toast.error("Please enter a valid email address");
       setSubmittingDetails(false);
       return;
@@ -341,6 +354,12 @@ const EmployeeRegistration: React.FC = () => {
       return;
     }
 
+    if (!isNonNegativeNumber(employeeDetails.basic_salary)) {
+      toast.error("Please enter a valid non-negative basic salary");
+      setSubmittingDetails(false);
+      return;
+    }
+
     let formattedDOB = "";
     let formattedJoiningDate = "";
     try {
@@ -360,7 +379,9 @@ const EmployeeRegistration: React.FC = () => {
       }
       formattedJoiningDate = joinDate.toISOString().split("T")[0];
     } catch {
-      toast.error("Error parsing dates. Please check Date of Birth and Date of Joining.");
+      toast.error(
+        "Error parsing dates. Please check Date of Birth and Date of Joining.",
+      );
       setSubmittingDetails(false);
       return;
     }
@@ -384,17 +405,14 @@ const EmployeeRegistration: React.FC = () => {
     };
 
     try {
-      const response = await fetch(
-        `${API_BASE}/employee/add_employee`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(`${API_BASE}/employee/add_employee`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
         // Handle non-200 responses
@@ -431,13 +449,15 @@ const EmployeeRegistration: React.FC = () => {
                     Authorization: `Bearer ${token}`,
                   },
                   body: imgFormData,
-                }
+                },
               );
               const imgData = await imgResponse.json();
               if (imgData.resultCode === 100) {
                 toast.success("Profile image uploaded successfully!");
               } else {
-                toast.error(imgData.resultDesc || "Failed to upload profile image");
+                toast.error(
+                  imgData.resultDesc || "Failed to upload profile image",
+                );
               }
             } catch (err) {
               console.error("Error uploading profile image:", err);
@@ -532,16 +552,13 @@ const EmployeeRegistration: React.FC = () => {
 
       let documentResponse = null;
       if (hasOtherFiles) {
-        documentResponse = await fetch(
-          `${API_BASE}/document/upload-all`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: otherDocsFormData,
+        documentResponse = await fetch(`${API_BASE}/document/upload-all`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: otherDocsFormData,
+        });
 
         if (!documentResponse.ok) {
           const errorData = await documentResponse.json();
@@ -566,7 +583,7 @@ const EmployeeRegistration: React.FC = () => {
           last_name: "",
           department: "",
           designation: "",
-          basic_salary: 0,
+          basic_salary: "",
           email: "",
           gender: "",
           DOB: "",
@@ -611,16 +628,13 @@ const EmployeeRegistration: React.FC = () => {
     const formData = new FormData();
     formData.append("empId", currentEmpId.toString());
     try {
-      const response = await fetch(
-        `${API_BASE}/document/upload-all`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+      const response = await fetch(`${API_BASE}/document/upload-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: formData,
+      });
       if (response.status === 200) {
         toast.success("Skipped document upload. Employee registered!");
         localStorage.removeItem("currentEmpId");
@@ -632,7 +646,7 @@ const EmployeeRegistration: React.FC = () => {
           last_name: "",
           department: "",
           designation: "",
-          basic_salary: 0,
+          basic_salary: "",
           email: "",
           gender: "",
           DOB: "",
@@ -782,13 +796,18 @@ const EmployeeRegistration: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700">
                 <TranslatableText text="Basic Salary" />
               </label>
-              <input
-                type="number"
-                name="basic_salary"
+              <LkrInput
+                id="employee-basic-salary"
                 value={employeeDetails.basic_salary}
-                onChange={handleInputChange}
-                className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Basic Salary"
+                onChange={(value) =>
+                  setEmployeeDetails((prev) => ({
+                    ...prev,
+                    basic_salary: value,
+                  }))
+                }
+                language={language}
+                placeholder="Enter basic salary"
+                required
               />
             </div>
             <div>

@@ -55,6 +55,19 @@ public class UserService {
         return optionalUser.orElse(null);
     }
 
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    public User updateCurrentUserProfile(String username, String name, String email) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) return null;
+
+        user.setName(name.trim());
+        user.setEmail(email.trim());
+        return userRepository.save(user);
+    }
+
 
     public User changeUserPassword(Long user_id, String oldPassword, String newPassword) {
         Optional<User> userOptional = userRepository.findById(user_id);

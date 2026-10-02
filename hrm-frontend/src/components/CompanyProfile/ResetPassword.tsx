@@ -12,11 +12,16 @@ interface PasswordResetFormData {
 }
 
 interface ApiResponse {
-  resultCode: number;
-  resultDesc: string;
+  resultCode?: number;
+  resultDesc?: string;
+  error?: string;
 }
 
-const PasswordReset = () => {
+interface PasswordResetProps {
+  onCancel?: () => void;
+}
+
+const PasswordReset = ({ onCancel }: PasswordResetProps) => {
   const [formData, setFormData] = useState<PasswordResetFormData>({
     oldPassword: "",
     newPassword: "",
@@ -77,6 +82,7 @@ const PasswordReset = () => {
       const role = localStorage.getItem("role");
       const cmpId = localStorage.getItem("cmpnyId");
       const empId = localStorage.getItem("empId");
+      const userId = localStorage.getItem("userId");
 
       if (!token) {
         toast.error("Authentication required");
@@ -95,6 +101,8 @@ const PasswordReset = () => {
         apiUrl = `${API_BASE}/employee/changePassword/${empId}`;
       } else if (role === "CMPNY" && cmpId) {
         apiUrl = `${API_BASE}/company/changePassword/${cmpId}`;
+      } else if ((role === "HRM" || role === "USER") && userId) {
+        apiUrl = `${API_BASE}/user/changePassword/${userId}`;
       } else {
         throw new Error("Invalid user role or missing ID");
       }
@@ -111,7 +119,9 @@ const PasswordReset = () => {
       const data: ApiResponse = await response.json();
 
       if (!response.ok || data.resultCode !== 100) {
-        throw new Error(data.resultDesc || "Password update failed");
+        throw new Error(
+          data.resultDesc || data.error || "Password update failed",
+        );
       }
 
       toast.success("Password updated successfully!");
@@ -124,7 +134,15 @@ const PasswordReset = () => {
       });
 
       // Optionally log out after password change
-      localStorage.clear();
+      [
+        "token",
+        "role",
+        "username",
+        "cmpnyId",
+        "companyId",
+        "empId",
+        "userId",
+      ].forEach((key) => localStorage.removeItem(key));
       navigate("/login");
     } catch (error) {
       const message =
@@ -137,14 +155,20 @@ const PasswordReset = () => {
   };
 
   return (
-    <div className="mt-6 bg-gray-50 p-6 rounded-lg shadow-md transition hover:shadow-lg">
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-5">
+      <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">Reset Password</h3>
         <button
-          onClick={() => navigate(-1)}
+          onClick={onCancel ?? (() => navigate(-1))}
           className="text-sky-500 hover:text-sky-800 flex items-center gap-1 text-sm"
         >
-          <FaArrowLeft /> Back
+          {onCancel ? (
+            "Cancel"
+          ) : (
+            <>
+              <FaArrowLeft /> Back
+            </>
+          )}
         </button>
       </div>
 
@@ -152,12 +176,17 @@ const PasswordReset = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Current Password */}
           <div>
-            <label className="block text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="current-password"
+              className="block text-sm text-gray-500 mb-1"
+            >
               Current Password
             </label>
             <div className="relative">
               <input
                 name="oldPassword"
+                id="current-password"
+                autoComplete="current-password"
                 type={showPasswords.old ? "text" : "password"}
                 value={formData.oldPassword}
                 onChange={handleChange}
@@ -167,6 +196,11 @@ const PasswordReset = () => {
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("old")}
+                aria-label={
+                  showPasswords.old
+                    ? "Hide current password"
+                    : "Show current password"
+                }
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPasswords.old ? <FaEyeSlash /> : <FaEye />}
@@ -176,12 +210,17 @@ const PasswordReset = () => {
 
           {/* New Password */}
           <div>
-            <label className="block text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="new-password"
+              className="block text-sm text-gray-500 mb-1"
+            >
               New Password
             </label>
             <div className="relative">
               <input
                 name="newPassword"
+                id="new-password"
+                autoComplete="new-password"
                 type={showPasswords.new ? "text" : "password"}
                 value={formData.newPassword}
                 onChange={handleChange}
@@ -191,6 +230,9 @@ const PasswordReset = () => {
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("new")}
+                aria-label={
+                  showPasswords.new ? "Hide new password" : "Show new password"
+                }
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
@@ -200,12 +242,17 @@ const PasswordReset = () => {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="confirm-new-password"
+              className="block text-sm text-gray-500 mb-1"
+            >
               Confirm New Password
             </label>
             <div className="relative">
               <input
                 name="confirmPassword"
+                id="confirm-new-password"
+                autoComplete="new-password"
                 type={showPasswords.confirm ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -215,6 +262,11 @@ const PasswordReset = () => {
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("confirm")}
+                aria-label={
+                  showPasswords.confirm
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}

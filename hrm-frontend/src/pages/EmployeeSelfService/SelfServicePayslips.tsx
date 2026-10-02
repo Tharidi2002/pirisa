@@ -5,6 +5,17 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Loading from "../../components/Loading/Loading";
 import { selfServiceApi, Payslip } from "../../api/services/selfServiceApi";
+import { formatLkr, formatLkrAmount } from "../../utils/currency";
+
+const parsePayItems = (items: string) => {
+  if (!items) return [];
+
+  return items.split(",").map((item) => {
+    const [name, ...amountParts] = item.split(":");
+    const amount = amountParts.join(":").trim();
+    return { name: name.trim(), amount: amount ? Number(amount) : Number.NaN };
+  });
+};
 
 // Type for jsPDF with autoTable plugin
 interface jsPDFWithAutoTable extends jsPDF {
@@ -26,7 +37,9 @@ const SelfServicePayslips: React.FC = () => {
         const data = await selfServiceApi.getMyPayslips(employeeId);
         setPayslips(data);
         if (data.length > 0) {
-          const years = [...new Set(data.map((p) => p.year))].sort((a, b) => b - a);
+          const years = [...new Set(data.map((p) => p.year))].sort(
+            (a, b) => b - a,
+          );
           setSelectedYear(years[0]);
         }
       } catch {
@@ -43,7 +56,20 @@ const SelfServicePayslips: React.FC = () => {
   const filteredPayslips = payslips
     .filter((p) => selectedYear === "all" || p.year === selectedYear)
     .sort((a, b) => {
-      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
       if (a.year !== b.year) return b.year - a.year;
       return months.indexOf(b.month) - months.indexOf(a.month);
     });
@@ -65,11 +91,17 @@ const SelfServicePayslips: React.FC = () => {
       startY: 70,
       head: [["Earnings", "Amount (LKR)"]],
       body: [
-        ["Basic Salary", payslip.basicSalary.toLocaleString()],
-        ["Allowances", payslip.allowance || "-"],
-        ["Overtime", payslip.overtimePay.toLocaleString()],
-        ["Bonus", payslip.bonusPay || "-"],
-        ["Total Earnings", payslip.totalEarnings.toLocaleString()],
+        ["Basic Salary", formatLkrAmount(payslip.basicSalary)],
+        ...parsePayItems(payslip.allowance).map(({ name, amount }) => [
+          name,
+          formatLkrAmount(amount),
+        ]),
+        ["Overtime", formatLkrAmount(payslip.overtimePay)],
+        ...parsePayItems(payslip.bonusPay).map(({ name, amount }) => [
+          `${name} Bonus`,
+          formatLkrAmount(amount),
+        ]),
+        ["Total Earnings", formatLkrAmount(payslip.totalEarnings)],
       ],
       headStyles: { fillColor: [14, 165, 233] },
     });
@@ -78,29 +110,26 @@ const SelfServicePayslips: React.FC = () => {
       startY: doc.lastAutoTable.finalY + 10,
       head: [["Deductions", "Amount (LKR)"]],
       body: [
-        ["EPF (8%)", payslip.epf8.toLocaleString()],
-        ["APIT", payslip.appit.toLocaleString()],
-        ["Loan", payslip.loan.toLocaleString()],
-        ["Other Deductions", payslip.otherDeductions.toLocaleString()],
-        ["Total Deductions", payslip.totalDeductions.toLocaleString()],
+        ["EPF (8%)", formatLkrAmount(payslip.epf8)],
+        ["APIT", formatLkrAmount(payslip.appit)],
+        ["Loan", formatLkrAmount(payslip.loan)],
+        ["Other Deductions", formatLkrAmount(payslip.otherDeductions)],
+        ["Total Deductions", formatLkrAmount(payslip.totalDeductions)],
       ],
       headStyles: { fillColor: [239, 68, 68] },
     });
 
     doc.setFontSize(14);
     doc.text(
-      `Net Salary: LKR ${payslip.netSalary.toLocaleString()}`,
+      `Net Salary: LKR ${formatLkrAmount(payslip.netSalary)}`,
       14,
-      doc.lastAutoTable.finalY + 15
+      doc.lastAutoTable.finalY + 15,
     );
 
     doc.setFontSize(8);
-    doc.text(
-      `Generated on ${new Date().toLocaleDateString()}`,
-      105,
-      290,
-      { align: "center" }
-    );
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 105, 290, {
+      align: "center",
+    });
 
     doc.save(`Payslip-${payslip.month}-${payslip.year}.pdf`);
     toast.success("Payslip downloaded!");
@@ -129,13 +158,17 @@ const SelfServicePayslips: React.FC = () => {
           <select
             value={selectedYear}
             onChange={(e) =>
-              setSelectedYear(e.target.value === "all" ? "all" : parseInt(e.target.value))
+              setSelectedYear(
+                e.target.value === "all" ? "all" : parseInt(e.target.value),
+              )
             }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
           >
             <option value="all">All Years</option>
             {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
         </div>
@@ -168,23 +201,27 @@ const SelfServicePayslips: React.FC = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Basic Salary</span>
-                  <span className="font-medium">LKR {p.basicSalary.toLocaleString()}</span>
+                  <span className="font-medium">
+                    {formatLkr(p.basicSalary)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Earnings</span>
                   <span className="font-medium text-green-600">
-                    + {p.totalEarnings.toLocaleString()}
+                    + {formatLkr(p.totalEarnings)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Deductions</span>
                   <span className="font-medium text-red-500">
-                    - {p.totalDeductions.toLocaleString()}
+                    - {formatLkr(p.totalDeductions)}
                   </span>
                 </div>
                 <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
                   <span className="text-gray-700">Net Salary</span>
-                  <span className="text-sky-600">LKR {p.netSalary.toLocaleString()}</span>
+                  <span className="text-sky-600">
+                    {formatLkr(p.netSalary)}
+                  </span>
                 </div>
               </div>
 

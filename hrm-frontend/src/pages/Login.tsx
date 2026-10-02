@@ -88,8 +88,9 @@ const LoginPage: React.FC = () => {
         localStorage.setItem("role", data.details.Role);
         localStorage.setItem("username", data.details.username);
 
-        // Role-specific ID storage
-        if (data.details.Role === "CMPNY") {
+        const role = data.details.Role;
+
+        if (role === "CMPNY") {
           // For company users, store CMPNY_Id
           console.log("DEBUG - Storing CMPNY_Id:", data.details.CMPNY_Id);
           localStorage.setItem("cmpnyId", data.details.CMPNY_Id);
@@ -100,9 +101,7 @@ const LoginPage: React.FC = () => {
           //   username: data.details.username,
           // });
           navigate("/dashboard");
-        } else {
-          // For employees, store EMP_id (assuming it's available in the response)
-          // If the field is named differently, adjust accordingly
+        } else if (role === "EMPLOYEE") {
           console.log("DEBUG - Storing employee data:", data.details);
           localStorage.setItem(
             "empId",
@@ -117,6 +116,11 @@ const LoginPage: React.FC = () => {
           //   username: data.details.username,
           // });
           navigate("/employee-dashboard");
+        } else {
+          localStorage.setItem("userId", String(data.details.USER_Id));
+          localStorage.setItem("cmpnyId", String(data.details.CMPNY_Id));
+          localStorage.setItem("companyId", String(data.details.CMPNY_Id));
+          navigate("/dashboard");
         }
 
         toast.success("Login successful!");
@@ -192,7 +196,7 @@ const LoginPage: React.FC = () => {
           },
         );
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred. Please try again.", {
         position: "top-center",
       });

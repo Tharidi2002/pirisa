@@ -103,6 +103,8 @@ public class SecurityConfig {
                     .hasAnyAuthority("EMPLOYEE", "CMPNY", "HRM")
                 .antMatchers("/api/admin/missing-punch/**")
                     .hasAnyAuthority("CMPNY", "HRM")
+                .antMatchers("/company/dashboard/**")
+                    .hasAnyAuthority("CMPNY", "HRM")
                 // Recruitment
                 .antMatchers("/api/recruitment/**")
                     .hasAnyAuthority("CMPNY", "HRM")

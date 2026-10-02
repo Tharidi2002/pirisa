@@ -1,11 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  FaBell,
-  FaEnvelope,
-  FaBars,
-  FaUser,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { FaBell, FaEnvelope, FaBars, FaCog } from "react-icons/fa";
 import { TranslatableText } from "../languages/TranslatableText";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageProvider";
@@ -79,11 +73,9 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const { language, setLanguage } = useTranslation();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -237,35 +229,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleProfileClick = () => {
-    navigate("/companyProfile");
-    setIsProfileDropdownOpen(false); // Close dropdown after click
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("cmpnyId");
-    localStorage.removeItem("companyId");
-    localStorage.removeItem("empId");
-    localStorage.removeItem("username");
-    navigate("/login");
-    setIsProfileDropdownOpen(false); // Close dropdown after click
-    //console.log("User logged out");
-  };
-
   const handleClickOutside = (event: MouseEvent) => {
     if (
       dropdownRef.current &&
       !dropdownRef.current.contains(event.target as Node)
     ) {
       setIsDropdownOpen(false);
-    }
-    if (
-      profileDropdownRef.current &&
-      !profileDropdownRef.current.contains(event.target as Node)
-    ) {
-      setIsProfileDropdownOpen(false);
     }
     if (
       notificationDropdownRef.current &&
@@ -275,7 +244,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }
   };
 
-  const getEmployeeLeaveDecisions = async () => {
+  const getEmployeeLeaveDecisions = useCallback(async () => {
     const token = localStorage.getItem("token");
     const empId = localStorage.getItem("empId");
     if (!token || !empId) return { decided: [] as EmployeeLeaveItem[] };
@@ -304,9 +273,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     } catch {
       return { decided: [] as EmployeeLeaveItem[] };
     }
-  };
+  }, []);
 
-  const monthToIndex = (m?: string) => {
+  const monthToIndex = useCallback((m?: string) => {
     const s = (m || "").toString().trim().toLowerCase();
     const months = [
       "january",
@@ -324,9 +293,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     ];
     const idx = months.indexOf(s);
     return idx >= 0 ? idx : -1;
-  };
+  }, []);
 
-  const getEmployeeLatestPayslip = async () => {
+  const getEmployeeLatestPayslip = useCallback(async () => {
     const token = localStorage.getItem("token");
     const empId = localStorage.getItem("empId");
     if (!token || !empId)
@@ -369,9 +338,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     } catch {
       return null;
     }
-  };
+  }, [monthToIndex]);
 
-  const getPendingLeaveCount = async () => {
+  const getPendingLeaveCount = useCallback(async () => {
     const token = localStorage.getItem("token");
     const cmpnyId = localStorage.getItem("cmpnyId");
     if (!token || !cmpnyId) return 0;
@@ -406,9 +375,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     } catch {
       return 0;
     }
-  };
+  }, []);
 
-  const refreshNotifications = async () => {
+  const refreshNotifications = useCallback(async () => {
     const items: NotificationItem[] = [];
 
     if (role === "CMPNY") {
@@ -488,7 +457,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     setNotifications([]);
     setUnreadCount(0);
-  };
+  }, [
+    getEmployeeLatestPayslip,
+    getEmployeeLeaveDecisions,
+    getPendingLeaveCount,
+    role,
+  ]);
 
   const markAllAsRead = async () => {
     if (role === "CMPNY") {
@@ -688,7 +662,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       window.removeEventListener("focus", onFocusOrVisible);
       document.removeEventListener("visibilitychange", onFocusOrVisible);
     };
-  }, [role]);
+  }, [refreshNotifications]);
 
   return (
     <div className="hrm-topbar px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center w-full">
@@ -836,9 +810,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         </div>
 
         {/* User Profile */}
-        <div className="relative" ref={profileDropdownRef}>
+        <div className="relative">
           <button
-            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+            type="button"
+            onClick={() => navigate("/settings")}
+            aria-label="Open settings"
+            title="Open settings"
             className="flex items-center space-x-2 focus:outline-none"
           >
             {role === "EMPLOYEE" && !logoUrl ? (
@@ -867,44 +844,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 {localStorage.getItem("role") || "Role"}
               </span>
             </div>
-            <svg
-              className={`w-4 h-4 transition-transform ${
-                isProfileDropdownOpen ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <FaCog className="h-4 w-4 text-gray-500" aria-hidden="true" />
           </button>
-
-          {isProfileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-              <div className="py-1">
-                <button
-                  onClick={handleProfileClick}
-                  className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-sky-600 transition-colors duration-200"
-                >
-                  <FaUser className="mr-3 text-gray-400 group-hover:text-sky-600" />
-                  <span>Profile</span>
-                </button>
-                <div className="border-t border-gray-100"></div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-sky-600 transition-colors duration-200"
-                >
-                  <FaSignOutAlt className="mr-3 text-gray-400 group-hover:text-sky-600" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

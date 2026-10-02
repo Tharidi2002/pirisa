@@ -13,7 +13,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loading from "../../components/Loading/Loading";
-import { selfServiceApi, SelfServiceDashboard as DashboardType } from "../../api/services/selfServiceApi";
+import {
+  selfServiceApi,
+  SelfServiceDashboard as DashboardType,
+} from "../../api/services/selfServiceApi";
+import { formatLkr } from "../../utils/currency";
 
 const SelfServiceDashboard: React.FC = () => {
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
@@ -34,7 +38,8 @@ const SelfServiceDashboard: React.FC = () => {
         const data = await selfServiceApi.getDashboard(employeeId);
         setDashboard(data);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load dashboard";
+        const message =
+          error instanceof Error ? error.message : "Failed to load dashboard";
         setError(message);
         toast.error(message);
       } finally {
@@ -57,7 +62,9 @@ const SelfServiceDashboard: React.FC = () => {
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <FaTimesCircle className="text-4xl text-red-500 mx-auto mb-3" />
-          <p className="text-red-700 font-medium">{error || "Dashboard not available"}</p>
+          <p className="text-red-700 font-medium">
+            {error || "Dashboard not available"}
+          </p>
         </div>
       </div>
     );
@@ -103,9 +110,12 @@ const SelfServiceDashboard: React.FC = () => {
               <FaUser className="text-3xl" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Welcome back, {dashboard.employeeName}!</h1>
+              <h1 className="text-2xl font-bold">
+                Welcome back, {dashboard.employeeName}!
+              </h1>
               <p className="text-white/90 text-sm flex items-center gap-2 mt-1">
-                <FaBriefcase /> {dashboard.designation || "N/A"} • {dashboard.department || "N/A"}
+                <FaBriefcase /> {dashboard.designation || "N/A"} •{" "}
+                {dashboard.department || "N/A"}
               </p>
             </div>
           </div>
@@ -121,36 +131,52 @@ const SelfServiceDashboard: React.FC = () => {
         {/* Today Status Card */}
         <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Today's Status</h3>
-            <div className={`p-2 rounded-lg ${getStatusColor(dashboard.todayStatus)}`}>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+              Today's Status
+            </h3>
+            <div
+              className={`p-2 rounded-lg ${getStatusColor(dashboard.todayStatus)}`}
+            >
               {getStatusIcon(dashboard.todayStatus)}
             </div>
           </div>
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-semibold ${getStatusColor(dashboard.todayStatus)}`}>
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-semibold ${getStatusColor(dashboard.todayStatus)}`}
+          >
             {dashboard.todayStatus.replace("_", " ")}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-gray-500 text-xs">Clock In</p>
-              <p className="font-semibold text-gray-800">{dashboard.clockInTime || "--:--"}</p>
+              <p className="font-semibold text-gray-800">
+                {dashboard.clockInTime || "--:--"}
+              </p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Clock Out</p>
-              <p className="font-semibold text-gray-800">{dashboard.clockOutTime || "--:--"}</p>
+              <p className="font-semibold text-gray-800">
+                {dashboard.clockOutTime || "--:--"}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Leave Balance Card */}
-        <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 cursor-pointer hover:shadow-lg transition-shadow"
-             onClick={() => navigate("/self-service/leave-balance")}>
+        <div
+          className="bg-white rounded-xl shadow-md p-5 border border-gray-100 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate("/self-service/leave-balance")}
+        >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Leave Balance</h3>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+              Leave Balance
+            </h3>
             <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
               <FaCalendarAlt />
             </div>
           </div>
-          <div className="text-4xl font-bold text-gray-800">{dashboard.leaveBalanceTotal}</div>
+          <div className="text-4xl font-bold text-gray-800">
+            {dashboard.leaveBalanceTotal}
+          </div>
           <p className="text-sm text-gray-500 mt-1">days remaining</p>
           <div className="mt-3 flex items-center text-sky-600 text-sm font-medium">
             View details <FaArrowRight className="ml-1 text-xs" />
@@ -160,12 +186,16 @@ const SelfServiceDashboard: React.FC = () => {
         {/* Hours Today Card */}
         <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Hours Today</h3>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+              Hours Today
+            </h3>
             <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
               <FaClock />
             </div>
           </div>
-          <div className="text-4xl font-bold text-gray-800">{dashboard.totalHoursToday.toFixed(1)}</div>
+          <div className="text-4xl font-bold text-gray-800">
+            {dashboard.totalHoursToday.toFixed(1)}
+          </div>
           <p className="text-sm text-gray-500 mt-1">hours worked</p>
           {dashboard.pendingRequests > 0 && (
             <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">
@@ -177,7 +207,9 @@ const SelfServiceDashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Quick Actions
+        </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button
             onClick={() => navigate("/self-service/profile")}
@@ -191,21 +223,27 @@ const SelfServiceDashboard: React.FC = () => {
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors border border-green-100"
           >
             <FaMoneyBillWave className="text-2xl text-green-600" />
-            <span className="text-sm font-medium text-green-700">My Payslips</span>
+            <span className="text-sm font-medium text-green-700">
+              My Payslips
+            </span>
           </button>
           <button
             onClick={() => navigate("/self-service/attendance")}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors border border-purple-100"
           >
             <FaClock className="text-2xl text-purple-600" />
-            <span className="text-sm font-medium text-purple-700">My Attendance</span>
+            <span className="text-sm font-medium text-purple-700">
+              My Attendance
+            </span>
           </button>
           <button
             onClick={() => navigate("/self-service/missing-punch")}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-100"
           >
             <FaHourglassHalf className="text-2xl text-amber-600" />
-            <span className="text-sm font-medium text-amber-700">Missing Punch</span>
+            <span className="text-sm font-medium text-amber-700">
+              Missing Punch
+            </span>
           </button>
         </div>
       </div>
@@ -215,7 +253,9 @@ const SelfServiceDashboard: React.FC = () => {
         {/* Recent Payslips */}
         <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Recent Payslips</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Recent Payslips
+            </h3>
             <button
               onClick={() => navigate("/self-service/payslips")}
               className="text-sky-600 hover:text-sky-800 text-sm font-medium flex items-center gap-1"
@@ -243,7 +283,7 @@ const SelfServiceDashboard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gray-800">
-                      LKR {payslip.netSalary.toLocaleString()}
+                      {formatLkr(payslip.netSalary)}
                     </p>
                   </div>
                 </div>
@@ -260,7 +300,9 @@ const SelfServiceDashboard: React.FC = () => {
         {/* Upcoming Leaves */}
         <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Upcoming Leaves</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Upcoming Leaves
+            </h3>
             <button
               onClick={() => navigate("/self-service/leave-balance")}
               className="text-sky-600 hover:text-sky-800 text-sm font-medium flex items-center gap-1"
@@ -280,14 +322,18 @@ const SelfServiceDashboard: React.FC = () => {
                       <FaCalendarAlt />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">{leave.leaveType}</p>
+                      <p className="font-medium text-gray-800">
+                        {leave.leaveType}
+                      </p>
                       <p className="text-xs text-gray-500">
                         {leave.startDate} → {leave.endDate}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-700">{leave.days} day(s)</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {leave.days} day(s)
+                    </p>
                     <p className="text-xs text-green-600">{leave.status}</p>
                   </div>
                 </div>

@@ -8,6 +8,7 @@ import com.pirisa.hrm.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -196,14 +197,25 @@ public class UserController {
     }
 
     @GetMapping(value = "/profile", produces = "application/json")
-    public ResponseEntity<?> getUserProfile() {
+    public ResponseEntity<?> getUserProfile(Authentication authentication) {
         try {
-            // This endpoint should get the current logged-in user's profile
-            // For now, returning a placeholder response
+            User user = userService.getUserByUsername(authentication.getName());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "User profile not found"));
+            }
+
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("id", user.getId());
+            profile.put("name", user.getName());
+            profile.put("email", user.getEmail());
+            profile.put("username", user.getUsername());
+            profile.put("role", user.getRole());
+
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
             response.put("resultDesc", "Successful");
-            response.put("message", "User profile endpoint - implement with authentication");
+            response.put("data", profile);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -213,16 +225,39 @@ public class UserController {
     }
 
     @PutMapping(value = "/update", produces = "application/json")
-    public ResponseEntity<?> updateUserProfile(@RequestBody User updateUser) {
+    public ResponseEntity<?> updateUserProfile(
+            @RequestBody Map<String, String> profileUpdate,
+            Authentication authentication) {
         try {
-            // This endpoint should update the current logged-in user's profile
-            // For now, returning a placeholder response
+            String name = profileUpdate.get("name");
+            String email = profileUpdate.get("email");
+            if (name == null || name.isBlank() || email == null || email.isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(Collections.singletonMap("message", "Name and email are required"));
+            }
+
+            User user = userService.updateCurrentUserProfile(authentication.getName(), name, email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "User profile not found"));
+            }
+
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("id", user.getId());
+            profile.put("name", user.getName());
+            profile.put("email", user.getEmail());
+            profile.put("username", user.getUsername());
+            profile.put("role", user.getRole());
+
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
             response.put("resultDesc", "Successful");
-            response.put("message", "User update endpoint - implement with authentication");
+            response.put("data", profile);
 
             return ResponseEntity.ok(response);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Collections.singletonMap("message", "That email address is already in use"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "An error occurred while updating user profile"));

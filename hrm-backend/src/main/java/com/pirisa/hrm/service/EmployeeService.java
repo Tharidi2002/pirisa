@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.*;
@@ -737,9 +738,11 @@ public class EmployeeService {
             if (updateEmployee.getDateOfJoining() != null) employee.setDateOfJoining(updateEmployee.getDateOfJoining());
             
             // Update salary if provided (not null and >= 0)
-            if (updateEmployee.getBasicSalary() > 0) {
-                employee.setBasicSalary(updateEmployee.getBasicSalary());
-            } else if (updateEmployee.getBasicSalary() == 0 && updateEmployee.getEmpNo() != null) {
+            BigDecimal updatedSalary = updateEmployee.getBasicSalary();
+            if (updatedSalary != null && updatedSalary.signum() > 0) {
+                employee.setBasicSalary(updatedSalary);
+            } else if (updatedSalary != null && updatedSalary.signum() == 0
+                    && updateEmployee.getEmpNo() != null) {
                 // If frontend explicitly sends 0, only keep existing if current is > 0
                 // This prevents accidental salary reset
                 System.out.println("Keeping existing basicSalary: " + employee.getBasicSalary());

@@ -20,6 +20,10 @@ public interface EmployeeLeaveRepository extends JpaRepository<EmployeeLeave, Lo
            "(SELECT e.id FROM Employee e WHERE e.cmpId = :companyId)")
     List<EmployeeLeave> findByLeaveStatusAndCompanyId(@Param("leaveStatus") String leaveStatus, @Param("companyId") Long companyId);
 
+    @Query("SELECT COUNT(el) FROM EmployeeLeave el WHERE UPPER(el.leaveStatus) = UPPER(:leaveStatus) AND el.empId IN " +
+           "(SELECT e.id FROM Employee e WHERE e.cmpId = :companyId)")
+    long countByLeaveStatusAndCompanyId(@Param("leaveStatus") String leaveStatus, @Param("companyId") Long companyId);
+
     // Find leaves by employee ID within a date range
     @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND " +
            "((el.leaveStartDay BETWEEN :startDate AND :endDate) OR " +

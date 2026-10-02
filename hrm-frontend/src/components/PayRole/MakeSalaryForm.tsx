@@ -4,8 +4,16 @@ import { User } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Select from "react-select";
-import { isNonEmpty, isNonNegativeNumber, isPositiveAmount, toNumberSafe } from "../../utils/validation";
+import {
+  isNonEmpty,
+  isNonNegativeNumber,
+  isPositiveAmount,
+  toNumberSafe,
+} from "../../utils/validation";
 import { API_BASE } from "../../api/endpoints";
+import LkrInput from "./LkrInput";
+import { formatLkr, getLkrLocale } from "../../utils/currency";
+import { useTranslation } from "../../context/LanguageProvider";
 
 interface Employee {
   id: number;
@@ -78,6 +86,7 @@ interface CompanyOTSettings {
 }
 
 const SalaryForm: React.FC = () => {
+  const { language } = useTranslation();
   const { employeeId } = useParams<{ employeeId: string }>();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +100,7 @@ const SalaryForm: React.FC = () => {
 
   // Salary form state
   const [month, setMonth] = useState(() => {
-    const currentMonth = new Date().toLocaleString("default", {
+    const currentMonth = new Date().toLocaleString("en", {
       month: "long",
     });
     return currentMonth;
@@ -114,7 +123,7 @@ const SalaryForm: React.FC = () => {
     SelectedAllowance[]
   >([]);
   const [selectedAllowanceId, setSelectedAllowanceId] = useState<number | null>(
-    null
+    null,
   );
   const [allowanceAmount, setAllowanceAmount] = useState("");
   const [isAddAllowanceModalOpen, setIsAddAllowanceModalOpen] = useState(false);
@@ -189,7 +198,7 @@ const SalaryForm: React.FC = () => {
     Number(overTime) +
     selectedAllowances.reduce(
       (sum, allowance) => sum + Number(allowance.amount),
-      0
+      0,
     ) +
     selectedBonuses.reduce((sum, bonus) => sum + Number(bonus.amount), 0);
 
@@ -197,6 +206,13 @@ const SalaryForm: React.FC = () => {
     epf_8 + Number(appit) + Number(loan) + Number(other_deductions);
 
   const net_salary = total_earnings - total_deductions;
+  const monthOptions = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(2000, index, 1);
+    return {
+      value: date.toLocaleString("en", { month: "long" }),
+      label: date.toLocaleString(getLkrLocale(language), { month: "long" }),
+    };
+  });
 
   // Fetch employee data
   useEffect(() => {
@@ -217,7 +233,7 @@ const SalaryForm: React.FC = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!employeeResponse.ok) {
@@ -230,7 +246,7 @@ const SalaryForm: React.FC = () => {
           employeeData.EmployeeList.length > 0
         ) {
           const selectedEmployee = employeeData.EmployeeList.find(
-            (emp) => emp.id === Number(employeeId)
+            (emp) => emp.id === Number(employeeId),
           );
           if (selectedEmployee) {
             setEmployee(selectedEmployee);
@@ -270,7 +286,7 @@ const SalaryForm: React.FC = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -302,15 +318,12 @@ const SalaryForm: React.FC = () => {
           throw new Error("No token or company ID found");
         }
 
-        const response = await fetch(
-          `${API_BASE}/bonus/company/${companyId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE}/bonus/company/${companyId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch bonuses");
@@ -339,15 +352,12 @@ const SalaryForm: React.FC = () => {
 
         if (!token || !companyId) return;
 
-        const response = await fetch(
-          `${API_BASE}/companyOT/${companyId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE}/companyOT/${companyId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) throw new Error("Failed to fetch OT settings");
 
@@ -379,7 +389,7 @@ const SalaryForm: React.FC = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -389,7 +399,7 @@ const SalaryForm: React.FC = () => {
         const data = await response.json();
         if (data.resultCode === 100) {
           const employeeData = data.EmployeeList.find(
-            (emp: Employee) => emp.id === selectedEmployeeForOvertime.id
+            (emp: Employee) => emp.id === selectedEmployeeForOvertime.id,
           );
 
           if (employeeData) {
@@ -422,7 +432,7 @@ const SalaryForm: React.FC = () => {
 
     if (selectedAllowanceId && allowanceAmount) {
       const selectedAllowance = allowances.find(
-        (a) => a.id === selectedAllowanceId
+        (a) => a.id === selectedAllowanceId,
       );
       if (selectedAllowance) {
         setSelectedAllowances((prev) => [
@@ -478,7 +488,7 @@ const SalaryForm: React.FC = () => {
             : 0)
         );
       },
-      0
+      0,
     );
 
     const newEpf = (Number(basic_salary) + epfEligibleAllowancesTotal) * 0.08;
@@ -494,21 +504,18 @@ const SalaryForm: React.FC = () => {
         throw new Error("No token or company ID found");
       }
 
-      const response = await fetch(
-        `${API_BASE}/allowance/add_allowance`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            allowanceName: newAllowanceName,
-            epfEligibleStatus: newAllowanceEpfStatus,
-            cmpId: companyId,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/allowance/add_allowance`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          allowanceName: newAllowanceName,
+          epfEligibleStatus: newAllowanceEpfStatus,
+          cmpId: companyId,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to add new allowance");
@@ -538,20 +545,17 @@ const SalaryForm: React.FC = () => {
         throw new Error("No token or company ID found");
       }
 
-      const response = await fetch(
-        `${API_BASE}/bonus/add_bonus`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bonusName: newBonusName,
-            cmpId: companyId,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/bonus/add_bonus`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bonusName: newBonusName,
+          cmpId: companyId,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to add new bonus");
@@ -586,7 +590,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -603,7 +607,7 @@ const SalaryForm: React.FC = () => {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to calculate APIT"
+        err instanceof Error ? err.message : "Failed to calculate APIT",
       );
       return 0;
     }
@@ -623,7 +627,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -640,7 +644,7 @@ const SalaryForm: React.FC = () => {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to calculate APIT"
+        err instanceof Error ? err.message : "Failed to calculate APIT",
       );
       return 0;
     }
@@ -652,7 +656,7 @@ const SalaryForm: React.FC = () => {
     payable: number,
     lumpSum: number,
     monthlyTax: number,
-    prevLumpTax: number
+    prevLumpTax: number,
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -668,7 +672,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -689,7 +693,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 2)"
+          : "Failed to calculate APIT (Table 2)",
       );
       return 0;
     }
@@ -700,7 +704,7 @@ const SalaryForm: React.FC = () => {
     payable: number,
     lumpSum: number,
     monthlyTax: number,
-    prevLumpTax: number
+    prevLumpTax: number,
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -716,7 +720,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -737,7 +741,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 4)"
+          : "Failed to calculate APIT (Table 4)",
       );
       return 0;
     }
@@ -746,7 +750,7 @@ const SalaryForm: React.FC = () => {
   //APIT Cumulative
   const calculateApitTable5 = async (
     cumulativeIncome: number,
-    prevTax: number
+    prevTax: number,
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -762,7 +766,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -783,7 +787,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 5)"
+          : "Failed to calculate APIT (Table 5)",
       );
       return 0;
     }
@@ -805,7 +809,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -822,7 +826,9 @@ const SalaryForm: React.FC = () => {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to calculate APIT Table 06"
+        err instanceof Error
+          ? err.message
+          : "Failed to calculate APIT Table 06",
       );
       return 0;
     }
@@ -834,7 +840,7 @@ const SalaryForm: React.FC = () => {
     payable: number,
     lumpSum: number,
     taxOnTaxMonthly: number,
-    prevLumpTaxOnTax: number
+    prevLumpTaxOnTax: number,
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -850,7 +856,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -871,7 +877,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 7)"
+          : "Failed to calculate APIT (Table 7)",
       );
       return 0;
     }
@@ -893,7 +899,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -914,7 +920,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 8)"
+          : "Failed to calculate APIT (Table 8)",
       );
       return 0;
     }
@@ -935,7 +941,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -956,7 +962,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 9)"
+          : "Failed to calculate APIT (Table 9)",
       );
       return 0;
     }
@@ -965,7 +971,7 @@ const SalaryForm: React.FC = () => {
 
   const calculateApitTable10 = async (
     cumulativeIncome: number,
-    prevTax: number
+    prevTax: number,
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -981,7 +987,7 @@ const SalaryForm: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -1002,7 +1008,7 @@ const SalaryForm: React.FC = () => {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to calculate APIT (Table 10)"
+          : "Failed to calculate APIT (Table 10)",
       );
       return 0;
     }
@@ -1040,12 +1046,16 @@ const SalaryForm: React.FC = () => {
       }
 
       // Validate selected allowance/bonus amounts
-      const invalidAllowance = selectedAllowances.some((a) => !isPositiveAmount(a.amount));
+      const invalidAllowance = selectedAllowances.some(
+        (a) => !isPositiveAmount(a.amount),
+      );
       if (invalidAllowance) {
         throw new Error("One or more allowance amounts are invalid");
       }
 
-      const invalidBonus = selectedBonuses.some((b) => !isPositiveAmount(b.amount));
+      const invalidBonus = selectedBonuses.some(
+        (b) => !isPositiveAmount(b.amount),
+      );
       if (invalidBonus) {
         throw new Error("One or more bonus amounts are invalid");
       }
@@ -1086,17 +1096,14 @@ const SalaryForm: React.FC = () => {
 
       //console.log("Request Body:", requestBody); // Log to verify values
 
-      const response = await fetch(
-        `${API_BASE}/payrole/add_payrole`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${API_BASE}/payrole/add_payrole`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to submit payroll data");
@@ -1117,14 +1124,14 @@ const SalaryForm: React.FC = () => {
         handlenavigate();
       } else {
         throw new Error(
-          data.response.resultDesc || "Failed to save payroll data"
+          data.response.resultDesc || "Failed to save payroll data",
         );
       }
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : "An error occurred while submitting payroll"
+          : "An error occurred while submitting payroll",
       );
     } finally {
       setIsSubmitting(false);
@@ -1143,7 +1150,7 @@ const SalaryForm: React.FC = () => {
     otHours: number,
     otCal: number,
     otType: string,
-    otSettings: CompanyOTSettings | null
+    otSettings: CompanyOTSettings | null,
   ) => {
     if (!otSettings) return 0;
 
@@ -1163,7 +1170,7 @@ const SalaryForm: React.FC = () => {
       (total, attendance) => {
         const otHours = Math.max(
           0,
-          attendance.totalTime / 60 - companyOTSettings.totalTime
+          attendance.totalTime / 60 - companyOTSettings.totalTime,
         );
         const otType = selectedOtTypes[attendance.id] || "normal";
         return (
@@ -1173,11 +1180,11 @@ const SalaryForm: React.FC = () => {
             otHours,
             companyOTSettings.ot_cal,
             otType,
-            companyOTSettings
+            companyOTSettings,
           )
         );
       },
-      0
+      0,
     );
   };
 
@@ -1277,18 +1284,11 @@ const SalaryForm: React.FC = () => {
             onChange={(e) => setMonth(e.target.value)}
           >
             <option value="">Select Month</option>
-            <option value="January">January</option>
-            <option value="February">February</option>
-            <option value="March">March</option>
-            <option value="April">April</option>
-            <option value="May">May</option>
-            <option value="June">June</option>
-            <option value="July">July</option>
-            <option value="August">August</option>
-            <option value="September">September</option>
-            <option value="October">October</option>
-            <option value="November">November</option>
-            <option value="December">December</option>
+            {monthOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="w-full md:w-1/2">
@@ -1301,7 +1301,7 @@ const SalaryForm: React.FC = () => {
             <option value="">Select Year</option>
             {Array.from(
               { length: 10 },
-              (_, i) => new Date().getFullYear() + i
+              (_, i) => new Date().getFullYear() + i,
             ).map((year) => (
               <option key={year} value={year}>
                 {year}
@@ -1320,24 +1320,21 @@ const SalaryForm: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block mb-1 text-sm">Basic Salary</label>
-              <input
-                type="text"
-                className="w-full p-2 bg-gray-100 rounded"
-                placeholder="Rs. 00"
-                value={`Rs. ${employee?.basicSalary ?? ""}`}
-                onChange={(e) =>
-                  setBasic_salary(e.target.value.replace("Rs. ", ""))
-                }
+              <LkrInput
+                value={basic_salary}
+                onChange={setBasic_salary}
+                language={language}
+                aria-label="Basic salary"
               />
             </div>
 
             <div>
               <label className="block mb-1 text-sm">Over Time</label>
-              <input
-                type="text"
-                className="w-full p-2 bg-gray-100 rounded cursor-pointer"
-                placeholder="Rs. 00"
-                value={`Rs. ${overTime}`}
+              <LkrInput
+                value={overTime}
+                onChange={setOverTime}
+                language={language}
+                aria-label="Overtime amount"
                 onClick={() => {
                   setSelectedEmployeeForOvertime(employee);
                   setIsOvertimeModalOpen(true);
@@ -1367,7 +1364,7 @@ const SalaryForm: React.FC = () => {
                         ? {
                             value: selectedAllowanceId,
                             label: allowances.find(
-                              (a) => a.id === selectedAllowanceId
+                              (a) => a.id === selectedAllowanceId,
                             )?.allowanceName,
                           }
                         : null
@@ -1401,12 +1398,12 @@ const SalaryForm: React.FC = () => {
                     }),
                   }}
                 />
-                <input
-                  type="text"
-                  className="w-full sm:w-1/2 p-2 bg-gray-100 rounded"
-                  placeholder="Amount"
+                <LkrInput
                   value={allowanceAmount}
-                  onChange={(e) => setAllowanceAmount(e.target.value)}
+                  onChange={setAllowanceAmount}
+                  language={language}
+                  aria-label="Allowance amount"
+                  className="sm:w-1/2"
                 />
                 <button
                   className="bg-sky-500 text-white px-4 py-2 rounded-md hover:bg-sky-600"
@@ -1425,7 +1422,7 @@ const SalaryForm: React.FC = () => {
               >
                 <span>{allowance.allowanceName}</span>
                 <div className="flex items-center gap-2">
-                  <span>Rs {allowance.amount}</span>
+                  <span>{formatLkr(allowance.amount, language)}</span>
                   <button
                     onClick={() => removeSelectedAllowance(allowance.id)}
                     className="text-red-500 hover:text-red-700"
@@ -1490,12 +1487,12 @@ const SalaryForm: React.FC = () => {
                     }),
                   }}
                 />
-                <input
-                  type="text"
-                  className="w-full sm:w-1/2 p-2 bg-gray-100 rounded"
-                  placeholder="Amount"
+                <LkrInput
                   value={bonusAmount}
-                  onChange={(e) => setBonusAmount(e.target.value)}
+                  onChange={setBonusAmount}
+                  language={language}
+                  aria-label="Bonus amount"
+                  className="sm:w-1/2"
                 />
                 <button
                   className="bg-sky-500 text-white px-4 py-2 rounded-md hover:bg-sky-600"
@@ -1514,7 +1511,7 @@ const SalaryForm: React.FC = () => {
               >
                 <span>{bonus.bonusName}</span>
                 <div className="flex items-center gap-2">
-                  <span>Rs {bonus.amount}</span>
+                  <span>{formatLkr(bonus.amount, language)}</span>
                   <button
                     onClick={() => removeSelectedBonus(bonus.id)}
                     className="text-red-500 hover:text-red-700"
@@ -1528,7 +1525,9 @@ const SalaryForm: React.FC = () => {
 
           <div className="mt-6 font-bold">
             Total Earning:{" "}
-            <span className="text-green-600">Rs {total_earnings || "00"}</span>
+            <span className="text-green-600">
+              {formatLkr(total_earnings, language)}
+            </span>
           </div>
         </div>
 
@@ -1539,11 +1538,11 @@ const SalaryForm: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block mb-1 text-sm">EPF (8%)</label>
-              <input
-                type="text"
-                className="w-full p-2 bg-gray-100 rounded"
-                placeholder="Rs. 00"
-                value={`Rs. ${epf_8.toFixed(2)}`}
+              <LkrInput
+                value={epf_8}
+                onChange={() => undefined}
+                language={language}
+                aria-label="EPF deduction"
                 readOnly
               />
             </div>
@@ -1581,12 +1580,11 @@ const SalaryForm: React.FC = () => {
               </div>
 
               {appitType === "manual" ? (
-                <input
-                  type="text"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter APPIT amount"
+                <LkrInput
                   value={appit}
-                  onChange={(e) => setAppit(e.target.value)}
+                  onChange={setAppit}
+                  language={language}
+                  aria-label="APIT deduction"
                 />
               ) : (
                 <div className="flex items-center gap-2">
@@ -1663,15 +1661,11 @@ const SalaryForm: React.FC = () => {
                         }),
                       }}
                     />
-                    <input
-                      type="text"
-                      className="w-full sm:w-1/3 p-2 bg-gray-100 rounded"
-                      placeholder="Amount"
-                      value={
-                        apitResult !== null
-                          ? `Rs. ${parseFloat(appit).toFixed(2)}`
-                          : ""
-                      }
+                    <LkrInput
+                      value={apitResult !== null ? appit : ""}
+                      onChange={() => undefined}
+                      language={language}
+                      aria-label="Calculated APIT amount"
                       readOnly
                     />
                   </div>
@@ -1681,46 +1675,30 @@ const SalaryForm: React.FC = () => {
 
             <div>
               <label className="block mb-1 text-sm">Loans</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 pointer-events-none">
-                  Rs.
-                </span>
-                <input
-                  type="text"
-                  className="w-full p-2 pl-8 bg-gray-100 rounded"
-                  placeholder="00"
-                  value={loan}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.]/g, "");
-                    setLoan(value);
-                  }}
-                />
-              </div>
+              <LkrInput
+                value={loan}
+                onChange={setLoan}
+                language={language}
+                aria-label="Loan deduction"
+              />
             </div>
 
             <div>
               <label className="block mb-1 text-sm">Other Deduction</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 pointer-events-none">
-                  Rs.
-                </span>
-                <input
-                  type="text"
-                  className="w-full p-2 pl-8 bg-gray-100 rounded"
-                  placeholder="00"
-                  value={other_deductions}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.]/g, "");
-                    setOther_deductions(value);
-                  }}
-                />
-              </div>
+              <LkrInput
+                value={other_deductions}
+                onChange={setOther_deductions}
+                language={language}
+                aria-label="Other deductions"
+              />
             </div>
           </div>
 
           <div className="mt-6 font-bold">
             Total Deduction:{" "}
-            <span className="text-red-600">Rs {total_deductions || "00"}</span>
+            <span className="text-red-600">
+              {formatLkr(total_deductions, language)}
+            </span>
           </div>
         </div>
       </div>
@@ -1729,7 +1707,9 @@ const SalaryForm: React.FC = () => {
       <div className="flex justify-end mt-4 mb-6">
         <div className="text-xl font-bold">
           Net Salary:{" "}
-          <span className="text-gray-800">Rs {net_salary || "00"}</span>
+          <span className="text-gray-800">
+            {formatLkr(net_salary, language)}
+          </span>
         </div>
       </div>
 
@@ -1876,14 +1856,14 @@ const SalaryForm: React.FC = () => {
                       const otHours = Math.max(
                         0,
                         attendance.totalTime / 60 -
-                          (companyOTSettings?.totalTime || 0)
+                          (companyOTSettings?.totalTime || 0),
                       );
 
                       return (
                         <tr key={attendance.id}>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                             {new Date(
-                              attendance.startedAt
+                              attendance.startedAt,
                             ).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
@@ -1892,14 +1872,14 @@ const SalaryForm: React.FC = () => {
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                             {new Date(attendance.startedAt).toLocaleTimeString(
                               [],
-                              { hour: "2-digit", minute: "2-digit" }
+                              { hour: "2-digit", minute: "2-digit" },
                             )}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                             {attendance.endedAt
                               ? new Date(attendance.endedAt).toLocaleTimeString(
                                   [],
-                                  { hour: "2-digit", minute: "2-digit" }
+                                  { hour: "2-digit", minute: "2-digit" },
                                 )
                               : "-"}
                           </td>
@@ -1915,7 +1895,7 @@ const SalaryForm: React.FC = () => {
                               onChange={(e) =>
                                 handleOtTypeChange(
                                   attendance.id,
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               defaultValue="normal"
@@ -1930,18 +1910,20 @@ const SalaryForm: React.FC = () => {
                             </select>
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                            Rs.{" "}
-                            {calculateOtAmount(
-                              selectedEmployeeForOvertime?.basicSalary || 0,
-                              otHours,
-                              companyOTSettings?.ot_cal || 240,
-                              selectedOtTypes[attendance.id] || "normal",
-                              companyOTSettings
-                            ).toFixed(2)}
+                            {formatLkr(
+                              calculateOtAmount(
+                                selectedEmployeeForOvertime?.basicSalary || 0,
+                                otHours,
+                                companyOTSettings?.ot_cal || 240,
+                                selectedOtTypes[attendance.id] || "normal",
+                                companyOTSettings,
+                              ),
+                              language,
+                            )}
                           </td>
                         </tr>
                       );
-                    }
+                    },
                   )}
                 </tbody>
               </table>
@@ -1981,7 +1963,7 @@ const SalaryForm: React.FC = () => {
                 <input
                   type="text"
                   className="w-full p-2 bg-gray-100 rounded"
-                  value={`Rs. ${total_earnings.toFixed(2)}`}
+                  value={formatLkr(total_earnings, language)}
                   readOnly
                 />
               </div>
@@ -2021,52 +2003,47 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Paid</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter paid amount"
+                <LkrInput
                   value={paid}
-                  onChange={(e) => setPaid(e.target.value)}
+                  onChange={setPaid}
+                  language={language}
+                  aria-label="Paid amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Payable</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter payable amount"
+                <LkrInput
                   value={payable}
-                  onChange={(e) => setPayable(e.target.value)}
+                  onChange={setPayable}
+                  language={language}
+                  aria-label="Payable amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Lump Sum</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter lump sum amount"
+                <LkrInput
                   value={lumpSum}
-                  onChange={(e) => setLumpSum(e.target.value)}
+                  onChange={setLumpSum}
+                  language={language}
+                  aria-label="Lump sum amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Monthly Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter monthly tax amount"
+                <LkrInput
                   value={monthlyTax}
-                  onChange={(e) => setMonthlyTax(e.target.value)}
+                  onChange={setMonthlyTax}
+                  language={language}
+                  aria-label="Monthly tax amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Previous Lump Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter previous lump tax amount"
+                <LkrInput
                   value={prevLumpTax}
-                  onChange={(e) => setPrevLumpTax(e.target.value)}
+                  onChange={setPrevLumpTax}
+                  language={language}
+                  aria-label="Previous lump tax"
                 />
               </div>
 
@@ -2089,7 +2066,7 @@ const SalaryForm: React.FC = () => {
                         parseFloat(payable) || 0,
                         parseFloat(lumpSum) || 0,
                         parseFloat(monthlyTax) || 0,
-                        parseFloat(prevLumpTax) || 0
+                        parseFloat(prevLumpTax) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2098,7 +2075,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2125,7 +2102,7 @@ const SalaryForm: React.FC = () => {
                 <input
                   type="text"
                   className="w-full p-2 bg-gray-100 rounded"
-                  value={`Rs. ${total_earnings.toFixed(2)}`}
+                  value={formatLkr(total_earnings, language)}
                   readOnly
                 />
               </div>
@@ -2165,52 +2142,47 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Paid</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter paid amount"
+                <LkrInput
                   value={paid}
-                  onChange={(e) => setPaid(e.target.value)}
+                  onChange={setPaid}
+                  language={language}
+                  aria-label="Paid amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Payable</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter payable amount"
+                <LkrInput
                   value={payable}
-                  onChange={(e) => setPayable(e.target.value)}
+                  onChange={setPayable}
+                  language={language}
+                  aria-label="Payable amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Lump Sum</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter lump sum amount"
+                <LkrInput
                   value={lumpSum}
-                  onChange={(e) => setLumpSum(e.target.value)}
+                  onChange={setLumpSum}
+                  language={language}
+                  aria-label="Lump sum amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Monthly Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter monthly tax amount"
+                <LkrInput
                   value={monthlyTax}
-                  onChange={(e) => setMonthlyTax(e.target.value)}
+                  onChange={setMonthlyTax}
+                  language={language}
+                  aria-label="Monthly tax amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Previous Lump Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter previous lump tax amount"
+                <LkrInput
                   value={prevLumpTax}
-                  onChange={(e) => setPrevLumpTax(e.target.value)}
+                  onChange={setPrevLumpTax}
+                  language={language}
+                  aria-label="Previous lump tax"
                 />
               </div>
 
@@ -2233,7 +2205,7 @@ const SalaryForm: React.FC = () => {
                         parseFloat(payable) || 0,
                         parseFloat(lumpSum) || 0,
                         parseFloat(monthlyTax) || 0,
-                        parseFloat(prevLumpTax) || 0
+                        parseFloat(prevLumpTax) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2242,7 +2214,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2266,22 +2238,20 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Cumulative Income</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Cumulative Income"
+                <LkrInput
                   value={cumulativeIncome}
-                  onChange={(e) => setCumulativeIncome(e.target.value)}
+                  onChange={setCumulativeIncome}
+                  language={language}
+                  aria-label="Cumulative income"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Prev Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Prev Tax"
+                <LkrInput
                   value={prevTax}
-                  onChange={(e) => setPrevTax(e.target.value)}
+                  onChange={setPrevTax}
+                  language={language}
+                  aria-label="Previous tax"
                 />
               </div>
 
@@ -2301,7 +2271,7 @@ const SalaryForm: React.FC = () => {
                     try {
                       const result = await calculateApitTable5(
                         parseFloat(cumulativeIncome) || 0,
-                        parseFloat(prevTax) || 0
+                        parseFloat(prevTax) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2310,7 +2280,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2337,7 +2307,7 @@ const SalaryForm: React.FC = () => {
                 <input
                   type="text"
                   className="w-full p-2 bg-gray-100 rounded"
-                  value={`Rs. ${total_earnings.toFixed(2)}`}
+                  value={formatLkr(total_earnings, language)}
                   readOnly
                 />
               </div>
@@ -2377,54 +2347,49 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Paid</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter paid amount"
+                <LkrInput
                   value={paid}
-                  onChange={(e) => setPaid(e.target.value)}
+                  onChange={setPaid}
+                  language={language}
+                  aria-label="Paid amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Payable</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter payable amount"
+                <LkrInput
                   value={payable}
-                  onChange={(e) => setPayable(e.target.value)}
+                  onChange={setPayable}
+                  language={language}
+                  aria-label="Payable amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Lump Sum</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter lump sum amount"
+                <LkrInput
                   value={lumpSum}
-                  onChange={(e) => setLumpSum(e.target.value)}
+                  onChange={setLumpSum}
+                  language={language}
+                  aria-label="Lump sum amount"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Tax On Tax Monthly</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Tax On Tax Monthly"
+                <LkrInput
                   value={taxOnTaxMonthly}
-                  onChange={(e) => setTaxOnTaxMonthly(e.target.value)}
+                  onChange={setTaxOnTaxMonthly}
+                  language={language}
+                  aria-label="Tax on tax monthly"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">
                   Tax On Tax Previous Lump{" "}
                 </label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter previous lump tax amount"
+                <LkrInput
                   value={prevLumpTaxOnTax}
-                  onChange={(e) => setPrevLumpTaxOnTax(e.target.value)}
+                  onChange={setPrevLumpTaxOnTax}
+                  language={language}
+                  aria-label="Previous lump tax on tax"
                 />
               </div>
 
@@ -2447,7 +2412,7 @@ const SalaryForm: React.FC = () => {
                         parseFloat(payable) || 0,
                         parseFloat(lumpSum) || 0,
                         parseFloat(taxOnTaxMonthly) || 0,
-                        parseFloat(prevLumpTaxOnTax) || 0
+                        parseFloat(prevLumpTaxOnTax) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2456,7 +2421,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2480,22 +2445,20 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Primary</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Cumulative Income"
+                <LkrInput
                   value={primary}
-                  onChange={(e) => setPrimary(e.target.value)}
+                  onChange={setPrimary}
+                  language={language}
+                  aria-label="Primary income"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Secondary</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Prev Tax"
+                <LkrInput
                   value={secondary}
-                  onChange={(e) => setSecondary(e.target.value)}
+                  onChange={setSecondary}
+                  language={language}
+                  aria-label="Secondary income"
                 />
               </div>
 
@@ -2515,7 +2478,7 @@ const SalaryForm: React.FC = () => {
                     try {
                       const result = await calculateApitTable8(
                         parseFloat(primary) || 0,
-                        parseFloat(secondary) || 0
+                        parseFloat(secondary) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2524,7 +2487,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2548,12 +2511,11 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Secondary</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Prev Tax"
+                <LkrInput
                   value={secondary}
-                  onChange={(e) => setSecondary(e.target.value)}
+                  onChange={setSecondary}
+                  language={language}
+                  aria-label="Secondary income"
                 />
               </div>
 
@@ -2572,7 +2534,7 @@ const SalaryForm: React.FC = () => {
                   onClick={async () => {
                     try {
                       const result = await calculateApitTable9(
-                        parseFloat(secondary) || 0
+                        parseFloat(secondary) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2581,7 +2543,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");
@@ -2605,22 +2567,20 @@ const SalaryForm: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block mb-1 text-sm">Cumulative Income</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Cumulative Income"
+                <LkrInput
                   value={cumulativeIncome}
-                  onChange={(e) => setCumulativeIncome(e.target.value)}
+                  onChange={setCumulativeIncome}
+                  language={language}
+                  aria-label="Cumulative income"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm">Prev Tax</label>
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-100 rounded"
-                  placeholder="Enter Prev Tax"
+                <LkrInput
                   value={prevTax}
-                  onChange={(e) => setPrevTax(e.target.value)}
+                  onChange={setPrevTax}
+                  language={language}
+                  aria-label="Previous tax"
                 />
               </div>
 
@@ -2640,7 +2600,7 @@ const SalaryForm: React.FC = () => {
                     try {
                       const result = await calculateApitTable10(
                         parseFloat(cumulativeIncome) || 0,
-                        parseFloat(prevTax) || 0
+                        parseFloat(prevTax) || 0,
                       );
 
                       // Ensure the result is displayed even if it's 0
@@ -2649,7 +2609,7 @@ const SalaryForm: React.FC = () => {
 
                       // Show success message
                       toast.success(
-                        `APIT calculated: Rs. ${result.toFixed(2)}`
+                        `APIT calculated: ${formatLkr(result, language)}`,
                       );
                     } catch {
                       toast.error("Failed to calculate APIT");

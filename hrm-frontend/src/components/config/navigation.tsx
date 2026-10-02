@@ -8,6 +8,7 @@ import {
   FaAddressCard,
   FaUserCircle,
   FaBriefcase,
+  FaCog,
 } from "react-icons/fa";
 import { NavItem } from "../types/navigation";
 
@@ -32,7 +33,11 @@ export const navItems: NavItem[] = [
     subItems: [
       { id: "all-employees", path: "/employee/all", label: "All Employees" },
       { id: "new-employee", path: "/employee/new", label: "New Employee" },
-      { id: "edit-employee", path: "/employee/edit/:id", label: "Edit Employee" },
+      {
+        id: "edit-employee",
+        path: "/employee/edit/:id",
+        label: "Edit Employee",
+      },
     ],
   },
   {
@@ -42,11 +47,31 @@ export const navItems: NavItem[] = [
     icon: FaCalendarAlt,
     roles: ["CMPNY"],
     subItems: [
-      { id: "attendance-list", path: "/attendance/list", label: "Attendance List" },
-      { id: "monthly-calendar", path: "/attendance/calendar", label: "Monthly Calendar" },
-      { id: "mark-attendance", path: "/attendance/mark", label: "Mark Attendance" },
-      { id: "bulk-attendance", path: "/attendance/bulk", label: "Bulk Attendance" },
-      { id: "attendance-report", path: "/attendance/report", label: "Attendance Report" },
+      {
+        id: "attendance-list",
+        path: "/attendance/list",
+        label: "Attendance List",
+      },
+      {
+        id: "monthly-calendar",
+        path: "/attendance/calendar",
+        label: "Monthly Calendar",
+      },
+      {
+        id: "mark-attendance",
+        path: "/attendance/mark",
+        label: "Mark Attendance",
+      },
+      {
+        id: "bulk-attendance",
+        path: "/attendance/bulk",
+        label: "Bulk Attendance",
+      },
+      {
+        id: "attendance-report",
+        path: "/attendance/report",
+        label: "Attendance Report",
+      },
     ],
   },
   {
@@ -57,8 +82,16 @@ export const navItems: NavItem[] = [
     roles: ["CMPNY"],
     subItems: [
       { id: "salaryList", path: "/payrole/salaryList", label: "Salary List" },
-      { id: "makesalary", path: "/payrole/makesalary/:employeeId", label: "Make Salary" },
-      { id: "payslips", path: "/payrole/payslips/:employeeId", label: "Pay Slips" },
+      {
+        id: "makesalary",
+        path: "/payrole/makesalary/:employeeId",
+        label: "Make Salary",
+      },
+      {
+        id: "payslips",
+        path: "/payrole/payslips/:employeeId",
+        label: "Pay Slips",
+      },
     ],
   },
   {
@@ -68,7 +101,11 @@ export const navItems: NavItem[] = [
     icon: FaAccusoft,
     roles: ["CMPNY"],
     subItems: [
-      { id: "leave-requests", path: "/leave/requests", label: "Leave Requests" },
+      {
+        id: "leave-requests",
+        path: "/leave/requests",
+        label: "Leave Requests",
+      },
     ],
   },
   {
@@ -78,7 +115,11 @@ export const navItems: NavItem[] = [
     icon: FaChartBar,
     roles: ["CMPNY"],
     subItems: [
-      { id: "evaluationForm", path: "/performance/evaluationForm", label: "Evaluation Form" },
+      {
+        id: "evaluationForm",
+        path: "/performance/evaluationForm",
+        label: "Evaluation Form",
+      },
       { id: "newForm", path: "/performance/newForm", label: "New Form" },
     ],
   },
@@ -89,10 +130,22 @@ export const navItems: NavItem[] = [
     icon: FaBriefcase,
     roles: ["CMPNY"],
     subItems: [
-      { id: "recruitment-dashboard", path: "/recruitment/dashboard", label: "Dashboard" },
+      {
+        id: "recruitment-dashboard",
+        path: "/recruitment/dashboard",
+        label: "Dashboard",
+      },
       { id: "job-postings", path: "/recruitment/jobs", label: "Job Postings" },
-      { id: "applicants", path: "/recruitment/applicants", label: "Applicants" },
-      { id: "interviews", path: "/recruitment/interviews", label: "Interviews" },
+      {
+        id: "applicants",
+        path: "/recruitment/applicants",
+        label: "Applicants",
+      },
+      {
+        id: "interviews",
+        path: "/recruitment/interviews",
+        label: "Interviews",
+      },
     ],
   },
   {
@@ -102,7 +155,11 @@ export const navItems: NavItem[] = [
     icon: FaAddressCard,
     roles: ["CMPNY"],
     subItems: [
-      { id: "payRoleReport", path: "/reports/payRoleReport", label: "Salary Report" },
+      {
+        id: "payRoleReport",
+        path: "/reports/payRoleReport",
+        label: "Salary Report",
+      },
     ],
   },
 
@@ -124,12 +181,32 @@ export const navItems: NavItem[] = [
     icon: FaUserCircle,
     roles: ["EMPLOYEE"],
     subItems: [
-      { id: "ss-dashboard", path: "/self-service/dashboard", label: "Dashboard" },
+      {
+        id: "ss-dashboard",
+        path: "/self-service/dashboard",
+        label: "Dashboard",
+      },
       { id: "ss-profile", path: "/self-service/profile", label: "My Profile" },
-      { id: "ss-payslips", path: "/self-service/payslips", label: "My Payslips" },
-      { id: "ss-attendance", path: "/self-service/attendance", label: "My Attendance" },
-      { id: "ss-leave", path: "/self-service/leave-balance", label: "Leave Balance" },
-      { id: "ss-missing", path: "/self-service/missing-punch", label: "Missing Punch" },
+      {
+        id: "ss-payslips",
+        path: "/self-service/payslips",
+        label: "My Payslips",
+      },
+      {
+        id: "ss-attendance",
+        path: "/self-service/attendance",
+        label: "My Attendance",
+      },
+      {
+        id: "ss-leave",
+        path: "/self-service/leave-balance",
+        label: "Leave Balance",
+      },
+      {
+        id: "ss-missing",
+        path: "/self-service/missing-punch",
+        label: "Missing Punch",
+      },
     ],
   },
   {
@@ -147,5 +224,21 @@ export const navItems: NavItem[] = [
     icon: FaAccusoft,
     roles: ["EMPLOYEE"],
     subItems: [],
+  },
+  {
+    id: "settings",
+    path: "/settings",
+    label: "Settings",
+    icon: FaCog,
+    roles: ["CMPNY", "HRM", "EMPLOYEE", "USER"],
+    subItems: [
+      { id: "preferences", path: "/settings", label: "Preferences" },
+      {
+        id: "company-settings",
+        path: "/company-settings",
+        label: "Company settings",
+        roles: ["CMPNY", "HRM"],
+      },
+    ],
   },
 ];

@@ -19,8 +19,8 @@ const DateFilter: React.FC<DateFilterProps> = ({ onDateChange }) => {
   // Set default date on component mount
   useEffect(() => {
     // Trigger the parent's date change handler with today's date on component mount
-    onDateChange(selectedDate);
-  }, []);
+    onDateChange(getTodayDate());
+  }, [onDateChange]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;

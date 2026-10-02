@@ -43,13 +43,7 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
   const CANVAS_SIZE = 400;
   const CROP_RADIUS = 180;
 
-  useEffect(() => {
-    if (employeeId) {
-      checkProfileImageExists();
-    }
-  }, [employeeId, token]);
-
-  const loadProfileImage = async () => {
+  const loadProfileImage = useCallback(async () => {
     try {
       const resp = await fetch(
         `${API_BASE}/api/profile-image/view/${employeeId}`,
@@ -78,9 +72,9 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
     } catch {
       // ignore image failures
     }
-  };
+  }, [employeeId, token]);
 
-  const checkProfileImageExists = async () => {
+  const checkProfileImageExists = useCallback(async () => {
     try {
       const response = await fetch(
         `${API_BASE}/api/profile-image/exists/${employeeId}`,
@@ -115,7 +109,13 @@ const ProfileImageEditor: React.FC<ProfileImageEditorProps> = ({
     } catch (error) {
       console.error('Error checking profile image:', error);
     }
-  };
+  }, [employeeId, loadProfileImage, onImageChange, token]);
+
+  useEffect(() => {
+    if (employeeId) {
+      void checkProfileImageExists();
+    }
+  }, [checkProfileImageExists, employeeId]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

@@ -127,7 +127,8 @@ export const attendanceService = {
     try {
       const resp = await axiosInstance.get(`/api/profile-image/exists/${empId}`);
       return resp?.data?.hasProfileImage === true;
-    } catch (e) {
+    } catch (error) {
+      console.error("Failed to check profile image availability:", error);
       return false;
     }
   },
@@ -146,7 +147,8 @@ export const attendanceService = {
         };
       }>(`/companyOT/${companyId}`);
       return response.data["OT Details"] || null;
-    } catch (e) {
+    } catch (error) {
+      console.error("Failed to fetch company overtime details:", error);
       return null;
     }
   },

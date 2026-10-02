@@ -18,6 +18,7 @@ import { InfoItem } from "../../EmployeeFolder/EmployeeProfile/InfoItem";
 import { LeaveBalanceCard } from "../../EmployeeFolder/EmployeeProfile/LeaveBalanceCard ";
 import { ProfileCard } from "../../EmployeeFolder/EmployeeProfile/ProfileCard";
 import { API_BASE } from "../../api/endpoints";
+import { formatLkr } from "../../utils/currency";
 
 interface EmployeeDetails {
   id: number;
@@ -46,6 +47,11 @@ interface LeaveBalance {
   calculatedOn?: string | null;
 }
 
+interface LeaveBalanceApiResponse {
+  resultCode: number;
+  planBalances?: LeaveBalance[];
+}
+
 type LeaveBalanceAsOfMode = "CURRENT_DATE" | "LAST_CALCULATION_DATE";
 
 const EmployeeProfile = () => {
@@ -54,7 +60,8 @@ const EmployeeProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
-  const [asOfMode, setAsOfMode] = useState<LeaveBalanceAsOfMode>("CURRENT_DATE");
+  const [asOfMode, setAsOfMode] =
+    useState<LeaveBalanceAsOfMode>("CURRENT_DATE");
   const [documentAvailability, setDocumentAvailability] = useState<
     Record<string, boolean>
   >({});
@@ -80,7 +87,7 @@ const EmployeeProfile = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!employeeResponse.ok) {
@@ -116,20 +123,14 @@ const EmployeeProfile = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (leaveBalanceResponse.ok) {
-          const data = await leaveBalanceResponse.json();
+          const data: LeaveBalanceApiResponse =
+            await leaveBalanceResponse.json();
           if (data?.resultCode === 100 && Array.isArray(data?.planBalances)) {
-            const balances: LeaveBalance[] = data.planBalances.map((b: any) => ({
-              leaveType: b.leaveType,
-              available: b.available,
-              taken: b.taken,
-              remaining: b.remaining,
-              calculatedOn: b.calculatedOn ?? null,
-            }));
-            setLeaveBalances(balances);
+            setLeaveBalances(data.planBalances);
           } else {
             setLeaveBalances([]);
           }
@@ -150,13 +151,13 @@ const EmployeeProfile = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (existsResponse.ok) {
         const existsData = await existsResponse.json();
         const hasImage = Boolean(
-          existsData?.hasProfileImage ?? existsData?.exists
+          existsData?.hasProfileImage ?? existsData?.exists,
         );
         if (hasImage) {
           const imgResponse = await fetch(
@@ -165,7 +166,7 @@ const EmployeeProfile = () => {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
 
           if (imgResponse.ok) {
@@ -197,16 +198,17 @@ const EmployeeProfile = () => {
     for (const docType of documentTypes) {
       try {
         // Use profile image API for photo, document API for others
-        const url = docType === "photo" 
-          ? `${API_BASE}/api/profile-image/exists/${empId}`
-          : `${API_BASE}/document/view/emp/${empId}/${docType}`;
-          
+        const url =
+          docType === "photo"
+            ? `${API_BASE}/api/profile-image/exists/${empId}`
+            : `${API_BASE}/document/view/emp/${empId}/${docType}`;
+
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        
+
         // For photo, check the response body for hasProfileImage flag
         if (docType === "photo") {
           const data = await response.json();
@@ -236,10 +238,11 @@ const EmployeeProfile = () => {
       }
 
       // Use profile image API for photo, document API for others
-      const url = documentType === "photo" 
-        ? `${API_BASE}/api/profile-image/view/${empId}`
-        : `${API_BASE}/document/view/emp/${empId}/${documentType}`;
-        
+      const url =
+        documentType === "photo"
+          ? `${API_BASE}/api/profile-image/view/${empId}`
+          : `${API_BASE}/document/view/emp/${empId}/${documentType}`;
+
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -316,7 +319,7 @@ const EmployeeProfile = () => {
             <InfoItem
               icon={<FaMoneyBillWave />}
               label="Basic Salary"
-              value={employee.basic_salary.toLocaleString()}
+              value={formatLkr(employee.basic_salary)}
             />
             <InfoItem
               icon={<FaVenusMars />}
@@ -363,14 +366,20 @@ const EmployeeProfile = () => {
       <Section title="Leave Balance">
         <div className="flex items-center justify-end mb-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600 font-medium">Balance As-of Date</span>
+            <span className="text-sm text-gray-600 font-medium">
+              Balance As-of Date
+            </span>
             <select
               className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
               value={asOfMode}
-              onChange={(e) => setAsOfMode(e.target.value as LeaveBalanceAsOfMode)}
+              onChange={(e) =>
+                setAsOfMode(e.target.value as LeaveBalanceAsOfMode)
+              }
             >
               <option value="CURRENT_DATE">Current date</option>
-              <option value="LAST_CALCULATION_DATE">Last calculation date</option>
+              <option value="LAST_CALCULATION_DATE">
+                Last calculation date
+              </option>
             </select>
           </div>
         </div>

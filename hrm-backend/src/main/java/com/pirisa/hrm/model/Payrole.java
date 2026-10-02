@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Getter
@@ -30,41 +32,43 @@ public class Payrole implements Serializable {
 
     private String allowance;
 
-    @Column(name = "overtime_pay")
+    @Column(name = "overtime_pay", precision = 19, scale = 2)
     @JsonProperty("overtime_pay")
-    private float overtimePay;
+    private BigDecimal overtimePay;
 
     @Column(name = "bonus_pay")
     @JsonProperty("bonus_pay")
     private String bonusPay;
 
-    private float appit;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal appit;
 
-    private float loan;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal loan;
 
-    @Column(name = "other_deductions")
+    @Column(name = "other_deductions", precision = 19, scale = 2)
     @JsonProperty("other_deductions")
-    private float otherDeductions;
+    private BigDecimal otherDeductions;
 
-    @Column(name = "epf_8")
+    @Column(name = "epf_8", precision = 19, scale = 2)
     @JsonProperty("epf_8")
-    private float epf8;
+    private BigDecimal epf8;
 
-    @Column(name = "total_earnings")
+    @Column(name = "total_earnings", precision = 19, scale = 2)
     @JsonProperty("total_earnings")
-    private float totalEarnings;
+    private BigDecimal totalEarnings;
 
-    @Column(name = "total_deductions")
+    @Column(name = "total_deductions", precision = 19, scale = 2)
     @JsonProperty("total_deductions")
-    private float totalDeductions;
+    private BigDecimal totalDeductions;
 
-    @Column(name = "net_salary")
+    @Column(name = "net_salary", precision = 19, scale = 2)
     @JsonProperty("net_salary")
-    private float netSalary;
+    private BigDecimal netSalary;
 
-    @Column(name = "basic_salary")
+    @Column(name = "basic_salary", precision = 19, scale = 2)
     @JsonProperty("basic_salary")
-    private float basicSalary;
+    private BigDecimal basicSalary;
 
     @Column(name = "emp_id")
     @JsonProperty("emp_id")
@@ -73,4 +77,22 @@ public class Payrole implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeMonetaryAmounts() {
+        overtimePay = toCents(overtimePay);
+        appit = toCents(appit);
+        loan = toCents(loan);
+        otherDeductions = toCents(otherDeductions);
+        epf8 = toCents(epf8);
+        totalEarnings = toCents(totalEarnings);
+        totalDeductions = toCents(totalDeductions);
+        netSalary = toCents(netSalary);
+        basicSalary = toCents(basicSalary);
+    }
+
+    private static BigDecimal toCents(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount.setScale(2, RoundingMode.HALF_UP);
+    }
 }

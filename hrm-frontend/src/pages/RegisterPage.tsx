@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { ToastContainer, toast } from "react-toastify";
@@ -106,10 +107,12 @@ const RegisterPage: React.FC = () => {
         navigate("/login");
       }, 2000);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
       const errorMessage =
-        error.response?.data?.message ||
+        (axios.isAxiosError<{ message?: string }>(error)
+          ? error.response?.data?.message
+          : undefined) ||
         "Registration failed. Please try again.";
       toast.error(errorMessage);
     } finally {

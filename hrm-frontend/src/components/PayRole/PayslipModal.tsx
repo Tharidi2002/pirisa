@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
 import { API_BASE } from "../../api/endpoints";
+import { useTranslation } from "../../context/LanguageProvider";
+import { formatLkr } from "../../utils/currency";
 
 interface PayslipDetail {
   id: number;
@@ -51,6 +53,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
   employeeId,
   onClose,
 }) => {
+  const { language } = useTranslation();
   const [payslip, setPayslip] = useState<PayslipDetail | null>(null);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [employee, setEmployee] = useState<EmployeeDetails | null>(null);
@@ -75,7 +78,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const payslipData = await payslipRes.json();
 
@@ -86,14 +89,14 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
         [key: string]: string | number | Payrole[] | undefined;
       }
       const employeeData = payslipData.EmployeeList.find(
-        (emp: Employee) => emp.id === employeeId
+        (emp: Employee) => emp.id === employeeId,
       );
       interface Payrole {
         id: number;
         [key: string]: string | number | undefined;
       }
       const foundPayslip = employeeData?.payroleList.find(
-        (p: Payrole) => p.id === payslipId
+        (p: Payrole) => p.id === payslipId,
       );
       if (!foundPayslip) throw new Error("Payslip not found");
       setPayslip(foundPayslip as PayslipDetail);
@@ -106,7 +109,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const companyData = await companyRes.json();
       if (
@@ -124,7 +127,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const employeeDetails = await employeeRes.json();
       if (employeeDetails.resultCode === 100) {
@@ -142,14 +145,11 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
       }
 
       // Fetch company logo
-      const logoRes = await fetch(
-        `${API_BASE}/logo/view/${companyId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const logoRes = await fetch(`${API_BASE}/logo/view/${companyId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (logoRes.ok) {
         const logoBlob = await logoRes.blob();
         const logoUrl = URL.createObjectURL(logoBlob);
@@ -157,7 +157,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to fetch payslip data"
+        err instanceof Error ? err.message : "Failed to fetch payslip data",
       );
     } finally {
       setLoading(false);
@@ -261,7 +261,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-between">
                 <span>Basic Salary</span>
-                <span>Rs. {payslip.basic_salary.toLocaleString()}</span>
+                <span>{formatLkr(payslip.basic_salary, language)}</span>
               </div>
 
               {allowances.length > 0 && (
@@ -269,10 +269,10 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                   <div className="flex justify-between font-medium">
                     <span>Allowance</span>
                     <span>
-                      Rs.{" "}
-                      {allowances
-                        .reduce((sum, item) => sum + item.value, 0)
-                        .toLocaleString()}
+                      {formatLkr(
+                        allowances.reduce((sum, item) => sum + item.value, 0),
+                        language,
+                      )}
                     </span>
                   </div>
                   <div className="pl-4 mt-1">
@@ -282,7 +282,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                         className="flex justify-between text-sm text-gray-600"
                       >
                         <span>{item.name}</span>
-                        <span>Rs. {item.value.toLocaleString()}</span>
+                        <span>{formatLkr(item.value, language)}</span>
                       </div>
                     ))}
                   </div>
@@ -291,7 +291,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
 
               <div className="flex justify-between">
                 <span>Over Time</span>
-                <span>Rs. {payslip.overtime_pay.toLocaleString()}</span>
+                <span>{formatLkr(payslip.overtime_pay, language)}</span>
               </div>
 
               {bonuses.length > 0 && (
@@ -299,10 +299,10 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                   <div className="flex justify-between font-medium">
                     <span>Bonus</span>
                     <span>
-                      Rs.{" "}
-                      {bonuses
-                        .reduce((sum, item) => sum + item.value, 0)
-                        .toLocaleString()}
+                      {formatLkr(
+                        bonuses.reduce((sum, item) => sum + item.value, 0),
+                        language,
+                      )}
                     </span>
                   </div>
                   <div className="pl-4 mt-1">
@@ -312,7 +312,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
                         className="flex justify-between text-sm text-gray-600"
                       >
                         <span>{item.name}</span>
-                        <span>Rs. {item.value.toLocaleString()}</span>
+                        <span>{formatLkr(item.value, language)}</span>
                       </div>
                     ))}
                   </div>
@@ -321,7 +321,7 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             </div>
             <div className="flex justify-between mt-4 border-t pt-2 font-bold">
               <span>Total Earning</span>
-              <span>Rs. {payslip.total_earnings.toLocaleString()}</span>
+              <span>{formatLkr(payslip.total_earnings, language)}</span>
             </div>
           </div>
 
@@ -331,24 +331,24 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-between">
                 <span>EPF (8%)</span>
-                <span>Rs. {payslip.epf_8.toLocaleString()}</span>
+                <span>{formatLkr(payslip.epf_8, language)}</span>
               </div>
               <div className="flex justify-between">
                 <span>APPIT</span>
-                <span>Rs. {payslip.appit.toLocaleString()}</span>
+                <span>{formatLkr(payslip.appit, language)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Loans</span>
-                <span>Rs. {payslip.loan.toLocaleString()}</span>
+                <span>{formatLkr(payslip.loan, language)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Other Deductions</span>
-                <span>Rs. {payslip.other_deductions.toLocaleString()}</span>
+                <span>{formatLkr(payslip.other_deductions, language)}</span>
               </div>
             </div>
             <div className="flex justify-between mt-4 border-t pt-2 font-bold">
               <span>Total Deduction</span>
-              <span>Rs. {payslip.total_deductions.toLocaleString()}</span>
+              <span>{formatLkr(payslip.total_deductions, language)}</span>
             </div>
           </div>
 
@@ -365,15 +365,15 @@ const PayslipModal: React.FC<PayslipModalProps> = ({
             <div className="text-left sm:text-right space-y-2">
               <div className="flex justify-between">
                 <span className="font-bold mr-4">Total Earning</span>
-                <span>Rs. {payslip.total_earnings.toLocaleString()}</span>
+                <span>{formatLkr(payslip.total_earnings, language)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-bold mr-4">Total Deduction</span>
-                <span>Rs. {payslip.total_deductions.toLocaleString()}</span>
+                <span>{formatLkr(payslip.total_deductions, language)}</span>
               </div>
               <div className="flex justify-between text-xl font-bold">
                 <span className="mr-4">Net Salary</span>
-                <span>Rs. {payslip.net_salary.toLocaleString()}</span>
+                <span>{formatLkr(payslip.net_salary, language)}</span>
               </div>
             </div>
           </div>

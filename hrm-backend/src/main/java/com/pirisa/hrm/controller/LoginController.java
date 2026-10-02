@@ -94,6 +94,7 @@ public class LoginController {
 
             Map<String, Object> logindetails = new HashMap<>();
             logindetails.put("username", user.getUsername());
+            logindetails.put("USER_Id", user.getId());
             logindetails.put("Role",user.getRole());
             logindetails.put("CMPNY_Id",user.getCmpId());
             logindetails.put("token", token);

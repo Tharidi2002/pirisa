@@ -9,6 +9,8 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileImageEditor from "../../components/ProfileImageEditor";
 import { API_BASE } from "../../api/endpoints";
+import LkrInput from "../../components/PayRole/LkrInput";
+import { useTranslation } from "../../context/LanguageProvider";
 import {
   isEmail,
   isNonEmpty,
@@ -23,7 +25,7 @@ interface EmployeeDetails {
   last_name: string;
   designation: string;
   department: string;
-  basic_salary: number;
+  basic_salary: string;
   email: string;
   gender: string;
   DOB: string;
@@ -61,6 +63,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
 const EmployeeUpdate: React.FC = () => {
+  const { language } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [employeeDetails, setEmployeeDetails] = useState<EmployeeDetails>({
@@ -70,7 +73,7 @@ const EmployeeUpdate: React.FC = () => {
     last_name: "",
     department: "",
     designation: "",
-    basic_salary: 0,
+    basic_salary: "",
     email: "",
     gender: "",
     DOB: "",
@@ -152,7 +155,7 @@ const EmployeeUpdate: React.FC = () => {
             last_name: emp.last_name || "",
             department: emp.department?.dpt_name || "",
             designation: emp.designation?.designation || "",
-            basic_salary: emp.basic_salary || 0,
+            basic_salary: String(emp.basic_salary ?? 0),
             email: emp.email || "",
             gender: emp.gender || "",
             DOB:
@@ -202,15 +205,12 @@ const EmployeeUpdate: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE}/department/company/${cmpId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_BASE}/department/company/${cmpId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -649,13 +649,14 @@ const EmployeeUpdate: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700">
               <TranslatableText text="Basic Salary" />
             </label>
-            <input
-              type="number"
-              name="basic_salary"
+            <LkrInput
+              id="employee-basic-salary"
               value={employeeDetails.basic_salary}
-              onChange={handleInputChange}
-              className="mt-1 px-3 block w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Basic Salary"
+              onChange={(value) =>
+                setEmployeeDetails((prev) => ({ ...prev, basic_salary: value }))
+              }
+              language={language}
+              placeholder="Enter basic salary"
               required
             />
           </div>

@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "../Loading/Loading";
 import * as XLSX from "xlsx";
 import { API_BASE } from "../../api/endpoints";
+import { formatLkr } from "../../utils/currency";
 
 interface Payroll {
   id: number;
@@ -63,7 +64,7 @@ const PayroleReport: React.FC = () => {
     "December",
   ];
   const years = Array.from(
-    new Set(employees.flatMap((emp) => emp.payroleList.map((p) => p.year)))
+    new Set(employees.flatMap((emp) => emp.payroleList.map((p) => p.year))),
   ).sort();
 
   useEffect(() => {
@@ -97,7 +98,7 @@ const PayroleReport: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -120,27 +121,30 @@ const PayroleReport: React.FC = () => {
   };
 
   // Filter payroll data for the selected month and year
-  const filteredPayroll = employees.reduce((acc, employee) => {
-    const payrolls = employee.payroleList.filter(
-      (payroll) =>
-        payroll.month === selectedMonth && payroll.year === selectedYear
-    );
-    if (payrolls.length > 0) {
-      payrolls.forEach((payroll) => {
-        acc.push({
-          epfNo: employee.epfNo,
-          fullName: `${employee.firstName} ${employee.lastName}`,
-          net_salary: payroll.net_salary,
+  const filteredPayroll = employees.reduce(
+    (acc, employee) => {
+      const payrolls = employee.payroleList.filter(
+        (payroll) =>
+          payroll.month === selectedMonth && payroll.year === selectedYear,
+      );
+      if (payrolls.length > 0) {
+        payrolls.forEach((payroll) => {
+          acc.push({
+            epfNo: employee.epfNo,
+            fullName: `${employee.firstName} ${employee.lastName}`,
+            net_salary: payroll.net_salary,
+          });
         });
-      });
-    }
-    return acc;
-  }, [] as { epfNo: string; fullName: string; net_salary: number }[]);
+      }
+      return acc;
+    },
+    [] as { epfNo: string; fullName: string; net_salary: number }[],
+  );
 
   // Calculate total net salary for the selected month
   const totalNetSalary = filteredPayroll.reduce(
     (sum, item) => sum + item.net_salary,
-    0
+    0,
   );
 
   // Handle print functionality - only print the report section
@@ -151,7 +155,7 @@ const PayroleReport: React.FC = () => {
     const printWindow = window.open("", "", "height=600,width=800");
     if (!printWindow) {
       toast.error(
-        "Could not open print window. Please check your popup settings."
+        "Could not open print window. Please check your popup settings.",
       );
       return;
     }
@@ -171,7 +175,7 @@ const PayroleReport: React.FC = () => {
     `);
     printWindow.document.write("</style></head><body>");
     printWindow.document.write(
-      `<h3>Payroll Summary - ${selectedMonth} ${selectedYear}</h3>`
+      `<h3>Payroll Summary - ${selectedMonth} ${selectedYear}</h3>`,
     );
     printWindow.document.write(printContent.innerHTML);
     printWindow.document.write("</body></html>");
@@ -310,7 +314,7 @@ const PayroleReport: React.FC = () => {
                         <td className="px-6 py-3 border-b">{item.epfNo}</td>
                         <td className="px-6 py-3 border-b">{item.fullName}</td>
                         <td className="px-6 py-3 border-b">
-                          {item.net_salary.toLocaleString()} LKR
+                          {formatLkr(item.net_salary)}
                         </td>
                       </tr>
                     ))}
@@ -328,7 +332,7 @@ const PayroleReport: React.FC = () => {
                 <p className="text-lg font-medium text-gray-800">
                   Total:{" "}
                   <span className="text-green-700 total-value">
-                    {totalNetSalary.toLocaleString()} LKR
+                    {formatLkr(totalNetSalary)}
                   </span>
                 </p>
               </div>

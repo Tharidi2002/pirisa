@@ -2,6 +2,8 @@ package com.pirisa.hrm.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,24 +19,24 @@ public class PayroleDTO {
 
     private String allowance;
 
-    private float overtime_pay;
+    private BigDecimal overtime_pay;
 
     private String bonus_pay;
 
-    private float appit;
+    private BigDecimal appit;
 
-    private float loan;
+    private BigDecimal loan;
 
-    private float other_deductions;
+    private BigDecimal other_deductions;
 
-    private float epf_8;
+    private BigDecimal epf_8;
 
-    private float total_earnings;
+    private BigDecimal total_earnings;
 
-    private float total_deductions;
+    private BigDecimal total_deductions;
 
-    private float net_salary;
+    private BigDecimal net_salary;
 
-    private float basic_salary;
+    private BigDecimal basic_salary;
 
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Table from "../../components/table/Table";
 import { User } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Loading/Loading";
 import { API_BASE } from "../../api/endpoints";
+import { useTranslation } from "../../context/LanguageProvider";
+import { formatLkr } from "../../utils/currency";
 
 interface PayrollEntry {
   id: number;
@@ -49,6 +51,7 @@ interface ApiResponse<T> {
 }
 
 const SalaryStatusTable = () => {
+  const { language } = useTranslation();
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
@@ -56,10 +59,6 @@ const SalaryStatusTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const rowsPerPage = 10;
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
 
   // Cleanup photo URLs on component unmount to prevent memory leaks
   useEffect(() => {
@@ -72,7 +71,10 @@ const SalaryStatusTable = () => {
     };
   }, [photoUrls]);
 
-  const fetchEmployeePhotos = async (employeeList: EmployeeRow[], token: string) => {
+  const fetchEmployeePhotos = useCallback(async (
+    employeeList: EmployeeRow[],
+    token: string,
+  ) => {
     const photoPromises = employeeList.map(async (employee) => {
       try {
         const existsResp = await fetch(
@@ -81,14 +83,14 @@ const SalaryStatusTable = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!existsResp.ok) return { id: employee.id, url: null };
         const existsData: { hasProfileImage?: boolean; exists?: boolean } =
           await existsResp.json();
         const hasImage = Boolean(
-          existsData?.hasProfileImage ?? existsData?.exists
+          existsData?.hasProfileImage ?? existsData?.exists,
         );
         if (!hasImage) return { id: employee.id, url: null };
 
@@ -98,7 +100,7 @@ const SalaryStatusTable = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!photoResponse.ok) {
@@ -127,9 +129,9 @@ const SalaryStatusTable = () => {
     });
 
     setPhotoUrls(photoUrlMap);
-  };
+  }, []);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const companyId = localStorage.getItem("cmpnyId");
@@ -161,12 +163,14 @@ const SalaryStatusTable = () => {
         throw new Error("Failed to fetch employees");
       }
 
-      const payrollData: ApiResponse<PayroleEmployeeApi> = await payrollResponse.json();
-      const detailsData: ApiResponse<EmpDetailsApi> = await detailsResponse.json();
+      const payrollData: ApiResponse<PayroleEmployeeApi> =
+        await payrollResponse.json();
+      const detailsData: ApiResponse<EmpDetailsApi> =
+        await detailsResponse.json();
 
       if (payrollData.resultCode !== 100 || detailsData.resultCode !== 100) {
         throw new Error(
-          payrollData.resultDesc || detailsData.resultDesc || "Failed to fetch"
+          payrollData.resultDesc || detailsData.resultDesc || "Failed to fetch",
         );
       }
 
@@ -182,7 +186,8 @@ const SalaryStatusTable = () => {
         const details = detailsMap.get(e.id);
         const payroleList = Array.isArray(e.payroleList) ? e.payroleList : [];
         const latest = payroleList.length > 0 ? payroleList[0] : undefined;
-        const salary = typeof latest?.net_salary === "number" ? latest.net_salary : 0;
+        const salary =
+          typeof latest?.net_salary === "number" ? latest.net_salary : 0;
 
         return {
           id: e.id,
@@ -206,7 +211,11 @@ const SalaryStatusTable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchEmployeePhotos]);
+
+  useEffect(() => {
+    void fetchEmployees();
+  }, [fetchEmployees]);
 
   const handleMakeSalary = (employeeId: number, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -222,7 +231,7 @@ const SalaryStatusTable = () => {
 
   const handleDeletePayroll = (
     _employeeId: number,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     //if we want replace _employeeId with employeeId
     event.stopPropagation();
@@ -252,12 +261,8 @@ const SalaryStatusTable = () => {
       {
         autoClose: false,
         closeButton: false,
-      }
+      },
     );
-  };
-
-  const formatSalary = (amount: number) => {
-    return amount.toLocaleString("en-US");
   };
 
   const columns = [
@@ -276,7 +281,7 @@ const SalaryStatusTable = () => {
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                   e.currentTarget.nextElementSibling?.classList.remove(
-                    "hidden"
+                    "hidden",
                   );
                 }}
               />
@@ -295,9 +300,7 @@ const SalaryStatusTable = () => {
       render: (item: EmployeeRow) => (
         <div>
           <div className="font-medium">{`${item.firstName} ${item.lastName}`}</div>
-          <div className="text-xs text-gray-500">
-            Full time
-          </div>
+          <div className="text-xs text-gray-500">Full time</div>
         </div>
       ),
     },
@@ -311,7 +314,9 @@ const SalaryStatusTable = () => {
     {
       key: "epfNo",
       title: "Employee ID",
-      render: (item: EmployeeRow) => <span className="text-sm">{item.epfNo}</span>,
+      render: (item: EmployeeRow) => (
+        <span className="text-sm">{item.epfNo}</span>
+      ),
     },
     {
       key: "role",
@@ -319,17 +324,22 @@ const SalaryStatusTable = () => {
       render: (item: EmployeeRow) => (
         <div>
           <div className="text-sm">{item.roleName || "N/A"}</div>
-          <div className="text-xs text-gray-500">
-            Full time
-          </div>
+          <div className="text-xs text-gray-500">Full time</div>
         </div>
       ),
     },
     {
       key: "salary",
-      title: "Salary (Rs)",
+      title:
+        language === "si"
+          ? "වැටුප (රු.)"
+          : language === "ta"
+            ? "சம்பளம் (ரூ.)"
+            : "Salary (Rs.)",
       render: (item: EmployeeRow) => (
-        <span className="text-sm">{formatSalary(item.salary || 0)}</span>
+        <span className="text-sm tabular-nums">
+          {formatLkr(item.salary || 0, language)}
+        </span>
       ),
     },
     {
@@ -486,7 +496,7 @@ const SalaryStatusTable = () => {
   const totalPages = Math.ceil(employees.length / rowsPerPage);
   const paginatedData = employees.slice(
     (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
+    currentPage * rowsPerPage,
   );
 
   return (

@@ -200,8 +200,11 @@ export const EnhancedEventForm: React.FC<EnhancedEventFormProps> = ({
 
   // ==================== Event Handlers ====================
 
-  const handleInputChange = (field: keyof EventFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = <Field extends keyof EventFormData>(
+    field: Field,
+    value: EventFormData[Field],
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleEventTypeChange = (eventType: string) => {
