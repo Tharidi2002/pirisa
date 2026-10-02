@@ -194,7 +194,6 @@ public class UnitController {
     }
 
 
-    @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("resultCode", 101);

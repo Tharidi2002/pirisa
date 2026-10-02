@@ -6,6 +6,8 @@ import com.pirisa.hrm.model.EmployeeLeave;
 import com.pirisa.hrm.repository.EmployeeRepository;
 import com.pirisa.hrm.service.EmailService;
 import com.pirisa.hrm.service.EmployeeLeaveRequestService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/emp_leave")
 public class EmployeeLeaveRequestController {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeLeaveRequestController.class);
 
     @Autowired
     private EmployeeLeaveRequestService employeeLeaveRequestService;
@@ -88,36 +91,39 @@ public class EmployeeLeaveRequestController {
     public ResponseEntity<?> updateEmployeeLeave(@PathVariable Long empleave_id, @RequestBody EmployeeLeave updateEmployeeLeave) {
 
         EmployeeLeave employeeLeave = employeeLeaveRequestService.updateEmployeeLeave(empleave_id, updateEmployeeLeave);
-        EmployeeLeave email = employeeLeaveRequestService.getEmployeeLeaveById(empleave_id);
         if (employeeLeave != null) {
             Map<String, Object> employeeResponse = new HashMap<>();
             employeeResponse.put("resultCode", 100);
-            employeeResponse.put("resultDesc", "Successfully Updated");
 
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("Employee Leave", employeeLeave);
-            responseBody.put("response", employeeResponse);
 
-            Employee employee = employeeRepository.findById(email.getEmpId()).orElse(null);
-            if (employee.getEmail() != null) {
-
-
+            Employee employee = employeeRepository.findById(employeeLeave.getEmpId()).orElse(null);
+            boolean emailSent = false;
+            if (employee != null && employee.getEmail() != null && !employee.getEmail().trim().isEmpty()) {
                 String subject = "Leave Request Approval!";
                 String content = "<p>Your Leave Request on "
-                        + email.getLeaveStartDay()
+                        + employeeLeave.getLeaveStartDay()
                         + " to "
-                        + email.getLeaveEndDay()
+                        + employeeLeave.getLeaveEndDay()
                         + " has been <strong>"
                         + updateEmployeeLeave.getLeaveStatus()
                         + "</strong></p>"
                         + "<p>Please contact HRM Division if you need any further details.</p>";;
 
-
-                emailService.sendEmail(employee.getEmail(), subject, content);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "There is no Email to this employee"));
+                try {
+                    emailSent = emailService.sendEmail(employee.getEmail(), subject, content);
+                } catch (RuntimeException exception) {
+                    logger.warn("Leave {} was updated, but its notification email could not be sent.",
+                            empleave_id, exception);
+                }
             }
+
+            employeeResponse.put("resultDesc", emailSent
+                    ? "Successfully Updated"
+                    : "Leave updated successfully, but the notification email could not be sent.");
+            responseBody.put("response", employeeResponse);
+            responseBody.put("emailSent", emailSent);
             return new ResponseEntity<>(responseBody, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

@@ -26,12 +26,11 @@ public class BonusService {
     }
 
     public Bonus updateBonus(Bonus bonus) {
-        // Verify the bonus exists
         Optional<Bonus> existingBonus = bonusRepository.findById(bonus.getId());
         if (!existingBonus.isPresent()) {
-            throw new RuntimeException("Bonus not found with id: " + bonus.getId());
+            return null;
         }
-        
+
         return bonusRepository.save(bonus);
     }
 

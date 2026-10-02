@@ -73,7 +73,7 @@ public class CompanyOTDetailsController {
                 response.put("resultCode", 404);
                 response.put("resultDesc", "No OT Details found for this Company ID");
                 response.put("data", null);
-                return ResponseEntity.status(HttpStatus.OK).body(response); // ✅ 200 return කරන්න
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             Map<String, Object> response = new HashMap<>();

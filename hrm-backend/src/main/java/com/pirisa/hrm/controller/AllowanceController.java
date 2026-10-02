@@ -121,7 +121,10 @@ public class AllowanceController {
     @DeleteMapping(value = "/{id}", produces = {"application/json"})
     public ResponseEntity<?> deleteAllowance(@PathVariable Long id) {
         try {
-            allowanceService.deleteAllowance(id);
+            if (!allowanceService.deleteAllowance(id)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "Allowance not found"));
+            }
 
             Map<String, Object> allowanceResponse = new HashMap<>();
             allowanceResponse.put("resultCode", 100);
@@ -132,11 +135,6 @@ public class AllowanceController {
             responseBody.put("response", allowanceResponse);
 
             return new ResponseEntity<>(responseBody, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("resultCode", 101);
-            errorResponse.put("resultDesc", e.getMessage());
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return handleException(e);
         }

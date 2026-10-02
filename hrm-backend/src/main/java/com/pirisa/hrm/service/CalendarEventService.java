@@ -247,6 +247,11 @@ public class CalendarEventService {
             if (updatedEvent.getIsEndDateOptional() != null) {
                 event.setIsEndDateOptional(updatedEvent.getIsEndDateOptional());
             }
+            if (updatedEvent.getStartDate() != null
+                    && Boolean.TRUE.equals(updatedEvent.getIsEndDateOptional())
+                    && updatedEvent.getEndDate() == null) {
+                event.setEndDate(event.getStartDate());
+            }
             if (updatedEvent.getVisibility() != null && !updatedEvent.getVisibility().trim().isEmpty()) {
                 if (isValidVisibility(updatedEvent.getVisibility())) {
                     event.setVisibility(updatedEvent.getVisibility());
@@ -261,7 +266,7 @@ public class CalendarEventService {
             event.setDesignationIds(updatedEvent.getDesignationIds());
             
             // Validate date logic after updates
-            if (event.getStartDate().isAfter(event.getEndDate())) {
+            if (event.getEndDate() != null && event.getStartDate().isAfter(event.getEndDate())) {
                 throw new IllegalArgumentException("Start date cannot be after end date");
             }
             

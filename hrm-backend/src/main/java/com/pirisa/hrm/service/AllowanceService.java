@@ -38,17 +38,11 @@ public class AllowanceService {
         return updated;
     }
 
-    public void deleteAllowance(Long id) {
-        try {
-            System.out.println("Deleting allowance with ID: " + id);
-            if (!allowanceRepository.existsById(id)) {
-                throw new RuntimeException("Allowance not found with id: " + id);
-            }
-            allowanceRepository.deleteById(id);
-            System.out.println("Successfully deleted allowance with ID: " + id);
-        } catch (Exception e) {
-            System.err.println("Error deleting allowance: " + e.getMessage());
-            throw new RuntimeException("Failed to delete allowance: " + e.getMessage(), e);
+    public boolean deleteAllowance(Long id) {
+        if (!allowanceRepository.existsById(id)) {
+            return false;
         }
+        allowanceRepository.deleteById(id);
+        return true;
     }
 }
