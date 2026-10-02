@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class CompanyService {
@@ -121,22 +120,6 @@ public class CompanyService {
     }
 
 
-    public String forgotPassword(String cmpEmail) {
-        Company company = companyRepository.findByCmpEmail(cmpEmail);
-        if (company == null) {
-            throw new IllegalArgumentException("No company found with the provided email");
-        }
-        String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        String hashedPassword = securityConfig.passwordEncoder().encode(randomPassword);
-        company.setCmp_password(hashedPassword);
-
-        companyRepository.save(company);
-
-
-        return randomPassword;
-    }
-
-
     public Company updateCompany(Company company) {
         return companyRepository.save(company);
     }
@@ -151,5 +134,4 @@ public class CompanyService {
     }
 
  }
-
 

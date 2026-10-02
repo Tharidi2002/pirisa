@@ -2,41 +2,43 @@ package com.pirisa.hrm.controller;
 
 import com.pirisa.hrm.dto.CompanyRegistrationRequest;
 import com.pirisa.hrm.service.CompanyRegistrationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/company")
 public class CompanyRegistrationController {
 
+    private static final Logger logger = LoggerFactory.getLogger(CompanyRegistrationController.class);
+
     @Autowired
     private CompanyRegistrationService companyRegistrationService;
 
-    @CrossOrigin(origins = "*") // Allow all origins
     @PostMapping("/register")
-    public ResponseEntity<?> registerCompany(@RequestBody CompanyRegistrationRequest request) {
+    public ResponseEntity<?> registerCompany(@Valid @RequestBody CompanyRegistrationRequest request) {
         try {
-            System.out.println("DEBUG - Received registration request:");
-            System.out.println("  cmpName: " + request.getCmpName());
-            System.out.println("  cmpEmail: " + request.getCmpEmail());
-            System.out.println("  cmpPhone: " + request.getCmpPhone());
-            System.out.println("  cmpAddress: " + request.getCmpAddress());
-            System.out.println("  username: " + request.getUsername());
-            System.out.println("  password: " + (request.getPassword() != null ? "[PRESENT]" : "[NULL]"));
-
-            String result = companyRegistrationService.registerCompany(request);
-            System.out.println("DEBUG - Registration result: " + result);
-
-            if (result.equals("SUCCESS")) {
-                return ResponseEntity.ok().body("{\"message\": \"Company registered successfully\", \"status\": \"success\"}");
-            } else {
-                return ResponseEntity.badRequest().body("{\"message\": \"" + result + "\", \"status\": \"error\"}");
-            }
+            companyRegistrationService.registerCompany(request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Company registered successfully",
+                    "status", "success"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage(), "status", "error"));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Company details conflict with an existing account.", "status", "error"));
         } catch (Exception e) {
-            System.out.println("DEBUG - Registration error: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"message\": \"Registration failed: " + e.getMessage() + "\", \"status\": \"error\"}");
+            logger.error("Company registration failed.", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Company registration failed. Please try again later.", "status", "error"));
         }
     }
 
@@ -46,7 +48,9 @@ public class CompanyRegistrationController {
             boolean available = companyRegistrationService.isUsernameAvailable(username);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("{\"message\": \"Error checking username: " + e.getMessage() + "\"}");
+            logger.error("Could not check company username availability.", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Could not check username availability."));
         }
     }
 
@@ -56,7 +60,9 @@ public class CompanyRegistrationController {
             boolean available = companyRegistrationService.isEmailAvailable(email);
             return ResponseEntity.ok().body("{\"available\": " + available + "}");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("{\"message\": \"Error checking email: " + e.getMessage() + "\"}");
+            logger.error("Could not check company email availability.", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Could not check email availability."));
         }
     }
 }

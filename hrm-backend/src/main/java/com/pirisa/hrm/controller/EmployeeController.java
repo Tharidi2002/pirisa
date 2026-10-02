@@ -2,12 +2,15 @@ package com.pirisa.hrm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pirisa.hrm.dto.AttendanceEmployeeDTO;
+import com.pirisa.hrm.dto.EmployeeCreationResult;
 import com.pirisa.hrm.dto.EmpDetailsDTO;
 import com.pirisa.hrm.dto.PayroleEmployeeDTO;
 import com.pirisa.hrm.model.Employee;
 import com.pirisa.hrm.service.EmailService;
 import com.pirisa.hrm.service.EmployeeService;
+import com.pirisa.hrm.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,9 @@ public class EmployeeController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
 
 
@@ -52,20 +58,35 @@ public class EmployeeController {
     @PostMapping(value = "/add_employee", produces = {"application/json"})
     public ResponseEntity<?> addEmployee(@RequestBody Employee employee) {
         try {
-            Employee createdEmployee = employeeService.createEmployee(employee);
+            EmployeeCreationResult creationResult = employeeService.createEmployee(employee);
+            Employee createdEmployee = creationResult.getEmployee();
             if (createdEmployee != null) {
                 Map<String, Object> employeeResponse = new HashMap<>();
                 employeeResponse.put("resultCode", 100);
-                employeeResponse.put("resultDesc", "Successfully Saved");
+                employeeResponse.put("resultDesc", creationResult.isEmailSent()
+                        ? "Successfully Saved"
+                        : "Employee saved successfully, but the welcome email could not be sent.");
 
                 Map<String, Object> responseBody = new HashMap<>();
                 responseBody.put("Employee", createdEmployee);
                 responseBody.put("response", employeeResponse);
+                responseBody.put("emailSent", creationResult.isEmailSent());
 
                 return new ResponseEntity<>(responseBody, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (DataIntegrityViolationException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("resultCode", 101);
+            errorResponse.put("resultDesc",
+                    "Employee details conflict with an existing record. Check the email address and employee/EPF numbers.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -432,22 +453,19 @@ public class EmployeeController {
     @PostMapping(value = "/forgetPassword", produces = "application/json")
     public ResponseEntity<?> forgotPassword(@RequestParam("email") String email) {
         try {
-            // Generate a new password and update the company record
-            String randomPassword = employeeService.forgotPassword(email);
-
-            // Prepare email content with the new password
-            String subject = "Password Reset Request";
-            String content = "<p>Your password has been reset successfully.</p>"
-                    + "<p>Your new password is: <strong>" + randomPassword + "</strong></p>"
-                    + "<p>Please log in and change your password as soon as possible.</p>";
-
-            emailService.sendEmail(email, subject, content);
+            passwordResetService.resetPasswordForEmail(email);
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
-            response.put("resultDesc", "Password reset successfully. The new password has been sent to your email.");
+            response.put("resultDesc", "Password reset successfully. Please check your email.");
             return new ResponseEntity<>(response, HttpStatus.OK);
 
+        } catch (PasswordResetService.NotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (PasswordResetService.DeliveryException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", ex.getMessage()));
         } catch (Exception ex) {
@@ -474,9 +492,10 @@ public class EmployeeController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        e.printStackTrace(); // Log the exception for debugging purposes
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("resultCode", 101);
-        errorResponse.put("resultDesc", "ERROR");
+        errorResponse.put("resultDesc", "ERROR: " + e.getMessage());
 
         String jsonResponse;
         try {

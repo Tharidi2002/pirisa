@@ -7,6 +7,7 @@ import com.pirisa.hrm.model.Company;
 import com.pirisa.hrm.repository.CompanyRepository;
 import com.pirisa.hrm.service.CompanyService;
 import com.pirisa.hrm.service.EmailService;
+import com.pirisa.hrm.service.PasswordResetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class CompanyController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
 
     @GetMapping(value = "/all", produces = {"application/json"})
@@ -184,20 +188,19 @@ public class CompanyController {
     @PostMapping(value = "/forgetPassword", produces = "application/json")
     public ResponseEntity<?> forgotPassword(@RequestParam("cmpEmail") String cmpEmail) {
         try {
-            String randomPassword = companyService.forgotPassword(cmpEmail);
-
-            String subject = "Password Reset Request";
-            String content = "<p>Your password has been reset successfully.</p>"
-                    + "<p>Your new password is: <strong>" + randomPassword + "</strong></p>"
-                    + "<p>Please log in and change your password as soon as possible.</p>";
-
-            emailService.sendEmail(cmpEmail, subject, content);
+            passwordResetService.resetPasswordForEmail(cmpEmail);
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
-            response.put("resultDesc", "Password reset successfully. The new password has been sent to your email.");
+            response.put("resultDesc", "Password reset successfully. Please check your email.");
             return new ResponseEntity<>(response, HttpStatus.OK);
 
+        } catch (PasswordResetService.NotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (PasswordResetService.DeliveryException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", ex.getMessage()));
         } catch (Exception ex) {

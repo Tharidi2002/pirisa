@@ -4,6 +4,7 @@ import com.pirisa.hrm.dto.CompanyRegistrationRequest;
 import com.pirisa.hrm.model.Company;
 import com.pirisa.hrm.model.User;
 import com.pirisa.hrm.repository.CompanyRepository;
+import com.pirisa.hrm.repository.EmployeeRepository;
 import com.pirisa.hrm.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,74 +22,59 @@ public class CompanyRegistrationService {
     private UserRepository userRepository;
 
     @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public String registerCompany(CompanyRegistrationRequest request) {
-        try {
-            // Check if company name already exists
-            Company existingCompany = companyRepository.findByName(request.getCmpName());
-            if (existingCompany != null) {
-                return "Company name already exists";
-            }
+    public void registerCompany(CompanyRegistrationRequest request) {
+        String companyName = request.getCmpName().trim();
+        String username = request.getUsername().trim();
+        String email = request.getCmpEmail().trim();
 
-            // Check if username already exists
-            User existingUser = userRepository.findByUsername(request.getUsername());
-            if (existingUser != null) {
-                return "Username already exists";
-            }
-
-            // Check if email already exists
-            User existingEmail = userRepository.findByEmail(request.getCmpEmail());
-            if (existingEmail != null) {
-                return "Email already exists";
-            }
-
-            // Create new company
-            Company company = new Company();
-            company.setCmp_name(request.getCmpName());
-            company.setCmpEmail(request.getCmpEmail());
-            company.setCmp_phone(request.getCmpPhone());
-            company.setCmp_address(request.getCmpAddress());
-            company.setUsername(request.getUsername());
-            company.setCmp_password(passwordEncoder.encode(request.getPassword()));
-            company.setCompany_status("ACTIVE");
-            
-            System.out.println("DEBUG - Saving company with data:");
-            System.out.println("  cmp_name: " + company.getCmp_name());
-            System.out.println("  cmpEmail: " + company.getCmpEmail());
-            System.out.println("  cmp_phone: " + company.getCmp_phone());
-            System.out.println("  cmp_address: " + company.getCmp_address());
-            System.out.println("  username: " + company.getUsername());
-            System.out.println("  cmp_password: " + (company.getCmp_password() != null ? "[ENCRYPTED]" : "[NULL]"));
-            System.out.println("  company_status: " + company.getCompany_status());
-            
-            Company savedCompany = companyRepository.save(company);
-            System.out.println("DEBUG - Company saved with ID: " + savedCompany.getId());
-
-            // Create user account for the company
-            User user = new User();
-            user.setUsername(request.getUsername());
-            user.setEmail(request.getCmpEmail());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setRole("CMPNY");
-            user.setCmpId(savedCompany.getId());
-            
-            userRepository.save(user);
-
-            return "SUCCESS";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Registration failed: " + e.getMessage();
+        if (companyRepository.findByName(companyName) != null) {
+            throw new IllegalArgumentException("Company name already exists");
         }
+        if (companyRepository.findByUsername(username) != null
+                || userRepository.findByUsername(username) != null
+                || employeeRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (companyRepository.findByCmpEmail(email) != null
+                || userRepository.findByEmail(email) != null
+                || employeeRepository.existsByEmailIgnoreCase(email)) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        Company company = new Company();
+        company.setCmp_name(companyName);
+        company.setCmpEmail(email);
+        company.setCmp_phone(request.getCmpPhone().trim());
+        company.setCmp_address(request.getCmpAddress().trim());
+        company.setUsername(username);
+        company.setCmp_password(passwordEncoder.encode(request.getPassword()));
+        company.setCompany_status("ACTIVE");
+        Company savedCompany = companyRepository.save(company);
+
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("CMPNY");
+        user.setCmpId(savedCompany.getId());
+        userRepository.save(user);
+
     }
 
     public boolean isUsernameAvailable(String username) {
-        User user = userRepository.findByUsername(username);
-        return user == null;
+        return companyRepository.findByUsername(username) == null
+                && userRepository.findByUsername(username) == null
+                && !employeeRepository.existsByUsernameIgnoreCase(username);
     }
 
     public boolean isEmailAvailable(String email) {
-        User user = userRepository.findByEmail(email);
-        return user == null;
+        return companyRepository.findByCmpEmail(email) == null
+                && userRepository.findByEmail(email) == null
+                && !employeeRepository.existsByEmailIgnoreCase(email);
     }
 }

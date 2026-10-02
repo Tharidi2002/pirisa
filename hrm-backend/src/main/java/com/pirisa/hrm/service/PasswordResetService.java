@@ -21,108 +21,73 @@ public class PasswordResetService {
     @Autowired private UserRepository userRepo;
     @Autowired private EmployeeRepository empRepo;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private EmailService emailService;
 
-    /** Thrown when no account is found for the given identifier */
     public static class NotFoundException extends RuntimeException {
         public NotFoundException(String msg) { super(msg); }
     }
 
-    /** Reset password & return the plain text new password */
-    @Transactional
-    public String resetPasswordFor(String identifier) {
-        // 1) Look up by email or username in each repo:
-        Company c = companyRepo.findByCmpEmail(identifier);
-        User u = userRepo.findByUsername(identifier);
-        Employee e = empRepo.findByUsername(identifier);
-
-        Object account;
-        if (c != null) {
-            account = c;
-        } else if (u != null) {
-            account = u;
-        } else if (e != null) {
-            account = e;
-        } else {
-            throw new NotFoundException("No account found for identifier: " + identifier);
-        }
-
-        // 2) Generate & encode new password
-        String plain  = UUID.randomUUID().toString().substring(0, 8);
-        String hashed = passwordEncoder.encode(plain);
-
-        // 3) Set it back on the right type and save
-        if (account instanceof Company) {
-            ((Company) account).setCmp_password(hashed);
-            companyRepo.save((Company) account);
-
-        } else if (account instanceof User) {
-            ((User) account).setPassword(hashed);
-            userRepo.save((User) account);
-
-        } else {
-            ((Employee) account).setPassword(hashed);
-            empRepo.save((Employee) account);
-        }
-
-        return plain;
-    }
-
-    /** Return the e-mail address for a given identifier */
-    public String getEmailForEmail(String email) {
-        Company  c = companyRepo.findByCmpEmail(email);
-        User     u = userRepo.findByEmail(email);
-        Employee e = empRepo.findByEmail(email);
-
-        if (c != null) {
-            return c.getCmpEmail();
-        }
-        else if (u != null) {
-            return u.getEmail();
-        }
-        else if (e != null) {
-            return e.getEmail();
-        }
-        else {
-            return null; // Return null instead of throwing exception for email validation
-        }
+    public static class DeliveryException extends RuntimeException {
+        public DeliveryException(String msg) { super(msg); }
     }
 
     @Transactional
-    public String resetPasswordForEmail(String email) {
-        // 1) Look up by email in each repo:
+    public void resetPasswordForIdentifier(String identifier) {
+        Company company = companyRepo.findByUsername(identifier);
+        User user = userRepo.findByUsername(identifier);
+        Employee employee = empRepo.findByUsername(identifier);
+
+        String email = company != null ? company.getCmpEmail()
+                : user != null ? user.getEmail()
+                : employee != null ? employee.getEmail()
+                : null;
+        if (email == null || email.trim().isEmpty()) {
+            resetPasswordForEmail(identifier);
+            return;
+        }
+
+        resetPasswordForEmail(email.trim());
+    }
+
+    @Transactional
+    public void resetPasswordForEmail(String email) {
         Company c = companyRepo.findByCmpEmail(email);
         User u = userRepo.findByEmail(email);
         Employee e = empRepo.findByEmail(email);
 
-        Object account;
-        if (c != null) {
-            account = c;
-        } else if (u != null) {
-            account = u;
-        } else if (e != null) {
-            account = e;
-        } else {
-            throw new NotFoundException("No account found for email: " + email);
+        if (c == null && u == null && e == null) {
+            throw new NotFoundException("No account found for the provided email");
         }
 
-        // 2) Generate & encode new password
-        String plain  = UUID.randomUUID().toString().substring(0, 8);
+        String plain = UUID.randomUUID().toString().substring(0, 8);
         String hashed = passwordEncoder.encode(plain);
-
-        // 3) Set it back on the right type and save
-        if (account instanceof Company) {
-            ((Company) account).setCmp_password(hashed);
-            companyRepo.save((Company) account);
-
-        } else if (account instanceof User) {
-            ((User) account).setPassword(hashed);
-            userRepo.save((User) account);
-
-        } else {
-            ((Employee) account).setPassword(hashed);
-            empRepo.save((Employee) account);
+        boolean emailSent;
+        try {
+            emailSent = emailService.sendEmail(
+                    email,
+                    "Password Reset Request",
+                    "<p>Your password reset was requested.</p>"
+                            + "<p>Your temporary password is: <strong>" + plain + "</strong></p>"
+                            + "<p>Please log in and change it as soon as possible.</p>");
+        } catch (RuntimeException exception) {
+            throw new DeliveryException("Password reset email could not be sent. Your password was not changed.");
+        }
+        if (!emailSent) {
+            throw new DeliveryException("Password reset email could not be sent. Your password was not changed.");
         }
 
-        return plain;
+        if (c != null) {
+            c.setCmp_password(hashed);
+            companyRepo.save(c);
+        }
+        if (u != null) {
+            u.setPassword(hashed);
+            userRepo.save(u);
+        }
+        if (e != null) {
+            e.setPassword(hashed);
+            empRepo.save(e);
+        }
+
     }
 }

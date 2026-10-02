@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pirisa.hrm.config.SecurityConfig;
 import com.pirisa.hrm.model.User;
 import com.pirisa.hrm.service.EmailService;
+import com.pirisa.hrm.service.PasswordResetService;
 import com.pirisa.hrm.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/user")
 public class UserController {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserService userService;
 
@@ -28,6 +33,9 @@ public class UserController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     @GetMapping(value = "/all", produces = {"application/json"})
     public ResponseEntity<?> getAllUsers() {
@@ -76,6 +84,10 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         try {
+            if (userService.getUserById(userId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "User not found"));
+            }
             userService.deleteUser(userId);
 
             Map<String, Object> userResponse = new HashMap<>();
@@ -150,22 +162,19 @@ public class UserController {
     @PostMapping(value = "/forgetPassword", produces = "application/json")
     public ResponseEntity<?> forgotPassword(@RequestParam("username") String username) {
         try {
-            // Generate a new password and update the company record
-            String randomPassword = userService.forgotPassword(username);
-
-            // Prepare email content with the new password
-            String subject = "Password Reset Request";
-            String content = "<p>Your password has been reset successfully.</p>"
-                    + "<p>Your new password is: <strong>" + randomPassword + "</strong></p>"
-                    + "<p>Please log in and change your password as soon as possible.</p>";
-
-            emailService.sendEmail(username, subject, content);
+            passwordResetService.resetPasswordForIdentifier(username);
 
             Map<String, Object> response = new HashMap<>();
             response.put("resultCode", 100);
-            response.put("resultDesc", "Password reset successfully. The new password has been sent to your email.");
+            response.put("resultDesc", "Password reset successfully. Please check your email.");
             return new ResponseEntity<>(response, HttpStatus.OK);
 
+        } catch (PasswordResetService.NotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (PasswordResetService.DeliveryException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Collections.singletonMap("error", ex.getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", ex.getMessage()));
         } catch (Exception ex) {
@@ -269,9 +278,10 @@ public class UserController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        logger.error("User request failed.", e);
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("resultCode", 101);
-        errorResponse.put("resultDesc", "ERROR");
+        errorResponse.put("resultDesc", "User request failed. Please check the input and try again.");
 
         String jsonResponse;
         try {

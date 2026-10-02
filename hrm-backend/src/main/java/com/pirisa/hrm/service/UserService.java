@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class UserService {
@@ -83,22 +82,6 @@ public class UserService {
         String hashedPassword = securityConfig.passwordEncoder().encode(newPassword);
         user.setPassword(hashedPassword);
         return userRepository.save(user);
-    }
-
-
-    public String forgotPassword(String usename) {
-        User user = userRepository.findByUsername(usename);
-        if (user == null) {
-            throw new IllegalArgumentException("No company found with the provided email");
-        }
-        String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        String hashedPassword = securityConfig.passwordEncoder().encode(randomPassword);
-        user.setPassword(hashedPassword);
-
-        userRepository.save(user);
-
-
-        return randomPassword;
     }
 
 

@@ -32,6 +32,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Employee findByEmail(String email);
 
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
+
     @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.department d LEFT JOIN FETCH e.designation des WHERE e.cmpId = :companyId AND " +
            "(LOWER(e.empNo) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(e.epfNo) LIKE LOWER(CONCAT('%', :query, '%')) OR " +

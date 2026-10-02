@@ -7,6 +7,10 @@ import com.pirisa.hrm.model.Company;
 import com.pirisa.hrm.model.Employee;
 import com.pirisa.hrm.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 public class EmployeeService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeService.class);
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -39,46 +44,14 @@ public class EmployeeService {
 
 
     public Map<String, String> getNextEmployeeNumbers() {
-        long maxEmp = 0;
-        long maxEpf = 0;
-        try {
-            List<String> empNos = employeeRepository.findAllEmpNos();
-            if (empNos != null) {
-                for (String empNo : empNos) {
-                    if (empNo != null && empNo.toUpperCase().startsWith("EMP")) {
-                        try {
-                            String digits = empNo.substring(3).replaceAll("\\D+", "");
-                            if (!digits.isEmpty()) {
-                                long num = Long.parseLong(digits);
-                                if (num > maxEmp) maxEmp = num;
-                            }
-                        } catch (Exception ignored) {}
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching empNos: " + e.getMessage());
-        }
-
-        try {
-            List<String> epfNos = employeeRepository.findAllEpfNos();
-            if (epfNos != null) {
-                for (String epfNo : epfNos) {
-                    if (epfNo != null && epfNo.toUpperCase().startsWith("EPF")) {
-                        try {
-                            String digits = epfNo.substring(3).replaceAll("\\D+", "");
-                            if (!digits.isEmpty()) {
-                                long num = Long.parseLong(digits);
-                                if (num > maxEpf) maxEpf = num;
-                            }
-                        } catch (Exception ignored) {}
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching epfNos: " + e.getMessage());
-        }
-
+        long maxEmp = employeeRepository.findAllEmpNos().stream()
+                .mapToLong(empNo -> parseSequenceNumber(empNo, "EMP"))
+                .max()
+                .orElse(0);
+        long maxEpf = employeeRepository.findAllEpfNos().stream()
+                .mapToLong(epfNo -> parseSequenceNumber(epfNo, "EPF"))
+                .max()
+                .orElse(0);
         long count = employeeRepository.count();
         long nextEmpNum = Math.max(maxEmp + 1, count + 1);
         long nextEpfNum = Math.max(maxEpf + 1, count + 1);
@@ -89,18 +62,36 @@ public class EmployeeService {
         return result;
     }
 
-    public Employee createEmployee(Employee emp) {
-        emp.setUsername(emp.getEmail());
+    private long parseSequenceNumber(String value, String prefix) {
+        if (value == null || !value.toUpperCase(Locale.ROOT).startsWith(prefix)) {
+            return 0;
+        }
+        String digits = value.substring(prefix.length()).replaceAll("\\D+", "");
+        if (digits.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException exception) {
+            logger.warn("Ignoring malformed employee sequence value '{}'.", value, exception);
+            return 0;
+        }
+    }
+
+    public EmployeeCreationResult createEmployee(Employee emp) {
+        String email = emp.getEmail() == null ? "" : emp.getEmail().trim();
+        validateEmployeeEmail(email);
+        if (employeeRepository.existsByEmailIgnoreCase(email)
+                || employeeRepository.existsByUsernameIgnoreCase(email)) {
+            throw new IllegalArgumentException(
+                    "An employee account with this email address already exists. Please use a different email address.");
+        }
+        emp.setEmail(email);
+        emp.setUsername(email);
 
         Map<String, String> nextNumbers = getNextEmployeeNumbers();
-
-        if (emp.getEmpNo() == null || emp.getEmpNo().trim().isEmpty() || emp.getEmpNo().contains("Auto-generated")) {
-            emp.setEmpNo(nextNumbers.get("emp_no"));
-        }
-
-        if (emp.getEpfNo() == null || emp.getEpfNo().trim().isEmpty() || emp.getEpfNo().contains("Auto-generated")) {
-            emp.setEpfNo(nextNumbers.get("epf_no"));
-        }
+        emp.setEmpNo(nextNumbers.get("emp_no"));
+        emp.setEpfNo(nextNumbers.get("epf_no"));
 
         // 1) Generate a secure random temporary password (12 chars alphanumeric)
         String tempPwd = new SecureRandom()
@@ -127,9 +118,38 @@ public class EmployeeService {
                         "— The HRM Team",
                 emp.getFirstName(), tempPwd
         );
-        emailService.sendEmail(emp.getEmail(), subject, body);
+        boolean emailSent;
+        try {
+            emailSent = emailService.sendEmail(email, subject, body);
+            if (!emailSent) {
+                logger.warn("Employee {} was saved, but welcome email delivery failed.",
+                        saved.getId());
+            }
+        } catch (RuntimeException exception) {
+            emailSent = false;
+            logger.warn("Employee {} was saved, but welcome email delivery failed.",
+                    saved.getId(), exception);
+        }
 
-        return saved;
+        return new EmployeeCreationResult(saved, emailSent);
+    }
+
+    private void validateEmployeeEmail(String email) {
+        if (email.isEmpty() || email.length() > 254) {
+            throw new IllegalArgumentException("Please enter a valid email address.");
+        }
+
+        try {
+            InternetAddress address = new InternetAddress(email, true);
+            address.validate();
+            if (address.getAddress().indexOf('@') < 1
+                    || address.getAddress().lastIndexOf('.') < address.getAddress().indexOf('@') + 2
+                    || address.getAddress().endsWith(".")) {
+                throw new IllegalArgumentException("Please enter a valid email address.");
+            }
+        } catch (AddressException exception) {
+            throw new IllegalArgumentException("Please enter a valid email address.");
+        }
     }
 
 
@@ -852,23 +872,6 @@ public class EmployeeService {
         employee.setPassword(hashedPassword);
         return employeeRepository.save(employee);
     }
-
-
-    public String forgotPassword(String email) {
-        Employee employee = employeeRepository.findByEmail(email);
-        if (employee == null) {
-            throw new IllegalArgumentException("No Employee found with the provided email");
-        }
-        String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        String hashedPassword = passwordEncoder.encode(randomPassword);
-        employee.setPassword(hashedPassword);
-
-        employeeRepository.save(employee);
-
-
-        return randomPassword;
-    }
-
 
 
 }

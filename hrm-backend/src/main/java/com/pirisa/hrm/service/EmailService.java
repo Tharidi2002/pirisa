@@ -7,7 +7,9 @@ import com.pirisa.hrm.repository.EmailRepository;
 import com.pirisa.hrm.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     @Autowired
     private JavaMailSender mailSender;
@@ -59,37 +63,41 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendEmail(String to, String subject, String content) {
-        MimeMessage message = mailSender.createMimeMessage();
+    public boolean sendEmail(String to, String subject, String content) {
+        if (senderAddress == null || senderAddress.trim().isEmpty()
+                || senderPassword == null || senderPassword.trim().isEmpty()) {
+            logger.warn("Email delivery skipped because SMTP sender credentials are not configured.");
+            saveEmailRecord(to, subject, content, false);
+            return false;
+        }
 
+        boolean success;
         try {
+            MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(senderAddress);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(content, true); // true indicates HTML content
-
-            // Send the email
+            helper.setText(content, true);
             mailSender.send(message);
-
-            // Store the email in the database
-            Email email = new Email();
-            email.setRecipient(to);
-            email.setSubject(subject);
-            email.setContent(content);
-            email.setSentAt(new Date());
-            email.setSuccess(true);
-            emailRepository.save(email);
-
-        } catch (MessagingException e) {
-            // Handle email sending failure and log the error
-            Email email = new Email();
-            email.setRecipient(to);
-            email.setSubject(subject);
-            email.setContent(content);
-            email.setSentAt(new Date());
-            email.setSuccess(false);
-            emailRepository.save(email);
+            success = true;
+        } catch (MessagingException | MailException e) {
+            logger.warn("Email delivery failed. Check SMTP configuration and provider logs.", e);
+            success = false;
         }
+
+        saveEmailRecord(to, subject, content, success);
+        return success;
+    }
+
+    private void saveEmailRecord(String to, String subject, String content, boolean success) {
+        Email email = new Email();
+        email.setRecipient(to);
+        email.setSubject(subject);
+        email.setContent(content);
+        email.setSentAt(new Date());
+        email.setSuccess(success);
+        emailRepository.save(email);
     }
 
     /**

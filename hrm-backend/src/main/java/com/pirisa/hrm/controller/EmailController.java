@@ -12,6 +12,7 @@ import javax.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/email")
@@ -26,9 +27,17 @@ public class EmailController {
     private DemoRequestSheetService demoRequestSheetService;
 
     @PostMapping("/send")
-    public String sendEmail(@RequestParam String to, @RequestParam String subject, @RequestParam String content) {
-        emailService.sendEmail(to, subject, content);
-        return "Email sent!";
+    public ResponseEntity<Map<String, Object>> sendEmail(
+            @RequestParam String to,
+            @RequestParam String subject,
+            @RequestParam String content) {
+        boolean sent = emailService.sendEmail(to, subject, content);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", sent);
+        response.put("message", sent
+                ? "Email sent successfully."
+                : "Email could not be sent. Check SMTP configuration and server logs.");
+        return ResponseEntity.status(sent ? HttpStatus.OK : HttpStatus.BAD_GATEWAY).body(response);
     }
 
     @PostMapping("/request-demo")
@@ -56,4 +65,3 @@ public class EmailController {
         }
     }
 }
-

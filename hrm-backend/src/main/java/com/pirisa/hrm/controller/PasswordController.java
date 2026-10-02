@@ -1,6 +1,5 @@
 package com.pirisa.hrm.controller;
 
-import com.pirisa.hrm.service.EmailService;
 import com.pirisa.hrm.service.PasswordResetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +16,9 @@ import java.util.Map;
 public class PasswordController {
 
     private final PasswordResetService resetService;
-    private final EmailService         emailService;
 
-    public PasswordController(PasswordResetService resetService,
-                              EmailService emailService) {
+    public PasswordController(PasswordResetService resetService) {
         this.resetService = resetService;
-        this.emailService  = emailService;
     }
 
     /**
@@ -35,32 +31,11 @@ public class PasswordController {
     @PostMapping(value = "/forgotPassword", produces = "application/json")
     public ResponseEntity<?> forgotPassword(@RequestParam("email") String email) {
         try {
-            // First validate that the email exists in the system
-            String emailAddress = resetService.getEmailForEmail(email);
-            if (emailAddress == null) {
-                Map<String,Object> error = new HashMap<>();
-                error.put("resultCode", 101);
-                error.put("resultDesc", "Email not found. Please check your email and try again.");
-                error.put("message", "No account found with email: " + email);
-                return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-            }
-
-            // Generate new password
-            String newPassword = resetService.resetPasswordForEmail(email);
-
-            // Send email with new password
-            String subject = "Password Reset Request";
-            String content = "<p>Your password has been reset successfully.</p>"
-                    + "<p>Your new password is: <strong>" + newPassword + "</strong></p>"
-                    + "<p>Please log in and change it as soon as possible.</p>"
-                    + "<p>If you didn't request this password reset, please contact support immediately.</p>";
-            
-            emailService.sendEmail(emailAddress, subject, content);
+            resetService.resetPasswordForEmail(email);
 
             Map<String,Object> result = new HashMap<>();
             result.put("resultCode", 100);
-            result.put("resultDesc", "Password reset successfully");
-            result.put("message", "A new password has been sent to your email address. Please check your inbox.");
+            result.put("resultDesc", "Password reset successfully. Please check your email.");
             return new ResponseEntity<>(result, HttpStatus.OK);
 
         } catch (PasswordResetService.NotFoundException ex) {
@@ -69,6 +44,12 @@ public class PasswordController {
             error.put("resultDesc", "Email not found. Please check your email and try again.");
             error.put("message", "No account found with email: " + email);
             return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+
+        } catch (PasswordResetService.DeliveryException ex) {
+            Map<String,Object> error = new HashMap<>();
+            error.put("resultCode", 102);
+            error.put("resultDesc", ex.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
 
         } catch (Exception ex) {
             Map<String,Object> error = new HashMap<>();
