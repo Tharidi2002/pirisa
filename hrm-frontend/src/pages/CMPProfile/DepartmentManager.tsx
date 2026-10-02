@@ -49,9 +49,11 @@ const UnitDesignationManager = () => {
   const [error, setError] = useState("");
 
   // Get company ID from localStorage
-  const getCompanyId = (): number => {
-    const cmpnyId = localStorage.getItem("cmpnyId");
-    return cmpnyId ? parseInt(cmpnyId) : 1; // Default to 1 if not found
+  const getCompanyId = (): number | null => {
+    const storedId =
+      localStorage.getItem("cmpnyId") || localStorage.getItem("companyId");
+    const companyId = storedId ? Number(storedId) : NaN;
+    return Number.isInteger(companyId) && companyId > 0 ? companyId : null;
   };
 
   // Get token from localStorage
@@ -64,6 +66,11 @@ const UnitDesignationManager = () => {
     try {
       setLoading(true);
       const cmpId = getCompanyId();
+      if (!cmpId) {
+        setUnits([]);
+        setError("Company ID not found. Please sign in again.");
+        return;
+      }
       const response = await axios.get<ApiResponse>(
         `${API_BASE}/department/company/${cmpId}`,
         {
@@ -78,6 +85,7 @@ const UnitDesignationManager = () => {
         response.data.resultCode === 100 &&
         Array.isArray(response.data.UnitList)
       ) {
+        setError("");
         setUnits(response.data.UnitList);
       } else {
         setError(response.data.resultDesc || "Failed to fetch units");
@@ -99,6 +107,10 @@ const UnitDesignationManager = () => {
   const addUnit = async (departmentData: Partial<Unit>) => {
     try {
       const cmpId = getCompanyId();
+      if (!cmpId) {
+        setError("Company ID not found. Please sign in again.");
+        return false;
+      }
       const payload = {
         dpt_name: departmentData.dpt_name,
         dpt_code: departmentData.dpt_code,
@@ -132,12 +144,17 @@ const UnitDesignationManager = () => {
   const updateUnit = async (departmentData: Partial<Unit>) => {
     try {
       if (!departmentData.id) return false;
+      const cmpId = getCompanyId();
+      if (!cmpId) {
+        setError("Company ID not found. Please sign in again.");
+        return false;
+      }
 
       const payload = {
         id: departmentData.id,
         dpt_name: departmentData.dpt_name,
         dpt_code: departmentData.dpt_code,
-        cmpId: getCompanyId(),
+        cmpId,
         dpt_desc: departmentData.dpt_desc || "",
       };
 

@@ -94,6 +94,7 @@ const EmployeeTable = () => {
         }
         if (response.status === 404) {
           setEmployees([]);
+          setError(null);
           return;
         }
         throw new Error("Failed to fetch employees. Please try again later.");
@@ -101,6 +102,7 @@ const EmployeeTable = () => {
 
       const data: ApiResponse = await response.json();
       if (data.resultCode === 100) {
+        setError(null);
         const employeeList = data.EmployeeList || [];
         setEmployees(employeeList);
 

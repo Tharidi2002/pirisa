@@ -1,17 +1,18 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react";
 
-interface LkrInputProps {
-  value: string | number;
-  onChange: (value: string) => void;
-  language: string;
-  id?: string;
+export interface CurrencyInputProps {
+  value: number | string;
+  onChange: (value: number) => void;
+  label?: string;
   placeholder?: string;
-  className?: string;
+  prefix?: string;
+  disabled?: boolean;
   required?: boolean;
-  readOnly?: boolean;
-  onClick?: () => void;
-  "aria-label"?: string;
+  error?: string;
+  maxValue?: number;
+  className?: string;
+  name?: string;
 }
 
 const DEFAULT_MAX_VALUE = 99_999_999.99;
@@ -19,9 +20,9 @@ const DEFAULT_MAX_VALUE = 99_999_999.99;
 /**
  * Convert a numeric value into minor units (BigInt, 2 decimal places)
  */
-const parseAmount = (value: string | number): bigint => {
+const parseAmount = (value: number | string): bigint => {
   const raw = String(value ?? "").replace(/,/g, "").trim();
-  if (!/^\d*(?:\.\d*)?$/.test(raw) || raw === "") return 0n;
+  if (!/^\d*(?:\.\d*)?$/.test(raw)) return 0n;
 
   const [wholePart = "0", fractionPart = ""] = raw.split(".");
   const whole = wholePart || "0";
@@ -53,34 +54,32 @@ const formatAmount = (minorUnits: bigint): string => {
   return `${whole}.${digits.slice(-2)}`;
 };
 
-const LkrInput = ({
+const CurrencyInput = ({
   value,
   onChange,
-  language,
-  id,
+  label,
   placeholder = "0.00",
-  className = "",
+  prefix = "Rs.",
+  disabled = false,
   required = false,
-  readOnly = false,
-  onClick,
-  "aria-label": ariaLabel,
-}: LkrInputProps) => {
+  error,
+  maxValue = DEFAULT_MAX_VALUE,
+  className = "",
+  name,
+}: CurrencyInputProps) => {
   const generatedId = useId();
-  const inputId = id || `lkr-input-${generatedId}`;
+  const inputId = `currency-input-${generatedId}`;
+  const errorId = `${inputId}-error`;
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const maximum = maximumMinorUnits(DEFAULT_MAX_VALUE);
+  const maximum = maximumMinorUnits(maxValue);
 
   // `digits` holds the raw numeric digits as a string (e.g. "123456" → 1234.56)
   const initialAmount = limitAmount(parseAmount(value), maximum);
   const [digits, setDigits] = useState(initialAmount.toString());
+
   const focusedRef = useRef(false);
-
   const formattedValue = formatAmount(BigInt(digits));
-
-  // Currency label based on language
-  const currencyLabel =
-    language === "si" ? "රු." : language === "ta" ? "ரூ." : "Rs.";
 
   // Sync external value → internal digits
   useEffect(() => {
@@ -104,9 +103,7 @@ const LkrInput = ({
     if (nextAmount > maximum) return; // ignore overflow
 
     setDigits(normalized);
-    // Return numeric string with 2 decimals (e.g. "1234.56")
-    const numericValue = (Number(nextAmount) / 100).toFixed(2);
-    onChange(numericValue);
+    onChange(Number(nextAmount) / 100);
   };
 
   const appendDigit = (digit: string) => {
@@ -120,11 +117,6 @@ const LkrInput = ({
   // ---- Event handlers ----
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (readOnly || onClick) {
-      // If the field is clickable (used as a modal trigger), allow default behavior
-      return;
-    }
-
     // Allow copy / select-all / paste shortcuts
     if (event.ctrlKey || event.metaKey) {
       const key = event.key.toLowerCase();
@@ -150,8 +142,7 @@ const LkrInput = ({
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (readOnly || onClick) return;
-
+    // Handle mobile / IME input as a fallback
     const inputEvent = event.nativeEvent as InputEvent;
     if (inputEvent.inputType === "deleteContentBackward") {
       removeLastDigit();
@@ -165,9 +156,7 @@ const LkrInput = ({
   };
 
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    if (readOnly || onClick) return;
     event.preventDefault();
-
     const pasted = event.clipboardData.getData("text").trim();
 
     // Allow thousands separators only if properly formatted
@@ -185,7 +174,6 @@ const LkrInput = ({
   };
 
   const handleFocus = () => {
-    if (readOnly || onClick) return;
     focusedRef.current = true;
     const end = inputRef.current?.value.length ?? 0;
     inputRef.current?.setSelectionRange(end, end);
@@ -196,36 +184,61 @@ const LkrInput = ({
   };
 
   return (
-    <div className={`relative w-full ${className}`}>
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-slate-500"
-      >
-        {currencyLabel}
-      </span>
-      <input
-        ref={inputRef}
-        id={inputId}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        aria-label={ariaLabel}
-        required={required}
-        placeholder={placeholder}
-        value={formattedValue}
-        readOnly={readOnly}
-        onClick={onClick}
-        onKeyDown={handleKeyDown}
-        onChange={handleChange}
-        onPaste={handlePaste}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        className={`w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-14 pr-3 text-right font-mono text-sm tabular-nums text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 read-only:cursor-default read-only:bg-slate-50 ${
-          onClick ? "cursor-pointer" : ""
-        }`}
-      />
+    <div className={`w-full ${className}`}>
+      {label && (
+        <label
+          htmlFor={inputId}
+          className="mb-1.5 block text-sm font-medium text-slate-700"
+        >
+          {label}
+          {required && <span className="ml-1 text-red-600">*</span>}
+        </label>
+      )}
+
+      <div className="relative">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base font-medium text-slate-500"
+        >
+          {prefix}
+        </span>
+        <input
+          ref={inputRef}
+          id={inputId}
+          name={name}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          disabled={disabled}
+          required={required}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          placeholder={placeholder}
+          value={formattedValue}
+          onKeyDown={handleKeyDown}
+          onChange={handleChange}
+          onPaste={handlePaste}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onClick={(event) => {
+            const end = event.currentTarget.value.length;
+            event.currentTarget.setSelectionRange(end, end);
+          }}
+          className={`w-full rounded-lg border bg-white py-3 pl-14 pr-3 text-right font-mono text-base tabular-nums text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 ${
+            error
+              ? "border-red-500 focus:border-red-500 focus:ring-red-100"
+              : "border-slate-300"
+          }`}
+        />
+      </div>
+
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
 
-export default LkrInput;
+export default CurrencyInput;

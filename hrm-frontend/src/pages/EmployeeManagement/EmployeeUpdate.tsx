@@ -366,6 +366,7 @@ const EmployeeUpdate: React.FC = () => {
     if (!cmpId) {
       console.error("Company ID not found in localStorage");
       setError("Company ID not found.");
+      setIsUpdating(false);
       return;
     }
 

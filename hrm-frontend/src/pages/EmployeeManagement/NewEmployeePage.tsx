@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   TranslatableOption,
   TranslatableText,
@@ -95,6 +95,7 @@ const EmployeeRegistration: React.FC = () => {
   const [empId, setEmpId] = useState<number | null>(null); // To store the employee ID from Step 1
   const [submittingDetails, setSubmittingDetails] = useState(false); // Loading state for Step 1
   const [submittingDocs, setSubmittingDocs] = useState(false); // Loading state for Step 2
+  const submittingDetailsRef = useRef(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -190,11 +191,11 @@ const EmployeeRegistration: React.FC = () => {
       }
     }
 
-    // Final fallback
+    // Leave IDs empty so the backend can allocate them without risking a duplicate.
     setEmployeeDetails((prev) => ({
       ...prev,
-      emp_no: prev.emp_no || "EMP0001",
-      epf_no: prev.epf_no || "EPF0001",
+      emp_no: "",
+      epf_no: "",
     }));
   };
 
@@ -285,6 +286,7 @@ const EmployeeRegistration: React.FC = () => {
 
   const handleSubmitDetails = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingDetailsRef.current) return;
     if (!token) {
       console.error("No token available");
       return;
@@ -311,7 +313,7 @@ const EmployeeRegistration: React.FC = () => {
 
     if (
       !employeeDetails.email.trim() ||
-      !/^\S+@\S+\.\S+$/.test(employeeDetails.email)
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeDetails.email.trim())
     ) {
       toast.error("Please enter a valid email address");
       setSubmittingDetails(false);
@@ -392,7 +394,7 @@ const EmployeeRegistration: React.FC = () => {
       first_name: employeeDetails.first_name,
       last_name: employeeDetails.last_name,
       basic_salary: Number(employeeDetails.basic_salary),
-      email: employeeDetails.email,
+      email: employeeDetails.email.trim(),
       gender: employeeDetails.gender,
       dob: formattedDOB,
       phone: employeeDetails.phone,
@@ -404,6 +406,8 @@ const EmployeeRegistration: React.FC = () => {
       designationId: Number(employeeDetails.designationId),
     };
 
+    submittingDetailsRef.current = true;
+    setSubmittingDetails(true);
     try {
       const response = await fetch(`${API_BASE}/employee/add_employee`, {
         method: "POST",
@@ -415,12 +419,12 @@ const EmployeeRegistration: React.FC = () => {
       });
 
       if (!response.ok) {
-        // Handle non-200 responses
-        const errorText = await response.text();
-        console.error(`HTTP ${response.status} Error:`, errorText);
-        toast.error(
-          `Server error (${response.status}): Failed to save employee details. Please check with administrator.`,
-        );
+        const errorData = await response.json().catch(() => null);
+        const message =
+          errorData?.resultDesc ||
+          `Server error (${response.status}): Failed to save employee details.`;
+        console.error(`HTTP ${response.status} Error:`, message);
+        toast.error(message);
         return;
       }
 
@@ -465,8 +469,14 @@ const EmployeeRegistration: React.FC = () => {
             }
           }
 
-          toast.success("Employee details saved successfully!");
-          // alert('Employee details saved successfully!');
+          if (data.emailSent === false) {
+            toast.warning(
+              "Employee details saved, but the welcome email could not be sent. Please check the email address or contact your administrator.",
+              { autoClose: 8000 },
+            );
+          } else {
+            toast.success("Employee details and welcome email sent successfully!");
+          }
           setStep(2);
         } else {
           console.error(
@@ -490,6 +500,7 @@ const EmployeeRegistration: React.FC = () => {
       // alert('Error saving employee details. Please try again.');
       toast.error("Error saving employee details. Please try again.");
     } finally {
+      submittingDetailsRef.current = false;
       setSubmittingDetails(false);
     }
   };
@@ -595,6 +606,7 @@ const EmployeeRegistration: React.FC = () => {
           dptId: 0,
           designationId: 0,
         });
+        void fetchNextNumbers();
         setDocuments({
           birthCertificate: null,
           cv: null,
@@ -658,6 +670,7 @@ const EmployeeRegistration: React.FC = () => {
           dptId: 0,
           designationId: 0,
         });
+        void fetchNextNumbers();
         setDocuments({
           birthCertificate: null,
           cv: null,
