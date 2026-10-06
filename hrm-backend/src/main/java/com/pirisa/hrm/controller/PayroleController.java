@@ -25,7 +25,17 @@ public class PayroleController {
     @PostMapping(value = "/add_payrole", produces = {"application/json"})
     public ResponseEntity<?> addPayrole(@RequestBody Payrole payrole) {
         try {
+            // validate empId to avoid FK constraint violation
+            if (payrole.getEmpId() <= 0) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("resultCode", 101);
+                errorResponse.put("resultDesc", "Valid empId is required");
+
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
             Payrole createdPayrole = payroleService.createPayrole(payrole);
+
             if (createdPayrole != null) {
                 Map<String, Object> payroleResponse = new HashMap<>();
                 payroleResponse.put("resultCode", 100);

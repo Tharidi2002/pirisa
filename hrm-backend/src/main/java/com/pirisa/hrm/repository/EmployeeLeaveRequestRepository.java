@@ -12,15 +12,21 @@ import java.util.List;
 @Repository
 public interface EmployeeLeaveRequestRepository extends JpaRepository<EmployeeLeave, Long> {
 
-    @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND el.leaveStatus = 'approved'")
+    @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND UPPER(el.leaveStatus) = 'APPROVED'")
     List<EmployeeLeave> findApprovedByEmpId(@Param("empId") long empId);
 
-    @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND el.leaveStatus = 'approved' AND el.leaveStartDay <= :asOfDateTime")
-    List<EmployeeLeave> findApprovedByEmpIdAsOf(@Param("empId") long empId, @Param("asOfDateTime") LocalDateTime asOfDateTime);
+    @Query("SELECT el FROM EmployeeLeave el WHERE el.empId = :empId AND UPPER(el.leaveStatus) = 'APPROVED' AND el.leaveStartDay <= :asOfDateTime")
+    List<EmployeeLeave> findApprovedByEmpIdAsOf(
+            @Param("empId") long empId, 
+            @Param("asOfDateTime") LocalDateTime asOfDateTime);
 
-    @Query("SELECT e FROM EmployeeLeave e WHERE e.leaveStatus = 'approved' AND :date BETWEEN e.leaveStartDay AND e.leaveEndDay")
+    @Query("SELECT e FROM EmployeeLeave e WHERE UPPER(e.leaveStatus) = 'APPROVED' AND :date BETWEEN e.leaveStartDay AND e.leaveEndDay")
     List<EmployeeLeave> findEmployeesOnLeaveForDate(@Param("date") LocalDateTime date);
 
-    @Query("SELECT e FROM EmployeeLeave e WHERE e.empId = :employeeId AND e.leaveStatus = 'approved' AND :date BETWEEN e.leaveStartDay AND e.leaveEndDay")
-    List<EmployeeLeave> findActiveLeaveForEmployee(@Param("employeeId") long employeeId, @Param("date") LocalDateTime date);
+    @Query("SELECT e FROM EmployeeLeave e WHERE e.empId = :employeeId " +
+        "AND UPPER(e.leaveStatus) = 'APPROVED' " +
+        "AND :date BETWEEN e.leaveStartDay AND e.leaveEndDay")
+    List<EmployeeLeave> findActiveLeaveForEmployee(
+            @Param("employeeId") long employeeId, 
+            @Param("date") LocalDateTime date);
 }

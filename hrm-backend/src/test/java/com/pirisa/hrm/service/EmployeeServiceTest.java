@@ -1,8 +1,11 @@
 package com.pirisa.hrm.service;
 
 import com.pirisa.hrm.dto.EmployeeCreationResult;
+import com.pirisa.hrm.dto.PayroleEmployeeDTO;
 import com.pirisa.hrm.model.Employee;
+import com.pirisa.hrm.model.Payrole;
 import com.pirisa.hrm.repository.EmployeeRepository;
+import com.pirisa.hrm.repository.PayroleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,11 +21,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.Collections;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
     @Mock
     private EmployeeRepository employeeRepository;
+
+    @Mock
+    private PayroleRepository payroleRepository;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -96,6 +103,38 @@ class EmployeeServiceTest {
         assertThat(employee.getEpfNo()).isEqualTo("EPF0004");
     }
 
+    @Test
+    void getPayroleByEmployeeIdLoadsPayrolesFromPayroleRepository() {
+        Employee employee = validEmployee("maya@example.com");
+        employee.setId(1L);
+        Payrole payrole = payrole(6L, 1L);
+        when(employeeRepository.findEmployeeById(1L)).thenReturn(Collections.singletonList(employee));
+        when(payroleRepository.findByEmpId(1L)).thenReturn(Collections.singletonList(payrole));
+
+        List<PayroleEmployeeDTO> result = employeeService.getPayroleByEmployeeId(1L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getPayroleList()).hasSize(1);
+        assertThat(result.get(0).getPayroleList().get(0).getId()).isEqualTo(6L);
+        verify(payroleRepository).findByEmpId(1L);
+    }
+
+    @Test
+    void getPayroleByCompanyIdLoadsPayrolesForEachEmployeeFromPayroleRepository() {
+        Employee employee = validEmployee("maya@example.com");
+        employee.setId(1L);
+        Payrole payrole = payrole(6L, 1L);
+        when(employeeRepository.findByCmpId(10L)).thenReturn(Collections.singletonList(employee));
+        when(payroleRepository.findByEmpId(1L)).thenReturn(Collections.singletonList(payrole));
+
+        List<PayroleEmployeeDTO> result = employeeService.getPayroleByCompanyId(10L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getPayroleList()).hasSize(1);
+        assertThat(result.get(0).getPayroleList().get(0).getId()).isEqualTo(6L);
+        verify(payroleRepository).findByEmpId(1L);
+    }
+
     private Employee validEmployee(String email) {
         Employee employee = new Employee();
         employee.setEmail(email);
@@ -103,5 +142,12 @@ class EmployeeServiceTest {
         employee.setEpfNo("EPF0001");
         employee.setFirstName("Maya");
         return employee;
+    }
+
+    private Payrole payrole(long id, long employeeId) {
+        Payrole payrole = new Payrole();
+        payrole.setId(id);
+        payrole.setEmpId(employeeId);
+        return payrole;
     }
 }

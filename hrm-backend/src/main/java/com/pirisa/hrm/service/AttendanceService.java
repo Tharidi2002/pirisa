@@ -31,6 +31,8 @@ import com.pirisa.hrm.dto.AttendanceExcludedEmployeeDTO;
 import com.pirisa.hrm.dto.AttendancePendingEmployeeDTO;
 import com.pirisa.hrm.dto.BulkAttendanceDataDTO;
 
+import java.util.Optional;
+
 @Service
 public class AttendanceService {
 
@@ -183,7 +185,31 @@ public class AttendanceService {
             throw new IllegalArgumentException("No valid attendance records were provided");
         }
 
-        return attendanceRepository.saveAll(validatedList);
+        // ==== UPSERT LOGIC: Handle existing records without duplicate constraint violation ====
+        List<Attendance> recordsToSave = new ArrayList<>();
+        for (Attendance incoming : validatedList) {
+            Optional<Attendance> existing = attendanceRepository
+                    .findByEmpIdAndAttendanceDate(incoming.getEmpId(), incoming.getAttendanceDate());
+
+            if (existing.isPresent()) {
+                // Update existing record
+                Attendance current = existing.get();
+                current.setStartedAt(incoming.getStartedAt());
+                current.setEndedAt(incoming.getEndedAt());
+                current.setWorking_status(incoming.getWorking_status());
+                current.setAttendance_status(incoming.getAttendance_status());
+                current.setEntryType(incoming.getEntryType());
+                current.setCreatedBy(incoming.getCreatedBy());
+                current.setDepartureReason(incoming.getDepartureReason());
+                current.setDepartureNotes(incoming.getDepartureNotes());
+                recordsToSave.add(current);
+            } else {
+                // Insert new record
+                recordsToSave.add(incoming);
+            }
+        }
+
+        return attendanceRepository.saveAll(recordsToSave);
     }
 
     private String normalizeText(String... values) {

@@ -1047,6 +1047,10 @@ public class CalendarEventService {
                 return;
             }
             
+            // Fetch the event entity to link properly
+            CalendarEvent event = calendarEventRepository.findById(eventId)
+                    .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+            
             // Parse JSON array of employee IDs
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             List<Long> employeeIds = mapper.readValue(employeeIdsJson, 
@@ -1055,11 +1059,13 @@ public class CalendarEventService {
             // Clear existing assignments
             eventEmployeeRepository.deleteByEventId(eventId);
             
-            // Create new assignments
+            // Create new assignments with proper event and company references
             for (Long employeeId : employeeIds) {
                 EventEmployee assignment = new EventEmployee();
+                assignment.setEvent(event);                              // ✅ Link to event entity
                 assignment.setEmployeeId(employeeId);
-                assignment.setCompanyId(1L); // TODO: Get actual company ID from event
+                assignment.setCompanyId(event.getCompanyId());          // ✅ Use event's companyId (not hardcoded)
+                assignment.setNotificationSent(false);                  // ✅ Explicit
                 assignment.setCreatedAt(LocalDateTime.now());
                 eventEmployeeRepository.save(assignment);
             }

@@ -17,7 +17,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findByCmpId(long cmpId);
 
 
-    List<Employee> findEmployeeById(long empId);
+    @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.payroleList WHERE e.id = :empId")
+    List<Employee> findEmployeeById(@Param("empId") long empId);
 
     @Modifying
     @Transactional

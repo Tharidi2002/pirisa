@@ -105,7 +105,7 @@ public class EmployeeSelfServiceService {
         dashboard.setLeaveBalanceTotal(totalRemaining);
 
         // Recent payslips (last 3)
-        List<Payrole> payslips = payroleRepository.findEmployeeById(employeeId);
+        List<Payrole> payslips = payroleRepository.findByEmpId(employeeId);
         List<SelfServiceDashboardDTO.RecentPayslip> recentPayslips = payslips.stream()
                 .sorted(Comparator.comparing(Payrole::getYear).reversed()
                         .thenComparing(Payrole::getMonth, Comparator.reverseOrder()))
@@ -334,7 +334,7 @@ public class EmployeeSelfServiceService {
      */
     @Transactional(readOnly = true)
     public List<Payrole> getMyPayslips(Long employeeId) {
-        return payroleRepository.findEmployeeById(employeeId);
+        return payroleRepository.findByEmpId(employeeId);
     }
 
     /**

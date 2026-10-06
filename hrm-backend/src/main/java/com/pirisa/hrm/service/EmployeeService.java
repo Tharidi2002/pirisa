@@ -5,7 +5,9 @@ import com.pirisa.hrm.dto.*;
 import com.pirisa.hrm.model.Attendance;
 import com.pirisa.hrm.model.Company;
 import com.pirisa.hrm.model.Employee;
+import com.pirisa.hrm.model.Payrole;
 import com.pirisa.hrm.repository.EmployeeRepository;
+import com.pirisa.hrm.repository.PayroleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,9 @@ public class EmployeeService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private PayroleRepository payroleRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -219,38 +224,9 @@ public class EmployeeService {
         public List<PayroleEmployeeDTO> getPayroleByCompanyId(long cmpId) {
         List<Employee> employees = employeeRepository.findByCmpId(cmpId);
 
-        return employees.stream().map(employee -> new PayroleEmployeeDTO(
-                employee.getId(),
-                employee.getEpfNo(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getBasicSalary(),
-                employee.getEmail(),
-                employee.getGender(),
-                employee.getPhone(),
-                employee.getAddress(),
-                employee.getDateOfJoining(),
-                employee.getNic(),
-                employee.getDob(),
-                employee.getStatus(),
-                employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
-                        payrole.getId(),
-                        payrole.getYear(),
-                        payrole.getMonth(),
-                        payrole.getAllowance(),
-                        payrole.getOvertimePay(),
-                        payrole.getBonusPay(),
-                        payrole.getAppit(),
-                        payrole.getLoan(),
-                        payrole.getOtherDeductions(),
-                        payrole.getEpf8(),
-                        payrole.getTotalEarnings(),
-                        payrole.getTotalDeductions(),
-                        payrole.getNetSalary(),
-                        payrole.getBasicSalary()
-
-                )).collect(Collectors.toList())
-        )).collect(Collectors.toList());
+        return employees.stream()
+                .map(this::toPayroleEmployeeDTO)
+                .collect(Collectors.toList());
     }
 
 
@@ -258,40 +234,46 @@ public class EmployeeService {
         public List<PayroleEmployeeDTO> getPayroleByEmployeeId(long empId) {
         List<Employee> employees = employeeRepository.findEmployeeById(empId);
 
-        return employees.stream().map(employee -> new PayroleEmployeeDTO(
-                employee.getId(),
-                employee.getEpfNo(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getBasicSalary(),
-                employee.getEmail(),
-                employee.getGender(),
-                employee.getPhone(),
-                employee.getAddress(),
-                employee.getDateOfJoining(),
-                employee.getNic(),
-                employee.getDob(),
-                employee.getStatus(),
-                employee.getPayroleList().stream().map(payrole -> new PayroleDTO(
-                        payrole.getId(),
-                        payrole.getYear(),
-                        payrole.getMonth(),
-                        payrole.getAllowance(),
-                        payrole.getOvertimePay(),
-                        payrole.getBonusPay(),
-                        payrole.getAppit(),
-                        payrole.getLoan(),
-                        payrole.getOtherDeductions(),
-                        payrole.getEpf8(),
-                        payrole.getTotalEarnings(),
-                        payrole.getTotalDeductions(),
-                        payrole.getNetSalary(),
-                        payrole.getBasicSalary()
-
-                )).collect(Collectors.toList())
-        )).collect(Collectors.toList());
+        return employees.stream()
+                .map(this::toPayroleEmployeeDTO)
+                .collect(Collectors.toList());
     }
 
+    private PayroleEmployeeDTO toPayroleEmployeeDTO(Employee employee) {
+        List<Payrole> payroleList = payroleRepository.findByEmpId(employee.getId());
+
+        return new PayroleEmployeeDTO(
+                        employee.getId(),
+                        employee.getEpfNo(),
+                        employee.getFirstName(),
+                        employee.getLastName(),
+                        employee.getBasicSalary(),
+                        employee.getEmail(),
+                        employee.getGender(),
+                        employee.getPhone(),
+                        employee.getAddress(),
+                        employee.getDateOfJoining(),
+                        employee.getNic(),
+                        employee.getDob(),
+                        employee.getStatus(),
+                        payroleList.stream().map(payrole -> new PayroleDTO(
+                                payrole.getId(),
+                                payrole.getYear(),
+                                payrole.getMonth(),
+                                payrole.getAllowance(),
+                                payrole.getOvertimePay(),
+                                payrole.getBonusPay(),
+                                payrole.getAppit(),
+                                payrole.getLoan(),
+                                payrole.getOtherDeductions(),
+                                payrole.getEpf8(),
+                                payrole.getTotalEarnings(),
+                                payrole.getTotalDeductions(),
+                                payrole.getNetSalary(),
+                                payrole.getBasicSalary()
+                        )).collect(Collectors.toList())
+        );
+    }
 
 
         @Transactional(readOnly = true)

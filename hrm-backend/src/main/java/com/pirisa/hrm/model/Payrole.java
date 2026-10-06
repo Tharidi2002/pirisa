@@ -71,7 +71,7 @@ public class Payrole implements Serializable {
     private BigDecimal basicSalary;
 
     @Column(name = "emp_id")
-    @JsonProperty("emp_id")
+    @JsonProperty("empId")
     private long empId;
 
     @CreationTimestamp
