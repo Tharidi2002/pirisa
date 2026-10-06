@@ -1,35 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 interface DateFilterProps {
+  selectedDate: string;
   onDateChange: (date: string) => void;
 }
 
-const DateFilter: React.FC<DateFilterProps> = ({ onDateChange }) => {
-  // Get today's date in YYYY-MM-DD format
-  const getTodayDate = (): string => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
-
-  // Set default date on component mount
-  useEffect(() => {
-    // Trigger the parent's date change handler with today's date on component mount
-    onDateChange(getTodayDate());
-  }, [onDateChange]);
-
+const DateFilter: React.FC<DateFilterProps> = ({
+  selectedDate,
+  onDateChange,
+}) => {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    setSelectedDate(newDate);
-    onDateChange(newDate);
+    onDateChange(e.target.value);
   };
 
   const handleClear = () => {
-    setSelectedDate('');
     onDateChange('');
   };
 

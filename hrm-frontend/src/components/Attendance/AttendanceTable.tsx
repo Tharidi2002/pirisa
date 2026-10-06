@@ -786,7 +786,10 @@ const AttendanceTable = () => {
   if (!hasAttendanceRecords) {
     return (
       <div className="p-6">
-        <DateFilter onDateChange={handleDateChange} />
+        <DateFilter
+          selectedDate={selectedDate}
+          onDateChange={handleDateChange}
+        />
         <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg shadow-md">
           <p className="text-lg font-semibold text-gray-700">
             No attendance records found
@@ -811,7 +814,10 @@ const AttendanceTable = () => {
 
   return (
     <div className="p-6">
-      <DateFilter onDateChange={handleDateChange} />
+      <DateFilter
+        selectedDate={selectedDate}
+        onDateChange={handleDateChange}
+      />
 
       {/* Department Filter */}
       <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
