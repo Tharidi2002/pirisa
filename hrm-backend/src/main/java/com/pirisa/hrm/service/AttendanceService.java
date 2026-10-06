@@ -246,9 +246,10 @@ public class AttendanceService {
         }
     }
 
-    public byte[] exportAttendanceToExcel(String filterType, Long departmentId, Long empId,
+    public byte[] exportAttendanceToExcel(long companyId, Long departmentId, Long empId,
                                           LocalDate startDate, LocalDate endDate) throws IOException {
-        List<Attendance> attendanceList = findAttendanceByFilters(filterType, departmentId, empId, startDate, endDate);
+        List<Attendance> attendanceList = attendanceRepository.findForCompanyReport(
+                companyId, departmentId, empId, startDate, endDate);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Attendance");
@@ -461,23 +462,6 @@ public class AttendanceService {
 
     private String formatLocalDateTime(LocalDateTime dateTime) {
         return dateTime == null ? "" : dateTime.format(DATE_TIME_FORMATTER);
-    }
-
-    private List<Attendance> findAttendanceByFilters(String filterType, Long departmentId, Long empId,
-                                                     LocalDate startDate, LocalDate endDate) {
-        if (empId != null && startDate != null && endDate != null) {
-            return attendanceRepository.findByEmpIdAndDateRange(empId, startDate, endDate);
-        }
-        if (departmentId != null && startDate != null && endDate != null) {
-            return attendanceRepository.findByAttendanceDateBetweenAndDepartment(startDate, endDate, departmentId);
-        }
-        if (departmentId != null && startDate != null && endDate == null) {
-            return attendanceRepository.findByAttendanceDateAndDepartment(startDate, departmentId);
-        }
-        if (startDate != null && endDate == null) {
-            return attendanceRepository.findByAttendanceDate(startDate);
-        }
-        return attendanceRepository.findAll();
     }
 
     public void deleteAttendance(Long atdnc_id) {

@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pirisa.hrm.dto.BulkAttendanceDataDTO;
 import com.pirisa.hrm.model.Attendance;
 import com.pirisa.hrm.service.AttendanceService;
+import com.pirisa.hrm.service.CompanyAccessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +30,9 @@ public class AttendanceController {
 
     @Autowired
     private AttendanceService attendanceService;
+
+    @Autowired
+    private CompanyAccessService companyAccessService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -54,7 +59,12 @@ public class AttendanceController {
     public ResponseEntity<?> getBulkAttendanceData(
             @RequestParam(value = "attendanceDate") String attendanceDateText,
             @RequestParam(value = "companyId") Long companyId,
-            @RequestParam(value = "departmentId", required = false) Long departmentId) {
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            Authentication authentication) {
+        if (companyId == null || !companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Collections.singletonMap("error", "You cannot access attendance data for this company."));
+        }
         try {
             LocalDate attendanceDate = LocalDate.parse(attendanceDateText, DATE_FORMATTER);
             BulkAttendanceDataDTO attendanceData = attendanceService.getBulkAttendanceData(attendanceDate, companyId, departmentId);
@@ -102,7 +112,13 @@ public class AttendanceController {
             @RequestParam(value = "department", required = false) Long departmentId,
             @RequestParam(value = "empId", required = false) Long empId,
             @RequestParam(value = "startDate", required = false) String startDateText,
-            @RequestParam(value = "endDate", required = false) String endDateText) {
+            @RequestParam(value = "endDate", required = false) String endDateText,
+            Authentication authentication) {
+        long companyId = companyAccessService.getCompanyIdForUser(authentication.getName());
+        if (companyId <= 0) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Collections.singletonMap("error", "Unable to determine your company for this report."));
+        }
         try {
             LocalDate startDate = parseDateOrNull(startDateText);
             LocalDate endDate = parseDateOrNull(endDateText);
@@ -111,7 +127,8 @@ public class AttendanceController {
                 startDate = dateRange[0];
                 endDate = dateRange[1];
             }
-            byte[] excelBytes = attendanceService.exportAttendanceToExcel(type, departmentId, empId, startDate, endDate);
+            byte[] excelBytes = attendanceService.exportAttendanceToExcel(
+                    companyId, departmentId, empId, startDate, endDate);
             String filename = buildExcelFilename(type, departmentId, empId, startDate, endDate);
             ByteArrayResource resource = new ByteArrayResource(excelBytes);
 

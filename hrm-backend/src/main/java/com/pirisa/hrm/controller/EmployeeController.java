@@ -9,11 +9,13 @@ import com.pirisa.hrm.model.Employee;
 import com.pirisa.hrm.service.EmailService;
 import com.pirisa.hrm.service.EmployeeService;
 import com.pirisa.hrm.service.PasswordResetService;
+import com.pirisa.hrm.service.CompanyAccessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -32,6 +34,9 @@ public class EmployeeController {
 
     @Autowired
     private PasswordResetService passwordResetService;
+
+    @Autowired
+    private CompanyAccessService companyAccessService;
 
 
 
@@ -148,7 +153,12 @@ public class EmployeeController {
 
 //Attendance List from Company Id
     @GetMapping(value = "/attendanceList/{cmpId}", produces = "application/json")
-    public ResponseEntity<?> getAttendanceByCompanyId(@PathVariable long cmpId) {
+    public ResponseEntity<?> getAttendanceByCompanyId(
+            @PathVariable long cmpId,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), cmpId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
         try {
             List<AttendanceEmployeeDTO> employees = employeeService.getAttendanceByCompanyId(cmpId);
             if (employees.isEmpty()) {
@@ -170,7 +180,12 @@ public class EmployeeController {
 
     //Attendance List from Company Id only the last attendance
     @GetMapping(value = "/lastattendanceList/{cmpId}", produces = "application/json")
-    public ResponseEntity<?> getLastAttendanceByCompanyId(@PathVariable long cmpId) {
+    public ResponseEntity<?> getLastAttendanceByCompanyId(
+            @PathVariable long cmpId,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), cmpId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
         try {
             List<AttendanceEmployeeDTO> employees = employeeService.getLastAttendanceByCompanyId(cmpId);
 
@@ -234,7 +249,12 @@ public class EmployeeController {
 
 
     @GetMapping(value = "/EmpDetailsList/{cmp_id}", produces = "application/json")
-    public ResponseEntity<?> getEmpDetailsByCompanyId(@PathVariable long cmp_id) {
+    public ResponseEntity<?> getEmpDetailsByCompanyId(
+            @PathVariable long cmp_id,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), cmp_id)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
         try {
             List<EmpDetailsDTO> employees = employeeService.getEmpDetailsByCompanyId(cmp_id);
 
@@ -392,7 +412,11 @@ public class EmployeeController {
     @GetMapping(value = "/attendanceList/{cmpId}/{month}", produces = "application/json")
     public ResponseEntity<?> getAttendanceByCompanyAndMonth(
             @PathVariable long cmpId,
-            @PathVariable  int month) {
+            @PathVariable int month,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), cmpId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
         try {
             List<AttendanceEmployeeDTO> list =
                     employeeService.getAttendanceByCompanyIdAndMonth(cmpId, month);
@@ -411,6 +435,11 @@ public class EmployeeController {
                             "An error occurred while fetching attendance"
                     ));
         }
+    }
+
+    private ResponseEntity<?> forbiddenCompanyAttendanceResponse() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Collections.singletonMap("error", "You cannot access attendance data for another company."));
     }
 
 

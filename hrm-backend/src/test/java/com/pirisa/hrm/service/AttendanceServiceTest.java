@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,5 +59,19 @@ class AttendanceServiceTest {
         assertThat(saved).hasSize(1);
         assertThat(saved.get(0).getDepartureNotes()).isEqualTo("Official site visit");
         assertThat(saved.get(0).getDepartureReason()).isEqualTo("Official Field Work");
+    }
+
+    @Test
+    void exportAttendanceToExcel_shouldQueryWithinCompanyAndRequestedFilters() throws Exception {
+        LocalDate startDate = LocalDate.of(2026, 10, 1);
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        when(attendanceRepository.findForCompanyReport(42L, 7L, 19L, startDate, endDate))
+                .thenReturn(List.of());
+
+        byte[] workbook = attendanceService.exportAttendanceToExcel(
+                42L, 7L, 19L, startDate, endDate);
+
+        assertThat(workbook).isNotEmpty();
+        verify(attendanceRepository).findForCompanyReport(42L, 7L, 19L, startDate, endDate);
     }
 }
