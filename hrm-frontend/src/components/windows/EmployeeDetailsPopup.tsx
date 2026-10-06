@@ -35,13 +35,13 @@ interface EmployeeDetails {
   dob: string;
   nic: string;
 
-  department: {
+  department?: {
     dpt_name: string;
-  };
-  designation: {
+  } | null;
+  designation?: {
     designation: string;
-  };
-  employeeLeaves: {
+  } | null;
+  employeeLeaves?: {
     id: number;
     leaveType: string;
     leaveStartDay: string;
@@ -153,9 +153,22 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
             throw new Error("Failed to fetch employee details");
           }
 
-          const employeeData = await employeeResponse.json();
+          const employeeData: {
+            resultCode: number;
+            resultDesc?: string;
+            Employee_list?: EmployeeDetails | null;
+          } = await employeeResponse.json();
           if (employeeData.resultCode === 100) {
-            setEmployee(employeeData.Employee_list);
+            const employeeDetails = employeeData.Employee_list;
+            if (!employeeDetails) {
+              throw new Error("Employee details were missing from the response");
+            }
+            setEmployee({
+              ...employeeDetails,
+              employeeLeaves: Array.isArray(employeeDetails.employeeLeaves)
+                ? employeeDetails.employeeLeaves
+                : [],
+            });
           } else {
             throw new Error(employeeData.resultDesc);
           }
@@ -279,10 +292,11 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
     if (!companyLeaves || companyLeaves.length === 0) {
       return [];
     }
+    const employeeLeaves = employee.employeeLeaves ?? [];
 
     return companyLeaves.map((companyLeave) => {
       // Filter approved leaves of this type
-      const approvedLeaves = employee.employeeLeaves.filter(
+      const approvedLeaves = employeeLeaves.filter(
         (leave) =>
           leave.leaveType === companyLeave.leaveType &&
           leave.leaveStatus === "APPROVED",
@@ -498,7 +512,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                       )}
                     </div>
                     <div className="absolute -bottom-3 -right-3 bg-gradient-to-r from-sky-600 to-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg">
-                      {employee.designation.designation}
+                      {employee.designation?.designation || "No designation"}
                     </div>
                   </div>
                 </div>
@@ -510,7 +524,7 @@ const EmployeeDetailsPopup: React.FC<EmployeeDetailsPopupProps> = ({
                         {employee.first_name} {employee.last_name}
                       </h3>
                       <p className="text-xl text-sky-600 font-medium mt-1">
-                        {employee.department.dpt_name}
+                        {employee.department?.dpt_name || "No department"}
                       </p>
                     </div>
 

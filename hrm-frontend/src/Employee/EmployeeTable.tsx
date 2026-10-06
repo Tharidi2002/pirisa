@@ -222,7 +222,11 @@ const EmployeeTable = () => {
     setPhotoUrls(photoUrlMap);
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: number | undefined) => {
+    if (!Number.isSafeInteger(id) || !id || id < 1) {
+      toast.error("Cannot edit this employee because the employee ID is invalid.");
+      return;
+    }
     navigate(`/employee/edit/${id}`);
   };
 
@@ -397,7 +401,10 @@ const EmployeeTable = () => {
       render: (item) => (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleEdit(item.id)}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleEdit(item.id);
+            }}
             className="p-2 rounded-lg bg-sky-100 hover:bg-sky-200 transition-colors"
             aria-label="Edit"
           >

@@ -62,6 +62,14 @@ type UpdateEmployeeApiResponse = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
+const isValidEmployeeId = (id: string | undefined): boolean =>
+  Boolean(
+    id &&
+      /^\d+$/.test(id) &&
+      Number.isSafeInteger(Number(id)) &&
+      Number(id) > 0,
+  );
+
 const EmployeeUpdate: React.FC = () => {
   const { language } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -106,20 +114,27 @@ const EmployeeUpdate: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (token && id) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          await Promise.all([fetchEmployeeDetails(), fetchDepartments()]);
-        } catch (err) {
-          console.error("Error in fetchData:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      void fetchData();
+    if (!token) return;
+    if (!isValidEmployeeId(id)) {
+      setError(
+        "Invalid employee ID in the URL. Return to the employee list and select an employee again.",
+      );
+      setIsLoading(false);
+      return;
     }
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        await Promise.all([fetchEmployeeDetails(), fetchDepartments()]);
+      } catch (err) {
+        console.error("Error in fetchData:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void fetchData();
   }, [token, id]);
 
   useEffect(() => {
@@ -169,8 +184,10 @@ const EmployeeUpdate: React.FC = () => {
               ? emp.date_of_joining.split("T")[0]
               : "",
             cmp_id: emp.cmpId || 0,
-            dptId: emp.department?.id || 0,
-            designationId: emp.designation?.id || 0,
+            dptId: Number(emp.dptId ?? emp.department?.id ?? 0),
+            designationId: Number(
+              emp.designationId ?? emp.designation?.id ?? 0,
+            ),
           });
         } else {
           setError(
@@ -288,9 +305,9 @@ const EmployeeUpdate: React.FC = () => {
     e.preventDefault();
     setIsUpdating(true); // Start loading
     setError(null); // Clear any previous errors
-    if (!token || !id) {
+    if (!token || !isValidEmployeeId(id)) {
       console.error("No token or employee ID available");
-      setError("Authentication token or employee ID missing.");
+      setError("Authentication token or valid employee ID is required.");
       setIsUpdating(false);
       return;
     }
