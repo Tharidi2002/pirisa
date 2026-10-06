@@ -42,13 +42,19 @@ interface Employee {
   cmpId: number;
   dptId: number;
   designationId: number;
-  attendanceList: AttendanceRecord[];
+  attendanceList?: AttendanceRecord[];
   payroleList: unknown[];
 }
 
 interface ApiResponse {
   resultCode: number;
-  Employee_list: Employee;
+  Employee_list?: Employee | null;
+}
+
+interface AttendanceHistoryResponse {
+  resultCode: number;
+  resultDesc?: string;
+  data?: unknown;
 }
 
 interface EmployeeDetailsResponse {
@@ -83,7 +89,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
         `${API_BASE}/employee/emp/${empId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: "Bearer " + token,
             "Content-Type": "application/json",
           },
         }
@@ -94,21 +100,77 @@ const AttendanceCalendarDashboard: React.FC = () => {
         `${API_BASE}/employee/EmpDetailsListByEmp/${empId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: "Bearer " + token,
             "Content-Type": "application/json",
           },
         }
       );
 
-      if (!employeeResponse.ok || !leaveResponse.ok) {
+      const attendanceResponse = await fetch(
+        `${API_BASE}/api/self-service/attendance/${empId}`,
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (
+        !employeeResponse.ok ||
+        !leaveResponse.ok ||
+        !attendanceResponse.ok
+      ) {
         throw new Error("Failed to fetch data");
       }
 
       const employeeData: ApiResponse = await employeeResponse.json();
       const leaveData: EmployeeDetailsResponse = await leaveResponse.json();
+      const attendanceData: AttendanceHistoryResponse =
+        await attendanceResponse.json();
 
-      if (employeeData.resultCode === 100 && leaveData.resultCode === 100) {
-        setEmployee(employeeData.Employee_list);
+      if (
+        employeeData.resultCode === 100 &&
+        employeeData.Employee_list &&
+        leaveData.resultCode === 100 &&
+        attendanceData.resultCode === 100
+      ) {
+        const rawAttendance = Array.isArray(attendanceData.data)
+          ? attendanceData.data
+          : [];
+        const attendanceList = rawAttendance.flatMap((record) => {
+          if (typeof record !== "object" || record === null) return [];
+          const data = record as Record<string, unknown>;
+          const startedAt = data.startedAt ?? data.attendanceDate;
+          if (typeof startedAt !== "string" || !startedAt) return [];
+
+          return [
+            {
+              id: typeof data.id === "number" ? data.id : 0,
+              startedAt,
+              endedAt: typeof data.endedAt === "string" ? data.endedAt : null,
+              empId:
+                typeof data.empId === "number" ? data.empId : Number(empId),
+              working_status: String(
+                data.working_status ?? data.workingStatus ?? "",
+              ),
+              totalTime:
+                typeof data.totalTime === "number" ? data.totalTime : 0,
+              attendance_status:
+                typeof data.attendance_status === "string"
+                  ? data.attendance_status
+                  : typeof data.attendanceStatus === "string"
+                    ? data.attendanceStatus
+                    : null,
+              dayName: typeof data.dayName === "string" ? data.dayName : "",
+              additional_attendance: data.additional_attendance,
+            },
+          ];
+        });
+        setEmployee({
+          ...employeeData.Employee_list,
+          attendanceList,
+        });
         const first = leaveData.EmployeeLeaveList?.[0] as unknown;
         const leaveList =
           typeof first === "object" && first !== null && "leaveList" in first
@@ -248,7 +310,7 @@ const AttendanceCalendarDashboard: React.FC = () => {
     if (!employee) return null;
 
     return (
-      employee.attendanceList.find((attendance) => {
+      (employee.attendanceList ?? []).find((attendance) => {
         const attendanceDate = new Date(attendance.startedAt);
         return attendanceDate.toDateString() === date.toDateString();
       }) || null
