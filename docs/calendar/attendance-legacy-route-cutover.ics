@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//PirisaHRM//Attendance Cutover//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:attendance-legacy-route-cutover-20261022@pirisahr.com
+DTSTAMP:20261007T053000Z
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
+STATUS:TENTATIVE
+SUMMARY:Confirm attendance rollout date and legacy route cutoff
+DESCRIPTION:Provisional reminder only: 2026-10-22 applies only if production rollout was 2026-10-07. The 14-day usage window ends rollout date plus 14 days; removal is no earlier than the following day. Before importing, set this event to rollout date plus 15 days and confirm metrics and external-client signoff.
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Confirm production rollout date, update the cutoff event, and review attendance legacy route usage.
+END:VALARM
+END:VEVENT
+END:VCALENDAR

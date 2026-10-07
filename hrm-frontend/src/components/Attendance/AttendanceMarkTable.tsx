@@ -97,8 +97,12 @@ const fetchEmployeePhotos = async (
 const AttendanceMarkTable = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
-  const [employeesOnLeave, setEmployeesOnLeave] = useState<EmployeeOnLeave[]>([]);
-  const [departments, setDepartments] = useState<{id: number; dpt_name: string}[]>([]);
+  const [employeesOnLeave, setEmployeesOnLeave] = useState<EmployeeOnLeave[]>(
+    [],
+  );
+  const [departments, setDepartments] = useState<
+    { id: number; dpt_name: string }[]
+  >([]);
   const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +123,9 @@ const AttendanceMarkTable = () => {
     reason?: string;
     notes?: string;
   }
-  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({ open: false });
+  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({
+    open: false,
+  });
 
   // Helper function to get local time in simple ISO format (no timezone)
   const getLocalDateISO = (): string => {
@@ -154,13 +160,13 @@ const AttendanceMarkTable = () => {
         }
 
         const response = await fetch(
-          `${API_BASE}/employee/lastattendanceList/${companyId}`,
+          `${API_BASE}/api/attendance/company/${companyId}/latest`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -176,17 +182,32 @@ const AttendanceMarkTable = () => {
         if (data.resultCode === 100) {
           const list = data.EmployeeList || [];
           setEmployees(list);
-          
+
           // Extract unique departments
           const uniqueDepts = Array.from(
             new Map(
               list
-                .filter((emp): emp is Employee & {department: {id: number; dpt_name: string}} => emp.department !== undefined)
-                .map(emp => [emp.department.id, {id: emp.department.id, dpt_name: emp.department.dpt_name}] as [number, {id: number; dpt_name: string}])
-            ).values()
+                .filter(
+                  (
+                    emp,
+                  ): emp is Employee & {
+                    department: { id: number; dpt_name: string };
+                  } => emp.department !== undefined,
+                )
+                .map(
+                  (emp) =>
+                    [
+                      emp.department.id,
+                      {
+                        id: emp.department.id,
+                        dpt_name: emp.department.dpt_name,
+                      },
+                    ] as [number, { id: number; dpt_name: string }],
+                ),
+            ).values(),
           );
           setDepartments(uniqueDepts);
-          
+
           if (list.length > 0) {
             setPhotoUrls(await fetchEmployeePhotos(list, token));
           }
@@ -215,7 +236,7 @@ const AttendanceMarkTable = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -290,14 +311,14 @@ const AttendanceMarkTable = () => {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
 
           if (!existsResp.ok) return;
           const existsData: { hasProfileImage?: boolean; exists?: boolean } =
             await existsResp.json();
           const hasImage = Boolean(
-            existsData?.hasProfileImage ?? existsData?.exists
+            existsData?.hasProfileImage ?? existsData?.exists,
           );
           if (!hasImage) return;
 
@@ -307,7 +328,7 @@ const AttendanceMarkTable = () => {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
 
           if (!imgResp.ok) return;
@@ -317,7 +338,7 @@ const AttendanceMarkTable = () => {
         } catch {
           // ignore photo failures; keep fallback avatar
         }
-      })
+      }),
     );
 
     setPhotoUrls(photoUrlMap);
@@ -326,7 +347,7 @@ const AttendanceMarkTable = () => {
   const handleAttendanceStatusChange = (
     empId: number,
     status: "OFFICE" | "WFH" | "FIELD_VISIT",
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     event.stopPropagation();
     setAttendanceStatus((prev) => ({
@@ -337,7 +358,7 @@ const AttendanceMarkTable = () => {
 
   const handleMarkAttendance = async (
     empId: number,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     event.stopPropagation();
     const status = attendanceStatus[empId] || "OFFICE";
@@ -377,7 +398,7 @@ const AttendanceMarkTable = () => {
                 toast.error(
                   err instanceof Error
                     ? err.message
-                    : "Failed to mark attendance"
+                    : "Failed to mark attendance",
                 );
               }
             }}
@@ -395,11 +416,15 @@ const AttendanceMarkTable = () => {
       {
         autoClose: false,
         closeButton: false,
-      }
+      },
     );
   };
 
-  const handleOpenClockOutModal = (employee: Employee, attendance: Attendance, event: React.MouseEvent) => {
+  const handleOpenClockOutModal = (
+    employee: Employee,
+    attendance: Attendance,
+    event: React.MouseEvent,
+  ) => {
     event.stopPropagation();
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, "0");
@@ -437,15 +462,16 @@ const AttendanceMarkTable = () => {
       setClockOutModal({ open: false });
       await fetchEmployees();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to mark clock out");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to mark clock out",
+      );
       setLoading(false);
     }
   };
 
-
   const handleCancelLeaveAndMarkAttendance = async (
     employee: Employee,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     event.stopPropagation();
 
@@ -464,7 +490,16 @@ const AttendanceMarkTable = () => {
             </p>
             <ul className="text-xs text-yellow-700 mt-1 list-disc list-inside">
               <li>Leave Type: {leaveInfo?.leaveType || "N/A"}</li>
-              <li>Period: {leaveInfo ? new Date(leaveInfo.leaveStartDay).toLocaleDateString() : "N/A"} - {leaveInfo ? new Date(leaveInfo.leaveEndDay).toLocaleDateString() : "N/A"}</li>
+              <li>
+                Period:{" "}
+                {leaveInfo
+                  ? new Date(leaveInfo.leaveStartDay).toLocaleDateString()
+                  : "N/A"}{" "}
+                -{" "}
+                {leaveInfo
+                  ? new Date(leaveInfo.leaveEndDay).toLocaleDateString()
+                  : "N/A"}
+              </li>
               <li>Reason: {leaveInfo?.leaveReason || "N/A"}</li>
             </ul>
           </div>
@@ -495,13 +530,19 @@ const AttendanceMarkTable = () => {
                   throw new Error("No token found");
                 }
 
-                const cancellationReason = (document.getElementById('cancellationReason') as HTMLInputElement)?.value || "Employee came to office";
-                const currentUser = localStorage.getItem("userName") || "HR Admin";
+                const cancellationReason =
+                  (
+                    document.getElementById(
+                      "cancellationReason",
+                    ) as HTMLInputElement
+                  )?.value || "Employee came to office";
+                const currentUser =
+                  localStorage.getItem("userName") || "HR Admin";
 
                 const requestData = {
                   empId: employee.id,
                   cancellationReason: cancellationReason,
-                  canceledBy: currentUser
+                  canceledBy: currentUser,
                 };
 
                 const response = await fetch(
@@ -513,7 +554,7 @@ const AttendanceMarkTable = () => {
                       "Content-Type": "application/json",
                     },
                     body: JSON.stringify(requestData),
-                  }
+                  },
                 );
 
                 if (!response.ok) {
@@ -525,10 +566,13 @@ const AttendanceMarkTable = () => {
                   toast.success(
                     <div>
                       <p className="font-semibold">Success!</p>
-                      <p className="text-sm">Leave cancelled and {employeeName} is now available for attendance marking.</p>
-                    </div>
+                      <p className="text-sm">
+                        Leave cancelled and {employeeName} is now available for
+                        attendance marking.
+                      </p>
+                    </div>,
                   );
-                  
+
                   // Refresh both tables immediately after canceling leave
                   setLoading(true);
                   await fetchEmployees();
@@ -539,7 +583,7 @@ const AttendanceMarkTable = () => {
                 toast.error(
                   err instanceof Error
                     ? err.message
-                    : "Failed to cancel leave and mark attendance"
+                    : "Failed to cancel leave and mark attendance",
                 );
               }
             }}
@@ -557,7 +601,7 @@ const AttendanceMarkTable = () => {
       {
         autoClose: false,
         closeButton: false,
-      }
+      },
     );
   };
 
@@ -571,13 +615,13 @@ const AttendanceMarkTable = () => {
       }
 
       const response = await fetch(
-        `${API_BASE}/employee/lastattendanceList/${companyId}`,
+        `${API_BASE}/api/attendance/company/${companyId}/latest`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -594,17 +638,32 @@ const AttendanceMarkTable = () => {
         const list = data.EmployeeList || [];
         setEmployees(list);
         applyDepartmentFilter(list, selectedDepartment);
-        
+
         // Extract unique departments
         const uniqueDepts = Array.from(
           new Map(
             list
-              .filter((emp): emp is Employee & {department: {id: number; dpt_name: string}} => emp.department !== undefined)
-              .map(emp => [emp.department.id, {id: emp.department.id, dpt_name: emp.department.dpt_name}] as [number, {id: number; dpt_name: string}])
-          ).values()
+              .filter(
+                (
+                  emp,
+                ): emp is Employee & {
+                  department: { id: number; dpt_name: string };
+                } => emp.department !== undefined,
+              )
+              .map(
+                (emp) =>
+                  [
+                    emp.department.id,
+                    {
+                      id: emp.department.id,
+                      dpt_name: emp.department.dpt_name,
+                    },
+                  ] as [number, { id: number; dpt_name: string }],
+              ),
+          ).values(),
         );
         setDepartments(uniqueDepts);
-        
+
         if (list.length > 0) {
           await fetchAndSetEmployeePhotos(list, token);
         }
@@ -628,7 +687,7 @@ const AttendanceMarkTable = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -643,17 +702,22 @@ const AttendanceMarkTable = () => {
     }
   };
 
-  const applyDepartmentFilter = (employeeList: Employee[], departmentId: number) => {
+  const applyDepartmentFilter = (
+    employeeList: Employee[],
+    departmentId: number,
+  ) => {
     let filtered = employeeList;
-    
+
     // Filter by department if selected
     if (departmentId !== 0) {
-      filtered = filtered.filter(emp => emp.department && emp.department.id === departmentId);
+      filtered = filtered.filter(
+        (emp) => emp.department && emp.department.id === departmentId,
+      );
     }
-    
+
     // Filter out employees who are on leave
-    filtered = filtered.filter(emp => !isEmployeeOnLeave(emp.id));
-    
+    filtered = filtered.filter((emp) => !isEmployeeOnLeave(emp.id));
+
     setFilteredEmployees(filtered);
     setCurrentPage(1); // Reset to first page when filtering
   };
@@ -674,16 +738,16 @@ const AttendanceMarkTable = () => {
   };
 
   const isEmployeeOnLeave = (empId: number): boolean => {
-    return employeesOnLeave.some(leave => leave.empId === empId);
+    return employeesOnLeave.some((leave) => leave.empId === empId);
   };
 
   const getEmployeeLeaveInfo = (empId: number): EmployeeOnLeave | null => {
-    return employeesOnLeave.find(leave => leave.empId === empId) || null;
+    return employeesOnLeave.find((leave) => leave.empId === empId) || null;
   };
 
   // Get employees who are on leave for the leave table
   const getEmployeesOnLeaveData = (): Employee[] => {
-    return employees.filter(emp => isEmployeeOnLeave(emp.id));
+    return employees.filter((emp) => isEmployeeOnLeave(emp.id));
   };
 
   // Columns for employees on leave table
@@ -766,7 +830,9 @@ const AttendanceMarkTable = () => {
       render: (item: Employee) => {
         const leaveInfo = getEmployeeLeaveInfo(item.id);
         if (leaveInfo) {
-          const startDate = new Date(leaveInfo.leaveStartDay).toLocaleDateString();
+          const startDate = new Date(
+            leaveInfo.leaveStartDay,
+          ).toLocaleDateString();
           const endDate = new Date(leaveInfo.leaveEndDay).toLocaleDateString();
           return (
             <span className="text-xs">
@@ -782,7 +848,9 @@ const AttendanceMarkTable = () => {
       title: "Leave Reason",
       render: (item: Employee) => {
         const leaveInfo = getEmployeeLeaveInfo(item.id);
-        return <span className="text-xs">{leaveInfo?.leaveReason || "N/A"}</span>;
+        return (
+          <span className="text-xs">{leaveInfo?.leaveReason || "N/A"}</span>
+        );
       },
     },
     {
@@ -795,7 +863,9 @@ const AttendanceMarkTable = () => {
             className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"
             aria-label="Cancel Leave & Mark Attendance"
           >
-            <span className="text-xs text-blue-600">Cancel Leave & Mark Attendance</span>
+            <span className="text-xs text-blue-600">
+              Cancel Leave & Mark Attendance
+            </span>
           </button>
         );
       },
@@ -873,7 +943,11 @@ const AttendanceMarkTable = () => {
         return activeAttendance ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
             <span>🟢 Working</span>
-            {clockInDisplay && <span className="text-emerald-700 font-medium">({clockInDisplay})</span>}
+            {clockInDisplay && (
+              <span className="text-emerald-700 font-medium">
+                ({clockInDisplay})
+              </span>
+            )}
           </span>
         ) : (
           <select
@@ -883,7 +957,7 @@ const AttendanceMarkTable = () => {
               handleAttendanceStatusChange(
                 item.id,
                 e.target.value as "OFFICE" | "WFH" | "FIELD_VISIT",
-                e
+                e,
               )
             }
             onClick={(e) => e.stopPropagation()}
@@ -977,7 +1051,7 @@ const AttendanceMarkTable = () => {
   const totalPages = Math.ceil(filteredEmployees.length / rowsPerPage);
   const paginatedData = filteredEmployees.slice(
     (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
+    currentPage * rowsPerPage,
   );
 
   return (
@@ -986,7 +1060,9 @@ const AttendanceMarkTable = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-700">Department:</label>
+            <label className="text-sm font-medium text-gray-700">
+              Department:
+            </label>
             <select
               value={selectedDepartment}
               onChange={(e) => handleDepartmentChange(Number(e.target.value))}
@@ -1001,7 +1077,8 @@ const AttendanceMarkTable = () => {
             </select>
           </div>
           <div className="text-sm text-gray-600">
-            Showing {filteredEmployees.length} of {employees.length} employees available for attendance
+            Showing {filteredEmployees.length} of {employees.length} employees
+            available for attendance
           </div>
         </div>
       </div>
@@ -1028,12 +1105,17 @@ const AttendanceMarkTable = () => {
             columns={leaveTableColumns}
             data={getEmployeesOnLeaveData()}
             title="Employees on Leave (Cannot Mark Attendance)"
-            searchKeys={["firstName", "lastName", "epfNo", "department.dpt_name"]}
+            searchKeys={[
+              "firstName",
+              "lastName",
+              "epfNo",
+              "department.dpt_name",
+            ]}
             pagination={undefined}
           />
         </div>
       )}
-      
+
       {/* Clock Out / Off Modal */}
       {clockOutModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -1053,7 +1135,9 @@ const AttendanceMarkTable = () => {
               {clockOutModal.clockInTime && (
                 <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center justify-between">
                   <span className="font-semibold">Clocked In Time:</span>
-                  <span className="font-bold text-sm">{clockOutModal.clockInTime}</span>
+                  <span className="font-bold text-sm">
+                    {clockOutModal.clockInTime}
+                  </span>
                 </div>
               )}
               <label className="block text-sm font-medium text-gray-700">
@@ -1062,7 +1146,10 @@ const AttendanceMarkTable = () => {
                   type="time"
                   value={clockOutModal.defaultEndedAt || ""}
                   onChange={(e) =>
-                    setClockOutModal((s) => ({ ...s, defaultEndedAt: e.target.value }))
+                    setClockOutModal((s) => ({
+                      ...s,
+                      defaultEndedAt: e.target.value,
+                    }))
                   }
                   className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
                 />
@@ -1079,7 +1166,9 @@ const AttendanceMarkTable = () => {
                   <option value="Standard Off-Time">Standard Off-Time</option>
                   <option value="Personal Reason">Personal Reason</option>
                   <option value="Medical Emergency">Medical Emergency</option>
-                  <option value="Official Field Work">Official Field Work</option>
+                  <option value="Official Field Work">
+                    Official Field Work
+                  </option>
                   <option value="Other">Other</option>
                 </select>
               </label>

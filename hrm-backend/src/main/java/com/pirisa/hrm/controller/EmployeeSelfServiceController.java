@@ -5,11 +5,14 @@ import com.pirisa.hrm.dto.common.ApiResponse;
 import com.pirisa.hrm.model.Attendance;
 import com.pirisa.hrm.model.MissingPunchRequest;
 import com.pirisa.hrm.model.Payrole;
+import com.pirisa.hrm.model.Employee;
+import com.pirisa.hrm.repository.EmployeeRepository;
 import com.pirisa.hrm.service.EmployeeSelfServiceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -23,6 +26,9 @@ public class EmployeeSelfServiceController {
 
     @Autowired
     private EmployeeSelfServiceService selfService;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     /**
      * Dashboard data for the logged-in employee
@@ -89,7 +95,12 @@ public class EmployeeSelfServiceController {
     @PostMapping("/missing-punch/{employeeId}")
     public ResponseEntity<ApiResponse<MissingPunchRequest>> submitMissingPunch(
             @PathVariable Long employeeId,
-            @Valid @RequestBody MissingPunchRequestDTO request) {
+            @Valid @RequestBody MissingPunchRequestDTO request,
+            Authentication authentication) {
+        if (!isOwnEmployee(employeeId, authentication)) {
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "You can only submit requests for your own attendance."));
+        }
         try {
             MissingPunchRequest saved = selfService.submitMissingPunchRequest(employeeId, request);
             return ResponseEntity.ok(ApiResponse.success("Missing punch request submitted successfully", saved));
@@ -104,7 +115,12 @@ public class EmployeeSelfServiceController {
      */
     @GetMapping("/missing-punch/{employeeId}")
     public ResponseEntity<ApiResponse<List<MissingPunchRequest>>> getMyMissingPunchRequests(
-            @PathVariable Long employeeId) {
+            @PathVariable Long employeeId,
+            Authentication authentication) {
+        if (!isOwnEmployee(employeeId, authentication)) {
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "You can only access your own attendance requests."));
+        }
         List<MissingPunchRequest> requests = selfService.getMyMissingPunchRequests(employeeId);
         return ResponseEntity.ok(ApiResponse.success("Requests loaded", requests));
     }
@@ -116,7 +132,12 @@ public class EmployeeSelfServiceController {
     @DeleteMapping("/missing-punch/{employeeId}/{requestId}")
     public ResponseEntity<ApiResponse<Void>> cancelMissingPunch(
             @PathVariable Long employeeId,
-            @PathVariable Long requestId) {
+            @PathVariable Long requestId,
+            Authentication authentication) {
+        if (!isOwnEmployee(employeeId, authentication)) {
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "You can only cancel your own attendance requests."));
+        }
         try {
             selfService.cancelMissingPunchRequest(employeeId, requestId);
             return ResponseEntity.ok(ApiResponse.success("Request cancelled", null));
@@ -143,8 +164,21 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<ApiResponse<List<Attendance>>> getMyAttendanceHistory(
             @PathVariable Long employeeId,
             @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Integer year) {
+            @RequestParam(required = false) Integer year,
+            Authentication authentication) {
+        if (!isOwnEmployee(employeeId, authentication)) {
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "You can only access your own attendance history."));
+        }
         List<Attendance> history = selfService.getMyAttendanceHistory(employeeId, month, year);
         return ResponseEntity.ok(ApiResponse.success("Attendance history loaded", history));
+    }
+
+    private boolean isOwnEmployee(Long employeeId, Authentication authentication) {
+        if (employeeId == null || authentication == null || authentication.getName() == null) {
+            return false;
+        }
+        Employee authenticatedEmployee = employeeRepository.findByUsername(authentication.getName());
+        return authenticatedEmployee != null && authenticatedEmployee.getId() == employeeId;
     }
 }

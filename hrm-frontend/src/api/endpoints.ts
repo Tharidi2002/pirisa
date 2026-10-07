@@ -32,6 +32,7 @@ export const ENDPOINTS = {
     BASE: "/api/attendance",
     BULK_MARK: "/api/attendance/bulk-mark",
     BULK_DATA: "/api/attendance/bulk-data",
+    OVERVIEW: "/api/attendance/overview",
     IMPORT_EXCEL: "/api/attendance/import-excel",
     DOWNLOAD_EXCEL: "/api/attendance/download-excel",
   },

@@ -1,6 +1,7 @@
 package com.pirisa.hrm.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -90,8 +91,8 @@ public class Attendance implements Serializable {
     @Column(name = "day_name")
     private String dayName;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "atdnc_id", referencedColumnName = "atdnc_id", insertable = false, updatable = false)
+    @OneToOne(mappedBy = "attendance", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Additional_attendance additional_attendance;
 
 

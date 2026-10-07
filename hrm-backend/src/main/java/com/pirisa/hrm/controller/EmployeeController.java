@@ -151,7 +151,10 @@ public class EmployeeController {
         }
     }
 
-//Attendance List from Company Id
+    /**
+    * @deprecated Use GET /api/attendance/company/{companyId}. Removal date: 2026-10-21.
+     */
+    @Deprecated
     @GetMapping(value = "/attendanceList/{cmpId}", produces = "application/json")
     public ResponseEntity<?> getAttendanceByCompanyId(
             @PathVariable long cmpId,
@@ -178,7 +181,10 @@ public class EmployeeController {
         }
     }
 
-    //Attendance List from Company Id only the last attendance
+    /**
+    * @deprecated Use GET /api/attendance/company/{companyId}/latest. Removal date: 2026-10-21.
+     */
+    @Deprecated
     @GetMapping(value = "/lastattendanceList/{cmpId}", produces = "application/json")
     public ResponseEntity<?> getLastAttendanceByCompanyId(
             @PathVariable long cmpId,
@@ -409,6 +415,10 @@ public class EmployeeController {
 
 
 
+    /**
+     * @deprecated Use GET /api/attendance/company/{companyId}/month/{month}. Removal date: 2026-10-21.
+     */
+    @Deprecated
     @GetMapping(value = "/attendanceList/{cmpId}/{month}", produces = "application/json")
     public ResponseEntity<?> getAttendanceByCompanyAndMonth(
             @PathVariable long cmpId,

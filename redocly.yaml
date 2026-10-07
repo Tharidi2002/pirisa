@@ -1,0 +1,5 @@
+extends:
+  - recommended
+rules:
+  # No license is declared in this repository; do not infer one from the API spec.
+  info-license: off

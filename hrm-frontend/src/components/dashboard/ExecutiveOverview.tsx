@@ -50,7 +50,7 @@ const ExecutiveOverview = () => {
             signal: controller.signal,
           }),
           fetch(
-            `${API_BASE}/employee/attendanceList/${companyId}/${new Date().getMonth() + 1}`,
+            `${API_BASE}/api/attendance/company/${companyId}/month/${new Date().getMonth() + 1}`,
             {
               method: "GET",
               headers: {
@@ -58,7 +58,7 @@ const ExecutiveOverview = () => {
                 "Content-Type": "application/json",
               },
               signal: controller.signal,
-            }
+            },
           ),
         ]);
 
@@ -68,29 +68,48 @@ const ExecutiveOverview = () => {
 
         if (employeesRes.ok) {
           const employeeJson = await employeesRes.json();
-          if (employeeJson?.resultCode === 100 && Array.isArray(employeeJson?.EmployeeList)) {
+          if (
+            employeeJson?.resultCode === 100 &&
+            Array.isArray(employeeJson?.EmployeeList)
+          ) {
             totalEmployees = employeeJson.EmployeeList.length;
             pendingLeaves = employeeJson.EmployeeList.reduce(
-              (count: number, employee: { leaveList?: Array<{ leaveStatus?: string }> }) =>
+              (
+                count: number,
+                employee: { leaveList?: Array<{ leaveStatus?: string }> },
+              ) =>
                 count +
                 (employee.leaveList ?? []).filter(
-                  (leave) => (leave.leaveStatus ?? "").toUpperCase() === "PENDING"
+                  (leave) =>
+                    (leave.leaveStatus ?? "").toUpperCase() === "PENDING",
                 ).length,
-              0
+              0,
             );
           }
         }
 
         if (attendanceRes.ok) {
           const attendanceJson = await attendanceRes.json();
-          if (attendanceJson?.resultCode === 100 && Array.isArray(attendanceJson?.EmployeeList)) {
-            presentToday = attendanceJson.EmployeeList.filter((employee: { attendanceList?: Array<{ attendance_status?: string }> }) => {
-              const list = employee.attendanceList ?? [];
-              return list.some((entry) => {
-                const status = (entry?.attendance_status || "").toUpperCase();
-                return status && status !== "ABSENT" && status !== "LEAVE" && status !== "PENDING";
-              });
-            }).length;
+          if (
+            attendanceJson?.resultCode === 100 &&
+            Array.isArray(attendanceJson?.EmployeeList)
+          ) {
+            presentToday = attendanceJson.EmployeeList.filter(
+              (employee: {
+                attendanceList?: Array<{ attendance_status?: string }>;
+              }) => {
+                const list = employee.attendanceList ?? [];
+                return list.some((entry) => {
+                  const status = (entry?.attendance_status || "").toUpperCase();
+                  return (
+                    status &&
+                    status !== "ABSENT" &&
+                    status !== "LEAVE" &&
+                    status !== "PENDING"
+                  );
+                });
+              },
+            ).length;
           }
         }
 
@@ -140,14 +159,26 @@ const ExecutiveOverview = () => {
         color: "bg-violet-100 text-violet-600",
       },
     ],
-    [metrics]
+    [metrics],
   );
 
   const quickActions = [
     { label: "Employee roster", path: "/employee/all", accent: "bg-sky-600" },
-    { label: "Attendance", path: "/attendance/list", accent: "bg-emerald-600" },
-    { label: "Leave requests", path: "/leave/requests", accent: "bg-amber-600" },
-    { label: "Salary list", path: "/payrole/salaryList", accent: "bg-violet-600" },
+    {
+      label: "Attendance",
+      path: "/attendance?view=list",
+      accent: "bg-emerald-600",
+    },
+    {
+      label: "Leave requests",
+      path: "/leave/requests",
+      accent: "bg-amber-600",
+    },
+    {
+      label: "Salary list",
+      path: "/payrole/salaryList",
+      accent: "bg-violet-600",
+    },
   ];
 
   return (
@@ -168,7 +199,10 @@ const ExecutiveOverview = () => {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map(({ title, value, hint, icon: Icon, color }) => (
-          <div key={title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div
+            key={title}
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+          >
             <div className="mb-4 flex items-center justify-between">
               <span className={`rounded-lg p-2 ${color}`}>
                 <Icon className="h-5 w-5" />
@@ -183,8 +217,12 @@ const ExecutiveOverview = () => {
 
       <div className="mt-6 rounded-xl bg-slate-50 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-800">Quick actions</h3>
-          <span className="text-xs uppercase tracking-[0.15em] text-slate-500">Operations</span>
+          <h3 className="text-lg font-semibold text-slate-800">
+            Quick actions
+          </h3>
+          <span className="text-xs uppercase tracking-[0.15em] text-slate-500">
+            Operations
+          </span>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

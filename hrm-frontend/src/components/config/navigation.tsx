@@ -49,27 +49,22 @@ export const navItems: NavItem[] = [
     subItems: [
       {
         id: "attendance-list",
-        path: "/attendance/list",
+        path: "/attendance?view=list",
         label: "Attendance List",
       },
       {
         id: "monthly-calendar",
-        path: "/attendance/calendar",
+        path: "/attendance?view=calendar",
         label: "Monthly Calendar",
       },
       {
         id: "mark-attendance",
-        path: "/attendance/mark",
+        path: "/attendance?view=mark",
         label: "Mark Attendance",
       },
       {
-        id: "bulk-attendance",
-        path: "/attendance/bulk",
-        label: "Bulk Attendance",
-      },
-      {
         id: "attendance-report",
-        path: "/attendance/report",
+        path: "/attendance?view=report",
         label: "Attendance Report",
       },
     ],

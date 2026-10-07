@@ -17,6 +17,17 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     List<Attendance> findByAttendanceDate(LocalDate attendanceDate);
 
+    @Query("SELECT a FROM Attendance a, Employee e " +
+            "WHERE a.empId = e.id " +
+            "AND a.attendanceDate = :attendanceDate " +
+            "AND e.cmpId = :companyId " +
+            "AND (:departmentId IS NULL OR e.dptId = :departmentId) " +
+            "ORDER BY a.startedAt")
+    List<Attendance> findByAttendanceDateAndCompany(
+            @Param("attendanceDate") LocalDate attendanceDate,
+            @Param("companyId") long companyId,
+            @Param("departmentId") Long departmentId);
+
     List<Attendance> findByAttendanceDateBetween(LocalDate startDate, LocalDate endDate);
 
     @Query("SELECT a FROM Attendance a, Employee e " +

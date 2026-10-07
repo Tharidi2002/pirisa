@@ -174,7 +174,7 @@ const CompanyAdminDashboard = () => {
 
   const quickLinks = [
     { label: "Employee directory", path: "/employee/all" },
-    { label: "Attendance records", path: "/attendance/list" },
+    { label: "Attendance records", path: "/attendance?view=list" },
     { label: "Leave requests", path: "/leave/requests" },
     { label: "Payroll", path: "/payrole/salaryList" },
   ];

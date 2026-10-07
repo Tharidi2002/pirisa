@@ -33,14 +33,14 @@ const AttendanceStatsCard = () => {
     (async () => {
       try {
         const res = await fetch(
-          `${API_BASE}/employee/lastattendanceList/${cmpnyId}`,
+          `${API_BASE}/api/attendance/company/${cmpnyId}/latest`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             signal: controller.signal,
-          }
+          },
         );
 
         if (!res.ok) {
@@ -80,7 +80,9 @@ const AttendanceStatsCard = () => {
     let late = 0;
 
     for (const e of employees) {
-      const latest = Array.isArray(e.attendanceList) ? e.attendanceList[0] : undefined;
+      const latest = Array.isArray(e.attendanceList)
+        ? e.attendanceList[0]
+        : undefined;
       const s = normalize(latest?.attendance_status);
       if (isLate(latest)) late += 1;
       if (s === "PRESENT") present += 1;

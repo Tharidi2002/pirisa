@@ -243,7 +243,7 @@ const AttendanceTable = () => {
       }
 
       const response = await fetch(
-        `${API_BASE}/employee/attendanceList/${companyId}`,
+        `${API_BASE}/api/attendance/company/${companyId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -726,7 +726,7 @@ const AttendanceTable = () => {
                 }
 
                 const response = await fetch(
-                  `${API_BASE}/employee/attendanceList/${companyId}`,
+                  `${API_BASE}/api/attendance/company/${companyId}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -803,7 +803,7 @@ const AttendanceTable = () => {
           </p>
           <button
             className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
-            onClick={() => navigate("/attendance/mark")} // Adjust the route as needed
+            onClick={() => navigate("/attendance?view=mark")}
           >
             Add Attendance
           </button>
@@ -814,10 +814,7 @@ const AttendanceTable = () => {
 
   return (
     <div className="p-6">
-      <DateFilter
-        selectedDate={selectedDate}
-        onDateChange={handleDateChange}
-      />
+      <DateFilter selectedDate={selectedDate} onDateChange={handleDateChange} />
 
       {/* Department Filter */}
       <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">

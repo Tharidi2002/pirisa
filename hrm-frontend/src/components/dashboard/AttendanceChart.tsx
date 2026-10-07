@@ -6,7 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import { SlidersHorizontal } from "lucide-react";
 import { API_BASE } from "../../api/endpoints";
@@ -44,7 +44,9 @@ const AttendanceChart = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRange>("Daily");
 
   const [totalEmployees, setTotalEmployees] = useState(0);
-  const [attendanceEmployees, setAttendanceEmployees] = useState<AttendanceEmployeeDTO[]>([]);
+  const [attendanceEmployees, setAttendanceEmployees] = useState<
+    AttendanceEmployeeDTO[]
+  >([]);
 
   const month = useMemo(() => new Date().getMonth() + 1, []);
 
@@ -66,7 +68,7 @@ const AttendanceChart = () => {
           },
           signal,
         }),
-        fetch(`${API_BASE}/employee/attendanceList/${cmpnyId}/${month}`, {
+        fetch(`${API_BASE}/api/attendance/company/${cmpnyId}/month/${month}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -77,7 +79,10 @@ const AttendanceChart = () => {
 
       if (empRes.ok) {
         const empJson = await empRes.json();
-        if (empJson?.resultCode === 100 && Array.isArray(empJson?.EmployeeList)) {
+        if (
+          empJson?.resultCode === 100 &&
+          Array.isArray(empJson?.EmployeeList)
+        ) {
           setTotalEmployees((empJson.EmployeeList as EmpDetailsDTO[]).length);
         } else {
           setTotalEmployees(0);
@@ -88,8 +93,13 @@ const AttendanceChart = () => {
 
       if (attRes.ok) {
         const attJson = await attRes.json();
-        if (attJson?.resultCode === 100 && Array.isArray(attJson?.EmployeeList)) {
-          setAttendanceEmployees(attJson.EmployeeList as AttendanceEmployeeDTO[]);
+        if (
+          attJson?.resultCode === 100 &&
+          Array.isArray(attJson?.EmployeeList)
+        ) {
+          setAttendanceEmployees(
+            attJson.EmployeeList as AttendanceEmployeeDTO[],
+          );
         } else {
           setAttendanceEmployees([]);
         }
@@ -97,7 +107,7 @@ const AttendanceChart = () => {
         setAttendanceEmployees([]);
       }
     },
-    [month]
+    [month],
   );
 
   useEffect(() => {
@@ -192,7 +202,10 @@ const AttendanceChart = () => {
 
     if (selectedRange === "Daily") {
       const maxVal = daily.reduce((m, p) => Math.max(m, p.value), 0);
-      return daily.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+      return daily.map((p) => ({
+        ...p,
+        highlight: p.value === maxVal && maxVal > 0,
+      }));
     }
 
     if (selectedRange === "Weekly") {
@@ -201,7 +214,10 @@ const AttendanceChart = () => {
         const day = Number(point.date);
         const week = Math.floor((day - 1) / 7) + 1;
         const prev = weekMap.get(week) || { presentSum: 0, days: 0 };
-        weekMap.set(week, { presentSum: prev.presentSum + point.value, days: prev.days + 1 });
+        weekMap.set(week, {
+          presentSum: prev.presentSum + point.value,
+          days: prev.days + 1,
+        });
       }
 
       const weekly = Array.from(weekMap.entries())
@@ -212,12 +228,18 @@ const AttendanceChart = () => {
         }));
 
       const maxVal = weekly.reduce((m, p) => Math.max(m, p.value), 0);
-      return weekly.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+      return weekly.map((p) => ({
+        ...p,
+        highlight: p.value === maxVal && maxVal > 0,
+      }));
     }
 
     // Monthly (current year): approximate using employees' month-wise attendance in current year
     const year = new Date().getFullYear();
-    const monthMap = new Map<number, { presentDays: number; totalDays: number }>();
+    const monthMap = new Map<
+      number,
+      { presentDays: number; totalDays: number }
+    >();
     for (const emp of attendanceEmployees) {
       const list = Array.isArray(emp.attendanceList) ? emp.attendanceList : [];
       for (const a of list) {
@@ -233,15 +255,34 @@ const AttendanceChart = () => {
       }
     }
 
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const monthly: ChartPoint[] = monthNames.map((name, idx) => {
       const agg = monthMap.get(idx);
-      const pct = agg && agg.totalDays ? Math.round((agg.presentDays / agg.totalDays) * 100) : 0;
+      const pct =
+        agg && agg.totalDays
+          ? Math.round((agg.presentDays / agg.totalDays) * 100)
+          : 0;
       return { date: name, value: pct };
     });
 
     const maxVal = monthly.reduce((m, p) => Math.max(m, p.value), 0);
-    return monthly.map((p) => ({ ...p, highlight: p.value === maxVal && maxVal > 0 }));
+    return monthly.map((p) => ({
+      ...p,
+      highlight: p.value === maxVal && maxVal > 0,
+    }));
   }, [attendanceEmployees, selectedRange, totalEmployees]);
 
   return (
@@ -283,12 +324,12 @@ const AttendanceChart = () => {
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#6B7280' }}
-              tickLine={{ stroke: '#6B7280' }}
+              tick={{ fill: "#6B7280" }}
+              tickLine={{ stroke: "#6B7280" }}
             />
             <YAxis
-              tick={{ fill: '#6B7280' }}
-              tickLine={{ stroke: '#6B7280' }}
+              tick={{ fill: "#6B7280" }}
+              tickLine={{ stroke: "#6B7280" }}
               domain={[0, 100]}
               ticks={[0, 20, 40, 60, 80, 100]}
               tickFormatter={(value) => `${value}%`}
@@ -313,7 +354,7 @@ const AttendanceChart = () => {
                     cx={props.cx}
                     cy={props.cy}
                     r={highlight ? 6 : 4}
-                    fill={highlight ? '#818CF8' : '#FFF'}
+                    fill={highlight ? "#818CF8" : "#FFF"}
                     stroke="#818CF8"
                     strokeWidth={2}
                   />

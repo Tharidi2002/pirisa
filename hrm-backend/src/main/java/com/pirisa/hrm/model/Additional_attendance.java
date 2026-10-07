@@ -1,5 +1,6 @@
 package com.pirisa.hrm.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,11 @@ public class Additional_attendance implements Serializable {
     private LocalDateTime travel_end;
 
     private long atdnc_id;
+
+    @JsonIgnore
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "atdnc_id", referencedColumnName = "atdnc_id", insertable = false, updatable = false)
+    private Attendance attendance;
 
 
 }

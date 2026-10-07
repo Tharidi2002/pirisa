@@ -1,14 +1,14 @@
-import AttendanceTable from "../../components/Attendance/AttendanceTable";
-// import SearchBar from "../../components/SearchBar";
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 
-const AttendanceContent = () => (
-    <div className="flex flex-col gap-5">
-      
-          {/* <div className="">
-          </div> */}
-          <AttendanceTable/>
-        </div>
-      
-  );
+const AttendanceContent = () => {
+  useEffect(() => {
+    console.warn(
+      "/attendance/list is deprecated; redirected to the unified attendance list.",
+    );
+  }, []);
 
-  export default AttendanceContent;
+  return <Navigate to="/attendance?view=list" replace />;
+};
+
+export default AttendanceContent;

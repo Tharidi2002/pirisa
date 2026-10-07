@@ -44,9 +44,16 @@ export type AttendedEmployeeDTO = {
   departmentId?: number;
   departmentName?: string;
   clockInTime: string;
+  clockOutTime: string;
+  workingStatus: string;
   status: string;
   attendanceDate: string;
   attendanceId: number;
+};
+
+export type AttendanceDepartmentDTO = {
+  id: number;
+  dpt_name: string;
 };
 
 export type ExcludedEmployeeDTO = {
@@ -65,6 +72,22 @@ export type BulkAttendanceDataResponse = {
   excludedEmployees: ExcludedEmployeeDTO[];
 };
 
+export type AttendanceOverviewSummary = {
+  attendanceDate: string;
+  companyId: number | string | null;
+  departmentId: number | string | null;
+  pendingCount: number;
+  attendedCount: number;
+  excludedCount: number;
+};
+
+export type AttendanceOverviewResponse = {
+  resultCode: number;
+  resultDesc: string;
+  summary?: AttendanceOverviewSummary;
+  attendanceData?: BulkAttendanceDataResponse;
+};
+
 export const attendanceService = {
   fetchEmployeesByCompany: async (companyId: string | number) => {
     const response = await axiosInstance.get<{
@@ -77,14 +100,17 @@ export const attendanceService = {
   },
 
   bulkMarkAttendance: async (attendanceList: AttendanceRowPayload[]) => {
-    const response = await axiosInstance.post(ENDPOINTS.ATTENDANCE.BULK_MARK, attendanceList);
+    const response = await axiosInstance.post(
+      ENDPOINTS.ATTENDANCE.BULK_MARK,
+      attendanceList,
+    );
     return response.data;
   },
 
   fetchBulkAttendanceData: async (
     companyId: string | number,
     attendanceDate: string,
-    departmentId?: number
+    departmentId?: number,
   ) => {
     const response = await axiosInstance.get<{
       resultCode: number;
@@ -96,28 +122,69 @@ export const attendanceService = {
     return response.data.attendanceData;
   },
 
+  fetchAttendanceOverview: async (
+    companyId: string | number,
+    attendanceDate: string,
+    departmentId?: number,
+  ) => {
+    const response = await axiosInstance.get<AttendanceOverviewResponse>(
+      ENDPOINTS.ATTENDANCE.OVERVIEW,
+      {
+        params: { companyId, attendanceDate, departmentId },
+      },
+    );
+    return response.data;
+  },
+
+  fetchDepartments: async (companyId: string | number) => {
+    const response = await axiosInstance.get<{
+      resultCode: number;
+      resultDesc: string;
+      UnitList: AttendanceDepartmentDTO[];
+    }>(`/department/company/${companyId}`);
+    return response.data.UnitList ?? [];
+  },
+
   importAttendanceExcel: async (file: File, createdBy: string) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("createdBy", createdBy);
 
-    const response = await axiosInstance.post(ENDPOINTS.ATTENDANCE.IMPORT_EXCEL, formData);
+    const response = await axiosInstance.post(
+      ENDPOINTS.ATTENDANCE.IMPORT_EXCEL,
+      formData,
+    );
 
     return response.data;
   },
 
-  downloadAttendanceExcel: async (params: Record<string, string | number | undefined>) => {
-    const response = await axiosInstance.get(ENDPOINTS.ATTENDANCE.DOWNLOAD_EXCEL, {
-      params,
-      responseType: "blob",
-    });
+  downloadAttendanceExcel: async (
+    params: Record<string, string | number | undefined>,
+  ) => {
+    const response = await axiosInstance.get(
+      ENDPOINTS.ATTENDANCE.DOWNLOAD_EXCEL,
+      {
+        params,
+        responseType: "blob",
+      },
+    );
     return response.data;
   },
 
   // Clock out an existing attendance record. Payload supports endedAt (datetime or time-only),
   // departureReason and departureNotes. Returns the updated attendance object from backend.
-  clockOut: async (attendanceId: number, payload: { endedAt?: string; departureReason?: string; departureNotes?: string }) => {
-    const response = await axiosInstance.put(`${ENDPOINTS.ATTENDANCE.BASE}/clock-out/${attendanceId}`, payload);
+  clockOut: async (
+    attendanceId: number,
+    payload: {
+      endedAt?: string;
+      departureReason?: string;
+      departureNotes?: string;
+    },
+  ) => {
+    const response = await axiosInstance.put(
+      `${ENDPOINTS.ATTENDANCE.BASE}/clock-out/${attendanceId}`,
+      payload,
+    );
     return response.data;
   },
 
@@ -125,7 +192,9 @@ export const attendanceService = {
   // Returns true when backend reports `hasProfileImage: true`.
   profileImageExists: async (empId: number) => {
     try {
-      const resp = await axiosInstance.get(`/api/profile-image/exists/${empId}`);
+      const resp = await axiosInstance.get(
+        `/api/profile-image/exists/${empId}`,
+      );
       return resp?.data?.hasProfileImage === true;
     } catch (error) {
       console.error("Failed to check profile image availability:", error);

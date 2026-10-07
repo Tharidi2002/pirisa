@@ -1,0 +1,254 @@
+openapi: 3.0.3
+info:
+  title: HRM Attendance API
+  version: 1.0.0
+  description: Primary attendance endpoints and the temporary legacy compatibility routes.
+servers:
+  - url: http://167.172.95.86
+security:
+  - bearerAuth: []
+paths:
+  /api/attendance/overview:
+    get:
+      operationId: getAttendanceOverview
+      summary: Get attendance overview
+      description: Primary attendance entry point for the selected company, date, and optional department.
+      parameters:
+        - in: query
+          name: attendanceDate
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: companyId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: departmentId
+          schema: { type: integer, format: int64 }
+      responses:
+        "200": { description: Overview and attendance data }
+        "400": { description: Invalid date }
+        "403": { description: Company access denied }
+  /api/attendance/company/{companyId}:
+    get:
+      operationId: getCompanyAttendance
+      summary: Get company attendance
+      description: Primary endpoint; returns the employee list and attendance history in the legacy response shape.
+      parameters:
+        - $ref: "#/components/parameters/companyId"
+      responses:
+        "200": { description: Company attendance list }
+        "403": { description: Company access denied }
+  /api/attendance/company/{companyId}/latest:
+    get:
+      operationId: getLatestCompanyAttendance
+      summary: Get latest attendance by company
+      parameters:
+        - $ref: "#/components/parameters/companyId"
+      responses:
+        "200": { description: Latest attendance per employee }
+        "403": { description: Company access denied }
+  /api/attendance/company/{companyId}/month/{month}:
+    get:
+      operationId: getCompanyAttendanceByMonth
+      summary: Get company attendance for a month
+      parameters:
+        - $ref: "#/components/parameters/companyId"
+        - in: path
+          name: month
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        "200": { description: Monthly company attendance list }
+        "400": { description: Month outside 1 through 12 }
+        "403": { description: Company access denied }
+  /api/attendance/bulk-data:
+    get:
+      operationId: getBulkAttendanceData
+      summary: Get bulk attendance marking data
+      parameters:
+        - in: query
+          name: attendanceDate
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: companyId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: departmentId
+          schema: { type: integer, format: int64 }
+      responses:
+        "200": { description: "Pending, attended, and excluded employee data" }
+        "403": { description: Company access denied }
+  /api/attendance/bulk-mark:
+    post:
+      operationId: bulkMarkAttendance
+      summary: Create or update attendance in bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { type: object }
+      responses:
+        "200": { description: Attendance saved }
+        "400": { description: Invalid attendance records }
+  /api/attendance/import-excel:
+    post:
+      operationId: importAttendanceFromExcel
+      summary: Import attendance from Excel
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                createdBy: { type: string }
+      responses:
+        "200": { description: Import result }
+        "400": { description: Invalid spreadsheet }
+  /api/attendance/download-excel:
+    get:
+      operationId: downloadAttendanceExcel
+      summary: Download attendance Excel report
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [DAILY, WEEKLY, MONTHLY, YEARLY] }
+        - in: query
+          name: department
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: empId
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: startDate
+          schema: { type: string, format: date }
+        - in: query
+          name: endDate
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Excel workbook
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        "400": { description: Invalid date range }
+        "403": { description: Company access denied }
+  /additional_attendance/add_attendance:
+    post:
+      operationId: createAdditionalAttendance
+      summary: Create attendance travel extension
+      description: Creates travel start/end details linked to an attendance record by atdnc_id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [atdnc_id]
+              properties:
+                atdnc_id: { type: integer, format: int64 }
+                travel_start:
+                  { type: string, format: date-time, nullable: true }
+                travel_end: { type: string, format: date-time, nullable: true }
+      responses:
+        "200": { description: Travel extension created }
+        "400": { description: Malformed request }
+        "500": { description: Create failed }
+  /additional_attendance/{additional_atdnc_id}:
+    put:
+      operationId: updateAdditionalAttendance
+      summary: Update attendance travel extension
+      parameters:
+        - in: path
+          name: additional_atdnc_id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                travel_start:
+                  { type: string, format: date-time, nullable: true }
+                travel_end: { type: string, format: date-time, nullable: true }
+      responses:
+        "200": { description: Travel extension updated }
+        "404": { description: Extension not found }
+    delete:
+      operationId: deleteAdditionalAttendance
+      summary: Delete attendance travel extension
+      parameters:
+        - in: path
+          name: additional_atdnc_id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200": { description: Travel extension deleted }
+        "400": { description: Invalid extension id }
+  /employee/attendanceList/{cmpId}:
+    get:
+      operationId: getLegacyCompanyAttendance
+      deprecated: true
+      summary: Legacy company attendance list
+      description: Use /api/attendance/company/{companyId}. Removal is no earlier than 15 calendar days after production rollout, after the full 14-day usage window; 2026-10-22 is provisional if rollout is 2026-10-07.
+      parameters:
+        - in: path
+          name: cmpId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200": { description: Legacy response shape }
+        "403": { description: Company access denied }
+  /employee/lastattendanceList/{cmpId}:
+    get:
+      operationId: getLegacyLatestCompanyAttendance
+      deprecated: true
+      summary: Legacy latest company attendance list
+      description: Use /api/attendance/company/{companyId}/latest. Removal is no earlier than 15 calendar days after production rollout, after the full 14-day usage window; 2026-10-22 is provisional if rollout is 2026-10-07.
+      parameters:
+        - in: path
+          name: cmpId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200": { description: Legacy response shape }
+        "403": { description: Company access denied }
+  /employee/attendanceList/{cmpId}/{month}:
+    get:
+      operationId: getLegacyMonthlyCompanyAttendance
+      deprecated: true
+      summary: Legacy monthly company attendance list
+      description: Use /api/attendance/company/{companyId}/month/{month}. Removal is no earlier than 15 calendar days after production rollout, after the full 14-day usage window; 2026-10-22 is provisional if rollout is 2026-10-07.
+      parameters:
+        - in: path
+          name: cmpId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: path
+          name: month
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Legacy response shape }
+        "403": { description: Company access denied }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    companyId:
+      in: path
+      name: companyId
+      required: true
+      schema: { type: integer, format: int64 }

@@ -1,14 +1,14 @@
-import AttendanceMarkTable from "../../components/Attendance/AttendanceMarkTable";
-// import SearchBar from "../../components/SearchBar";
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 
-const AttendanceMark = () => (
-    <div className="flex flex-col gap-5">
-      
-          {/* <div className="py-5">
-          </div> */}
-          <AttendanceMarkTable/>
-        </div>
-      
-  );
+const AttendanceMark = () => {
+  useEffect(() => {
+    console.warn(
+      "/attendance/mark is deprecated; redirected to unified attendance marking.",
+    );
+  }, []);
 
-  export default AttendanceMark;
+  return <Navigate to="/attendance?view=mark" replace />;
+};
+
+export default AttendanceMark;

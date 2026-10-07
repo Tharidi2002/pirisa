@@ -15,6 +15,8 @@ public class AttendanceAttendedEmployeeDTO {
     private Long departmentId;
     private String departmentName;
     private String clockInTime;
+    private String clockOutTime;
+    private String workingStatus;
     private String status;
     private String attendanceDate;
     private Long attendanceId;

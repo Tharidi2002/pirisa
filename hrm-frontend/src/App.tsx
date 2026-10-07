@@ -30,6 +30,7 @@ import EmployeeDashboard from "./pages/Employee/EmployeeDashboard";
 import PayroleList from "./pages/Employee/PayroleList";
 import EmployeeLeave from "./pages/Employee/EmployeeLeave";
 import MonthlyCalendarPage from "./pages/Attendance/MonthlyCalendarPage";
+import AttendanceOverviewPage from "./pages/Attendance/AttendanceOverviewPage";
 
 // ============================================
 // EMPLOYEE SELF-SERVICE PAGES
@@ -97,7 +98,7 @@ function App() {
 
                 {/* Attendance */}
                 <Route path="attendance">
-                  <Route index element={<Navigate to="list" replace />} />
+                  <Route index element={<AttendanceOverviewPage />} />
                   <Route path="list" element={<AttendanceContent />} />
                   <Route path="calendar" element={<MonthlyCalendarPage />} />
                   <Route path="mark" element={<AttendanceMark />} />

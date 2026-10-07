@@ -383,7 +383,7 @@ const SalaryForm: React.FC = () => {
         if (!token || !companyId || !selectedEmployeeForOvertime) return;
 
         const response = await fetch(
-          `${API_BASE}/employee/attendanceList/${companyId}`,
+          `${API_BASE}/api/attendance/company/${companyId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

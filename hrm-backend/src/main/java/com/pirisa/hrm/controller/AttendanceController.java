@@ -1,10 +1,12 @@
 package com.pirisa.hrm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pirisa.hrm.dto.AttendanceEmployeeDTO;
 import com.pirisa.hrm.dto.BulkAttendanceDataDTO;
 import com.pirisa.hrm.model.Attendance;
 import com.pirisa.hrm.service.AttendanceService;
 import com.pirisa.hrm.service.CompanyAccessService;
+import com.pirisa.hrm.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +35,9 @@ public class AttendanceController {
 
     @Autowired
     private CompanyAccessService companyAccessService;
+
+    @Autowired
+    private EmployeeService employeeService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -80,6 +85,121 @@ public class AttendanceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "Failed to fetch bulk attendance data"));
         }
+    }
+
+    @GetMapping(value = "/overview", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAttendanceOverview(
+            @RequestParam(value = "attendanceDate") String attendanceDateText,
+            @RequestParam(value = "companyId") Long companyId,
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            Authentication authentication) {
+        if (companyId == null || !companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Collections.singletonMap("error", "You cannot access attendance data for this company."));
+        }
+        try {
+            LocalDate attendanceDate = LocalDate.parse(attendanceDateText, DATE_FORMATTER);
+            BulkAttendanceDataDTO attendanceData = attendanceService.getBulkAttendanceData(attendanceDate, companyId, departmentId);
+
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("attendanceDate", attendanceDateText);
+            summary.put("companyId", companyId);
+            summary.put("departmentId", departmentId);
+            summary.put("pendingCount", attendanceData.getPendingEmployees() == null ? 0 : attendanceData.getPendingEmployees().size());
+            summary.put("attendedCount", attendanceData.getAttendedEmployees() == null ? 0 : attendanceData.getAttendedEmployees().size());
+            summary.put("excludedCount", attendanceData.getExcludedEmployees() == null ? 0 : attendanceData.getExcludedEmployees().size());
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("resultCode", 100);
+            responseBody.put("resultDesc", "Attendance overview fetched successfully");
+            responseBody.put("summary", summary);
+            responseBody.put("attendanceData", attendanceData);
+            return ResponseEntity.ok(responseBody);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid attendanceDate format. Use yyyy-MM-dd."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to fetch attendance overview"));
+        }
+    }
+
+    @GetMapping(value = "/company/{companyId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getCompanyAttendanceList(
+            @PathVariable long companyId,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+
+        try {
+            List<AttendanceEmployeeDTO> employees = employeeService.getAttendanceByCompanyId(companyId);
+            if (employees.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "No Attendance List found for this company ID"));
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("EmployeeList", employees);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching company attendance"));
+        }
+    }
+
+    @GetMapping(value = "/company/{companyId}/latest", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getLatestCompanyAttendanceList(
+            @PathVariable long companyId,
+            Authentication authentication) {
+        if (!companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+
+        try {
+            List<AttendanceEmployeeDTO> employees = employeeService.getLastAttendanceByCompanyId(companyId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("EmployeeList", employees);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching latest company attendance"));
+        }
+    }
+
+    @GetMapping(value = "/company/{companyId}/month/{month}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getCompanyAttendanceByMonth(
+            @PathVariable long companyId,
+            @PathVariable int month,
+            Authentication authentication) {
+        if (month < 1 || month > 12) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Month must be between 1 and 12."));
+        }
+        if (!companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+
+        try {
+            List<AttendanceEmployeeDTO> employees = employeeService.getAttendanceByCompanyIdAndMonth(companyId, month);
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Successful");
+            response.put("EmployeeList", employees);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching monthly company attendance"));
+        }
+    }
+
+    private ResponseEntity<?> forbiddenCompanyAttendanceResponse() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Collections.singletonMap("error", "You do not have access to this company attendance data."));
     }
 
     @PostMapping(value = "/import-excel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
