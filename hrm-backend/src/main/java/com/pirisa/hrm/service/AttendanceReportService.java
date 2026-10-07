@@ -73,7 +73,7 @@ public class AttendanceReportService {
 
     private boolean isEmployeeEligibleForAttendance(Employee employee, LocalDate attendanceDate) {
         LocalDate joinDate = attendanceValidator.parseEmployeeJoinDate(employee.getDateOfJoining());
-        return joinDate != null && !attendanceDate.isBefore(joinDate);
+        return joinDate == null || !attendanceDate.isBefore(joinDate);
     }
 
     private AttendancePendingEmployeeDTO toPendingEmployeeDTO(Employee employee) {
@@ -119,7 +119,8 @@ public class AttendanceReportService {
                 Optional.ofNullable(attendance.getWorking_status()).orElse(""),
                 Optional.ofNullable(attendance.getAttendance_status()).orElse(""),
                 attendance.getAttendanceDate() != null ? attendance.getAttendanceDate().format(DATE_FORMATTER) : "",
-                attendance.getId()
+                attendance.getId(),
+                attendance.getHalfDayType()
         );
     }
 

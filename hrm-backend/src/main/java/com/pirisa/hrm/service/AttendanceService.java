@@ -79,6 +79,16 @@ public class AttendanceService {
             }
 
             attendanceValidator.validateAttendanceJoinDate(attendance, employeeRepository);
+
+            if ("ABSENT".equalsIgnoreCase(attendance.getAttendance_status())) {
+                attendance.setStartedAt(null);
+                attendance.setEndedAt(null);
+                attendance.setHalfDayType(null);
+            } else if ("MANUAL_HR".equalsIgnoreCase(attendance.getEntryType())
+                    && attendance.getStartedAt() == null) {
+                attendance.setStartedAt(currentAttendanceTime(attendance));
+            }
+
             validatedList.add(attendance);
         }
 
@@ -97,6 +107,7 @@ public class AttendanceService {
                 current.setEndedAt(incoming.getEndedAt());
                 current.setWorking_status(incoming.getWorking_status());
                 current.setAttendance_status(incoming.getAttendance_status());
+                current.setHalfDayType(incoming.getHalfDayType());
                 current.setEntryType(incoming.getEntryType());
                 current.setCreatedBy(incoming.getCreatedBy());
                 current.setDepartureReason(incoming.getDepartureReason());
@@ -120,8 +131,37 @@ public class AttendanceService {
         return markBulkAttendance(attendanceRecords);
     }
 
-    public void deleteAttendance(Long atdnc_id) {
-        attendanceRepository.deleteById(atdnc_id);
+    public Attendance updateAttendanceStatus(long attendanceId, String status, String halfDayType) {
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(() -> new IllegalArgumentException("Attendance record not found for id: " + attendanceId));
+        String normalizedStatus = status == null ? "" : status.trim().toUpperCase();
+        if (!List.of("OFFICE", "WFH", "HALF_DAY", "ABSENT").contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Status must be OFFICE, WFH, HALF_DAY, or ABSENT.");
+        }
+
+        if ("HALF_DAY".equals(normalizedStatus)) {
+            String normalizedHalfDayType = halfDayType == null ? "" : halfDayType.trim().toUpperCase();
+            if (!List.of("MORNING", "AFTERNOON").contains(normalizedHalfDayType)) {
+                throw new IllegalArgumentException("Half-day type must be MORNING or AFTERNOON.");
+            }
+            attendance.setHalfDayType(normalizedHalfDayType);
+            attendance.setAttendance_status("HALF_DAY");
+            attendance.setWorking_status("OFFICE");
+            if (attendance.getStartedAt() == null) {
+                attendance.setStartedAt(currentAttendanceTime(attendance));
+            }
+        } else {
+            attendance.setHalfDayType(null);
+            attendance.setAttendance_status("ABSENT".equals(normalizedStatus) ? "ABSENT" : "PRESENT");
+            attendance.setWorking_status("ABSENT".equals(normalizedStatus) ? "OFFICE" : normalizedStatus);
+            if ("ABSENT".equals(normalizedStatus)) {
+                attendance.setStartedAt(null);
+                attendance.setEndedAt(null);
+            } else if (attendance.getStartedAt() == null) {
+                attendance.setStartedAt(currentAttendanceTime(attendance));
+            }
+        }
+        return attendanceRepository.save(attendance);
     }
 
     public Attendance updateAttendance(Long atdnc_id, Attendance updateAttendance) {
@@ -143,6 +183,9 @@ public class AttendanceService {
         Attendance attendance = getAttendanceById(attendanceId);
         if (attendance == null) {
             throw new IllegalArgumentException("Attendance record not found for id: " + attendanceId);
+        }
+        if ("ABSENT".equalsIgnoreCase(attendance.getAttendance_status())) {
+            throw new IllegalArgumentException("Cannot set an off-time for an absent employee.");
         }
 
         LocalDateTime parsedEndedAt = null;
@@ -181,5 +224,11 @@ public class AttendanceService {
             }
         }
         return null;
+    }
+
+    private LocalDateTime currentAttendanceTime(Attendance attendance) {
+        LocalDate attendanceDate = Optional.ofNullable(attendance.getAttendanceDate())
+                .orElse(LocalDate.now());
+        return attendanceDate.atTime(LocalTime.now());
     }
 }

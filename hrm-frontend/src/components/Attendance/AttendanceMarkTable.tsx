@@ -1,1209 +1,1078 @@
-import React, { useState, useEffect } from "react";
-import Table from "../../components/table/Table";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { User } from "lucide-react";
-import { attendanceService } from "../../api/services/attendanceService";
-import { ToastContainer, toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { API_BASE } from "../../api/endpoints";
+import { attendanceService, type EmployeeLeaveDTO } from "../../api/services/attendanceService";
+import type {
+  AttendedEmployeeDTO,
+  AttendanceDepartmentDTO,
+  AttendanceRowPayload,
+  EmployeeDetailsDTO,
+  PendingEmployeeDTO,
+} from "../../api/services/attendanceService";
+import { axiosInstance } from "../../api/config/axios";
 
-interface Attendance {
-  id: number;
-  startedAt: string;
-  endedAt: string | null;
-  workingStatus: string;
-}
+type AttendanceStatus = "OFFICE" | "WFH" | "HALF_DAY" | "ABSENT";
+type HalfDayType = "MORNING" | "AFTERNOON";
 
-interface Employee {
+type DirectoryEmployee = {
   id: number;
+  epfNo?: string;
   firstName: string;
   lastName: string;
-  epfNo: string;
-  department: {
-    id: number;
-    dpt_name: string;
-  };
-  attendanceList: Attendance[];
-}
-
-interface ApiResponse {
-  resultCode: number;
-  resultDesc: string;
-  EmployeeList: Employee[];
-}
-
-interface AttendanceRequest {
-  attendanceDate: string;
-  startedAt: string;
-  endedAt: string | null;
-  empId: number;
-  working_status: "OFFICE" | "WFH" | "FIELD_VISIT" | "On-Site" | "Online";
-  attendance_status: string;
-  entryType: string;
-  createdBy: string;
-}
-
-interface EmployeeOnLeave {
-  id: number;
-  empId: number;
-  leaveType: string;
-  leaveStartDay: string;
-  leaveEndDay: string;
-  leaveDays: number;
-  leaveReason: string;
-  leaveStatus: string;
-}
-
-const fetchEmployeePhotos = async (
-  employeeList: Employee[],
-  token: string,
-): Promise<Record<number, string>> => {
-  const photoUrlMap: Record<number, string> = {};
-
-  await Promise.all(
-    employeeList.map(async (employee) => {
-      try {
-        const existsResponse = await fetch(
-          `${API_BASE}/api/profile-image/exists/${employee.id}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (!existsResponse.ok) return;
-
-        const existsData: { hasProfileImage?: boolean; exists?: boolean } =
-          await existsResponse.json();
-        if (!(existsData.hasProfileImage ?? existsData.exists)) return;
-
-        const imageResponse = await fetch(
-          `${API_BASE}/api/profile-image/view/${employee.id}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (!imageResponse.ok) return;
-
-        const blob = await imageResponse.blob();
-        if (blob.size > 0) {
-          photoUrlMap[employee.id] = URL.createObjectURL(blob);
-        }
-      } catch (error) {
-        console.error(
-          `Failed to fetch profile image for employee ${employee.id}:`,
-          error,
-        );
-      }
-    }),
-  );
-
-  return photoUrlMap;
+  departmentId?: number;
+  departmentName?: string;
 };
 
-const AttendanceMarkTable = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
-  const [employeesOnLeave, setEmployeesOnLeave] = useState<EmployeeOnLeave[]>(
-    [],
+type LeaveEmployee = DirectoryEmployee & Omit<EmployeeLeaveDTO, "id"> & {
+  leaveRecordId: number;
+};
+
+const todayIso = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+};
+
+const employeeName = (employee: DirectoryEmployee) =>
+  [employee.firstName, employee.lastName].filter(Boolean).join(" ") ||
+  "Unknown employee";
+
+const departmentName = (employee: DirectoryEmployee) =>
+  employee.departmentName || "Unassigned";
+
+const toDirectoryEmployee = (employee: EmployeeDetailsDTO): DirectoryEmployee => ({
+  id: employee.id,
+  epfNo: employee.epfNo,
+  firstName: employee.firstName,
+  lastName: employee.lastName,
+  departmentId: employee.department?.id,
+  departmentName: employee.department?.dpt_name,
+});
+
+const toPendingEmployee = (employee: PendingEmployeeDTO): DirectoryEmployee => ({
+  id: employee.id,
+  epfNo: employee.epfNo,
+  firstName: employee.firstName,
+  lastName: employee.lastName,
+  departmentId: employee.departmentId,
+  departmentName: employee.departmentName,
+});
+
+const statusLabel = (
+  status: AttendanceStatus,
+  halfDayType?: HalfDayType,
+) => {
+  if (status === "OFFICE") return "Office";
+  if (status === "WFH") return "Work From Home";
+  if (status === "HALF_DAY") {
+    return `Half Day (${halfDayType === "MORNING" ? "AM" : "PM"})`;
+  }
+  return "Absent";
+};
+
+const statusBadge = (employee: AttendedEmployeeDTO) => {
+  const attendanceStatus = employee.status.toUpperCase();
+  let status: AttendanceStatus = "OFFICE";
+  if (attendanceStatus === "ABSENT") status = "ABSENT";
+  else if (attendanceStatus === "HALF_DAY") status = "HALF_DAY";
+  else if (employee.workingStatus.toUpperCase() === "WFH") status = "WFH";
+
+  const colors: Record<AttendanceStatus, string> = {
+    OFFICE: "bg-blue-100 text-blue-800",
+    WFH: "bg-purple-100 text-purple-800",
+    HALF_DAY: "bg-orange-100 text-orange-800",
+    ABSENT: "bg-red-100 text-red-800",
+  };
+  const icon: Record<AttendanceStatus, string> = {
+    OFFICE: "🏢",
+    WFH: "🏠",
+    HALF_DAY: "⏰",
+    ABSENT: "❌",
+  };
+  const halfDayType = employee.halfDayType as HalfDayType | undefined;
+  return (
+    <span
+      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${colors[status]}`}
+    >
+      {icon[status]} {statusLabel(status, halfDayType)}
+    </span>
   );
-  const [departments, setDepartments] = useState<
-    { id: number; dpt_name: string }[]
-  >([]);
-  const [selectedDepartment, setSelectedDepartment] = useState<number>(0);
+};
+
+const markedAtLabel = (time: string) => {
+  if (!time) return "—";
+  const [hoursText, minutesText] = time.split(":");
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return time;
+  const displayHours = hours % 12 || 12;
+  return `${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"}`;
+};
+
+const matchesSearch = (employee: DirectoryEmployee, query: string) => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  return [
+    employeeName(employee),
+    employee.epfNo ?? "",
+    String(employee.id),
+    departmentName(employee),
+  ].some((value) => value.toLowerCase().includes(normalizedQuery));
+};
+
+type SectionCardProps = {
+  title: string;
+  count: number;
+  search: string;
+  onSearchChange: (value: string) => void;
+  children: ReactNode;
+};
+
+const SectionCard = ({
+  title,
+  count,
+  search,
+  onSearchChange,
+  children,
+}: SectionCardProps) => (
+  <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4">
+      <h3 className="text-base font-semibold text-slate-800">
+        {title} <span className="text-slate-500">({count})</span>
+      </h3>
+      <input
+        type="search"
+        aria-label={`Search ${title}`}
+        placeholder="Search name, ID, department"
+        value={search}
+        onChange={(event) => onSearchChange(event.target.value)}
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-72"
+      />
+    </header>
+    {children}
+  </section>
+);
+
+type EmployeeCellsProps = {
+  employee: DirectoryEmployee;
+  photoUrl?: string;
+};
+
+const EmployeeCells = ({ employee, photoUrl }: EmployeeCellsProps) => (
+  <>
+    <td className="px-4 py-3">
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={`${employeeName(employee)} profile`}
+          className="h-9 w-9 rounded-full object-cover"
+        />
+      ) : (
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100"
+          aria-label="No employee photo"
+        >
+          <User size={17} className="text-slate-500" />
+        </div>
+      )}
+    </td>
+    <td className="px-4 py-3 font-medium text-slate-800">{employeeName(employee)}</td>
+    <td className="px-4 py-3 text-slate-600">{employee.epfNo || employee.id}</td>
+    <td className="px-4 py-3 text-slate-600">{departmentName(employee)}</td>
+  </>
+);
+
+const tableHeadClass =
+  "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500";
+const rowClass =
+  "border-t border-slate-100 text-sm transition-colors duration-200 hover:bg-slate-50";
+
+const AttendanceMarkTable = () => {
+  const [pendingEmployees, setPendingEmployees] = useState<PendingEmployeeDTO[]>([]);
+  const [markedEmployees, setMarkedEmployees] = useState<AttendedEmployeeDTO[]>([]);
+  const [directory, setDirectory] = useState<DirectoryEmployee[]>([]);
+  const [leaveRecords, setLeaveRecords] = useState<EmployeeLeaveDTO[]>([]);
+  const [departments, setDepartments] = useState<AttendanceDepartmentDTO[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState(0);
+  const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
+  const [pendingStatuses, setPendingStatuses] = useState<Record<number, AttendanceStatus>>({});
+  const [pendingHalfDays, setPendingHalfDays] = useState<Record<number, HalfDayType>>({});
+  const [editingAttendanceId, setEditingAttendanceId] = useState<number | null>(null);
+  const [editedStatuses, setEditedStatuses] = useState<Record<number, AttendanceStatus>>({});
+  const [editedHalfDays, setEditedHalfDays] = useState<Record<number, HalfDayType>>({});
+  const [offTimeEmployee, setOffTimeEmployee] = useState<AttendedEmployeeDTO | null>(null);
+  const [offTimeValue, setOffTimeValue] = useState("");
+  const [leaveToCancel, setLeaveToCancel] = useState<LeaveEmployee | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("Employee came to office");
+  const [busyEmployeeId, setBusyEmployeeId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [photoUrls, setPhotoUrls] = useState<Record<number, string>>({});
-  const [attendanceStatus, setAttendanceStatus] = useState<{
-    [key: number]: "OFFICE" | "WFH" | "FIELD_VISIT";
-  }>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const [pendingSearch, setPendingSearch] = useState("");
+  const [markedSearch, setMarkedSearch] = useState("");
+  const [offTodaySearch, setOffTodaySearch] = useState("");
+  const [absentSearch, setAbsentSearch] = useState("");
+  const [leaveSearch, setLeaveSearch] = useState("");
 
-  interface ClockOutModalState {
-    open: boolean;
-    attendanceId?: number;
-    empId?: number;
-    name?: string;
-    clockInTime?: string;
-    defaultEndedAt?: string;
-    reason?: string;
-    notes?: string;
-  }
-  const [clockOutModal, setClockOutModal] = useState<ClockOutModalState>({
-    open: false,
-  });
+  const companyId = localStorage.getItem("cmpnyId");
+  const attendanceDate = todayIso();
 
-  // Helper function to get local time in simple ISO format (no timezone)
-  const getLocalDateISO = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const getLocalTimeISO = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const seconds = String(now.getSeconds()).padStart(2, "0");
-    const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
-  };
-
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const companyId = localStorage.getItem("cmpnyId");
-
-        if (!token || !companyId) {
-          throw new Error("No token or company ID found");
-        }
-
-        const response = await fetch(
-          `${API_BASE}/api/attendance/company/${companyId}/latest`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setEmployees([]);
-            setFilteredEmployees([]);
-            return;
-          }
-          throw new Error("Failed to fetch employees");
-        }
-
-        const data: ApiResponse = await response.json();
-        if (data.resultCode === 100) {
-          const list = data.EmployeeList || [];
-          setEmployees(list);
-
-          // Extract unique departments
-          const uniqueDepts = Array.from(
-            new Map(
-              list
-                .filter(
-                  (
-                    emp,
-                  ): emp is Employee & {
-                    department: { id: number; dpt_name: string };
-                  } => emp.department !== undefined,
-                )
-                .map(
-                  (emp) =>
-                    [
-                      emp.department.id,
-                      {
-                        id: emp.department.id,
-                        dpt_name: emp.department.dpt_name,
-                      },
-                    ] as [number, { id: number; dpt_name: string }],
-                ),
-            ).values(),
-          );
-          setDepartments(uniqueDepts);
-
-          if (list.length > 0) {
-            setPhotoUrls(await fetchEmployeePhotos(list, token));
-          }
-        } else {
-          throw new Error(data.resultDesc);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchEmployeesOnLeave = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("No token found");
-        }
-
-        const response = await fetch(
-          `${API_BASE}/emp_leave/employees-on-leave-today`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch employees on leave");
-        }
-
-        const data = await response.json();
-        if (data.resultCode === 100) {
-          setEmployeesOnLeave(data.employeesOnLeave || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch employees on leave:", err);
-      }
-    };
-
-    // Fetch both data sets sequentially to ensure proper filtering
-    const fetchData = async () => {
-      await fetchEmployees();
-      await fetchEmployeesOnLeave();
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const filtered = employees.filter((employee) => {
-      const inSelectedDepartment =
-        selectedDepartment === 0 ||
-        employee.department?.id === selectedDepartment;
-      const onLeave = employeesOnLeave.some(
-        (leave) => leave.empId === employee.id,
-      );
-      return inSelectedDepartment && !onLeave;
-    });
-    setFilteredEmployees(filtered);
-    setCurrentPage(1);
-  }, [employees, employeesOnLeave, selectedDepartment]);
-
-  useEffect(() => {
-    return () => {
-      Object.values(photoUrls).forEach((url) => {
+  const loadPhotos = useCallback(async (employees: DirectoryEmployee[]) => {
+    const photoEntries = await Promise.all(
+      employees.map(async (employee): Promise<[number, string] | null> => {
         try {
-          URL.revokeObjectURL(url);
-        } catch {
-          // no-op
-        }
-      });
-    };
-  }, [photoUrls]);
-
-  const fetchAndSetEmployeePhotos = async (
-    employeeList: Employee[],
-    token: string,
-  ) => {
-    // Cleanup previous URLs
-    Object.values(photoUrls).forEach((url) => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {
-        // no-op
-      }
-    });
-
-    const photoUrlMap: Record<number, string> = {};
-
-    await Promise.all(
-      employeeList.map(async (employee) => {
-        try {
-          const existsResp = await fetch(
-            `${API_BASE}/api/profile-image/exists/${employee.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
+          const exists = await axiosInstance.get<{ hasProfileImage?: boolean; exists?: boolean }>(
+            `/api/profile-image/exists/${employee.id}`,
           );
-
-          if (!existsResp.ok) return;
-          const existsData: { hasProfileImage?: boolean; exists?: boolean } =
-            await existsResp.json();
-          const hasImage = Boolean(
-            existsData?.hasProfileImage ?? existsData?.exists,
+          if (!(exists.data.hasProfileImage ?? exists.data.exists)) return null;
+          const image = await axiosInstance.get<Blob>(
+            `/api/profile-image/view/${employee.id}`,
+            { responseType: "blob" },
           );
-          if (!hasImage) return;
-
-          const imgResp = await fetch(
-            `${API_BASE}/api/profile-image/view/${employee.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
-
-          if (!imgResp.ok) return;
-          const blob = await imgResp.blob();
-          if (!blob || blob.size === 0) return;
-          photoUrlMap[employee.id] = URL.createObjectURL(blob);
-        } catch {
-          // ignore photo failures; keep fallback avatar
+          return image.data.size > 0
+            ? [employee.id, URL.createObjectURL(image.data)]
+            : null;
+        } catch (loadError) {
+          console.error(`Failed to load employee photo ${employee.id}:`, loadError);
+          return null;
         }
       }),
     );
-
-    setPhotoUrls(photoUrlMap);
-  };
-
-  const handleAttendanceStatusChange = (
-    empId: number,
-    status: "OFFICE" | "WFH" | "FIELD_VISIT",
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    event.stopPropagation();
-    setAttendanceStatus((prev) => ({
-      ...prev,
-      [empId]: status,
-    }));
-  };
-
-  const handleMarkAttendance = async (
-    empId: number,
-    event: React.MouseEvent,
-  ) => {
-    event.stopPropagation();
-    const status = attendanceStatus[empId] || "OFFICE";
-
-    toast.info(
-      <div>
-        <p>
-          Are you sure you want to mark attendance as <strong>{status}</strong>?
-        </p>
-        <div className="flex justify-end mt-2">
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mr-2"
-            onClick={async () => {
-              toast.dismiss();
-              try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                  throw new Error("No token found");
-                }
-
-                const attendanceData: AttendanceRequest = {
-                  attendanceDate: getLocalDateISO(),
-                  startedAt: getLocalTimeISO(),
-                  endedAt: null,
-                  empId: empId,
-                  working_status: status,
-                  attendance_status: "PRESENT",
-                  entryType: "MANUAL_HR",
-                  createdBy: localStorage.getItem("userName") || "HR Admin",
-                };
-
-                await attendanceService.bulkMarkAttendance([attendanceData]);
-                toast.success("Attendance marked successfully!");
-                setLoading(true);
-                await fetchEmployees();
-              } catch (err) {
-                toast.error(
-                  err instanceof Error
-                    ? err.message
-                    : "Failed to mark attendance",
-                );
-              }
-            }}
-          >
-            Confirm
-          </button>
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            onClick={() => toast.dismiss()}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      {
-        autoClose: false,
-        closeButton: false,
-      },
+    const nextPhotos = Object.fromEntries(
+      photoEntries.filter((entry): entry is [number, string] => entry !== null),
     );
-  };
-
-  const handleOpenClockOutModal = (
-    employee: Employee,
-    attendance: Attendance,
-    event: React.MouseEvent,
-  ) => {
-    event.stopPropagation();
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    let formattedIn = "";
-    if (attendance.startedAt) {
-      if (attendance.startedAt.includes("T")) {
-        formattedIn = attendance.startedAt.split("T")[1].substring(0, 5);
-      } else {
-        formattedIn = attendance.startedAt.substring(0, 5);
-      }
-    }
-    setClockOutModal({
-      open: true,
-      attendanceId: attendance.id,
-      empId: employee.id,
-      name: `${employee.firstName} ${employee.lastName}`,
-      clockInTime: formattedIn,
-      defaultEndedAt: `${hh}:${mm}`,
-      reason: "Standard Off-Time",
-      notes: "",
+    setPhotoUrls((previous) => {
+      Object.values(previous).forEach((url) => URL.revokeObjectURL(url));
+      return nextPhotos;
     });
-  };
+  }, []);
 
-  const handleConfirmClockOut = async () => {
-    if (!clockOutModal.attendanceId) return;
-    try {
-      setLoading(true);
-      await attendanceService.clockOut(clockOutModal.attendanceId, {
-        endedAt: clockOutModal.defaultEndedAt,
-        departureReason: clockOutModal.reason,
-        departureNotes: clockOutModal.notes,
-      });
-      toast.success(`Clock Out (Off) marked for ${clockOutModal.name}`);
-      setClockOutModal({ open: false });
-      await fetchEmployees();
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to mark clock out",
-      );
+  const loadBoard = useCallback(async (showLoading = true) => {
+    if (!companyId) {
+      setError("Company information is missing. Please log in again.");
       setLoading(false);
+      return;
     }
-  };
-
-  const handleCancelLeaveAndMarkAttendance = async (
-    employee: Employee,
-    event: React.MouseEvent,
-  ) => {
-    event.stopPropagation();
-
-    const leaveInfo = getEmployeeLeaveInfo(employee.id);
-    const employeeName = `${employee.firstName} ${employee.lastName}`;
-
-    toast.info(
-      <div className="max-w-md">
-        <div className="mb-4">
-          <p className="font-semibold text-gray-800 mb-2">
-            Cancel Leave & Mark Attendance
-          </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
-            <p className="text-sm text-yellow-800">
-              <strong>{employeeName}</strong> is currently on leave:
-            </p>
-            <ul className="text-xs text-yellow-700 mt-1 list-disc list-inside">
-              <li>Leave Type: {leaveInfo?.leaveType || "N/A"}</li>
-              <li>
-                Period:{" "}
-                {leaveInfo
-                  ? new Date(leaveInfo.leaveStartDay).toLocaleDateString()
-                  : "N/A"}{" "}
-                -{" "}
-                {leaveInfo
-                  ? new Date(leaveInfo.leaveEndDay).toLocaleDateString()
-                  : "N/A"}
-              </li>
-              <li>Reason: {leaveInfo?.leaveReason || "N/A"}</li>
-            </ul>
-          </div>
-          <p className="text-sm text-gray-600 mb-3">
-            Do you want to cancel this leave and mark attendance for today?
-          </p>
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cancellation Reason (optional):
-            </label>
-            <input
-              type="text"
-              id="cancellationReason"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Employee came to office"
-              defaultValue="Employee came to office"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end space-x-2">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
-            onClick={async () => {
-              toast.dismiss();
-              try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                  throw new Error("No token found");
-                }
-
-                const cancellationReason =
-                  (
-                    document.getElementById(
-                      "cancellationReason",
-                    ) as HTMLInputElement
-                  )?.value || "Employee came to office";
-                const currentUser =
-                  localStorage.getItem("userName") || "HR Admin";
-
-                const requestData = {
-                  empId: employee.id,
-                  cancellationReason: cancellationReason,
-                  canceledBy: currentUser,
-                };
-
-                const response = await fetch(
-                  `${API_BASE}/emp_leave/cancel-leave-and-mark-attendance`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(requestData),
-                  },
-                );
-
-                if (!response.ok) {
-                  throw new Error("Failed to cancel leave");
-                }
-
-                const result = await response.json();
-                if (result.resultCode === 100) {
-                  toast.success(
-                    <div>
-                      <p className="font-semibold">Success!</p>
-                      <p className="text-sm">
-                        Leave cancelled and {employeeName} is now available for
-                        attendance marking.
-                      </p>
-                    </div>,
-                  );
-
-                  // Refresh both tables immediately after canceling leave
-                  setLoading(true);
-                  await fetchEmployees();
-                } else {
-                  toast.error(result.resultDesc || "Failed to cancel leave");
-                }
-              } catch (err) {
-                toast.error(
-                  err instanceof Error
-                    ? err.message
-                    : "Failed to cancel leave and mark attendance",
-                );
-              }
-            }}
-          >
-            Confirm & Mark Attendance
-          </button>
-          <button
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm font-medium"
-            onClick={() => toast.dismiss()}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      {
-        autoClose: false,
-        closeButton: false,
-      },
-    );
-  };
-
-  const fetchEmployees = async () => {
+    if (showLoading) setLoading(true);
+    setError(null);
     try {
-      const token = localStorage.getItem("token");
-      const companyId = localStorage.getItem("cmpnyId");
-
-      if (!token || !companyId) {
-        throw new Error("No token or company ID found");
-      }
-
-      const response = await fetch(
-        `${API_BASE}/api/attendance/company/${companyId}/latest`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
+      const [pending, marked, leaves, employees, loadedDepartments] =
+        await Promise.all([
+          attendanceService.fetchPendingAttendance(companyId, attendanceDate),
+          attendanceService.fetchMarkedAttendance(companyId, attendanceDate),
+          attendanceService.fetchEmployeesOnLeave(companyId, attendanceDate),
+          attendanceService.fetchEmployeesByCompany(companyId),
+          attendanceService.fetchDepartments(companyId),
+        ]);
+      const employeeDirectory = employees.map(toDirectoryEmployee);
+      setPendingEmployees(pending);
+      setMarkedEmployees(marked);
+      setLeaveRecords(leaves);
+      setDirectory(employeeDirectory);
+      setDepartments(loadedDepartments);
+      void loadPhotos(employeeDirectory);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load attendance.",
       );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setEmployees([]);
-          setFilteredEmployees([]);
-          return;
-        }
-        throw new Error("Failed to fetch employees");
-      }
-
-      const data: ApiResponse = await response.json();
-      if (data.resultCode === 100) {
-        const list = data.EmployeeList || [];
-        setEmployees(list);
-        applyDepartmentFilter(list, selectedDepartment);
-
-        // Extract unique departments
-        const uniqueDepts = Array.from(
-          new Map(
-            list
-              .filter(
-                (
-                  emp,
-                ): emp is Employee & {
-                  department: { id: number; dpt_name: string };
-                } => emp.department !== undefined,
-              )
-              .map(
-                (emp) =>
-                  [
-                    emp.department.id,
-                    {
-                      id: emp.department.id,
-                      dpt_name: emp.department.dpt_name,
-                    },
-                  ] as [number, { id: number; dpt_name: string }],
-              ),
-          ).values(),
-        );
-        setDepartments(uniqueDepts);
-
-        if (list.length > 0) {
-          await fetchAndSetEmployeePhotos(list, token);
-        }
-      } else {
-        throw new Error(data.resultDesc);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
+  }, [attendanceDate, companyId, loadPhotos]);
 
-    // Also fetch employees on leave
+  useEffect(() => {
+    void loadBoard();
+  }, [loadBoard]);
+
+  useEffect(
+    () => () => Object.values(photoUrls).forEach((url) => URL.revokeObjectURL(url)),
+    [photoUrls],
+  );
+
+  const departmentMatches = useCallback(
+    (employee: DirectoryEmployee) =>
+      selectedDepartment === 0 || employee.departmentId === selectedDepartment,
+    [selectedDepartment],
+  );
+
+  const pendingInDepartment = useMemo(
+    () =>
+      pendingEmployees
+        .map(toPendingEmployee)
+        .filter(departmentMatches)
+        .filter((employee) => !leaveRecords.some((leave) => leave.empId === employee.id)),
+    [leaveRecords, pendingEmployees, departmentMatches],
+  );
+  const markedInDepartment = useMemo(
+    () => markedEmployees.filter((employee) => departmentMatches({
+      id: employee.empId,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      epfNo: employee.epfNo,
+      departmentId: employee.departmentId,
+      departmentName: employee.departmentName,
+    })),
+    [markedEmployees, departmentMatches],
+  );
+  const onLeaveEmployeeIds = useMemo(
+    () => new Set(leaveRecords.map((leave) => leave.empId)),
+    [leaveRecords],
+  );
+  const absentInDepartment = useMemo(
+    () =>
+      markedInDepartment.filter(
+        (employee) =>
+          employee.status.trim().toUpperCase() === "ABSENT" &&
+          !onLeaveEmployeeIds.has(employee.empId),
+      ),
+    [markedInDepartment, onLeaveEmployeeIds],
+  );
+  const eligibleWorkingEmployees = useMemo(
+    () =>
+      markedInDepartment.filter(
+        (employee) =>
+          employee.status.trim().toUpperCase() !== "ABSENT" &&
+          employee.status.trim().toUpperCase() !== "LEAVE" &&
+          !onLeaveEmployeeIds.has(employee.empId),
+      ),
+    [markedInDepartment, onLeaveEmployeeIds],
+  );
+  const workingInDepartment = useMemo(
+    () =>
+      eligibleWorkingEmployees.filter(
+        (employee) => !employee.clockOutTime?.trim(),
+      ),
+    [eligibleWorkingEmployees],
+  );
+  const offTodayEmployees = useMemo(
+    () =>
+      eligibleWorkingEmployees.filter((employee) =>
+        Boolean(employee.clockOutTime?.trim()),
+      ),
+    [eligibleWorkingEmployees],
+  );
+
+  const employeesById = useMemo(
+    () => new Map(directory.map((employee) => [employee.id, employee])),
+    [directory],
+  );
+  const onLeaveEmployees = useMemo(
+    () =>
+      leaveRecords.flatMap((leave) => {
+        const employee = employeesById.get(leave.empId);
+        return employee && departmentMatches(employee)
+          ? [{ ...leave, ...employee, leaveRecordId: leave.id }]
+          : [];
+      }),
+    [departmentMatches, employeesById, leaveRecords],
+  );
+
+  const filteredPending = pendingInDepartment.filter((employee) =>
+    matchesSearch(employee, pendingSearch),
+  );
+  const filteredWorking = workingInDepartment.filter((employee) =>
+    matchesSearch({
+      id: employee.empId,
+      epfNo: employee.epfNo,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      departmentName: employee.departmentName,
+    }, markedSearch),
+  );
+  const filteredAbsent = absentInDepartment.filter((employee) =>
+    matchesSearch({
+      id: employee.empId,
+      epfNo: employee.epfNo,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      departmentName: employee.departmentName,
+    }, absentSearch),
+  );
+  const filteredOffToday = offTodayEmployees.filter((employee) =>
+    matchesSearch(
+      {
+        id: employee.empId,
+        epfNo: employee.epfNo,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        departmentName: employee.departmentName,
+      },
+      offTodaySearch,
+    ),
+  );
+  const filteredOnLeave = onLeaveEmployees.filter((employee) =>
+    matchesSearch(employee, leaveSearch),
+  );
+
+  const markAttendance = async (employee: DirectoryEmployee) => {
+    const status = pendingStatuses[employee.id] || "OFFICE";
+    const halfDayType = pendingHalfDays[employee.id] || "MORNING";
+    setBusyEmployeeId(employee.id);
     try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const response = await fetch(
-          `${API_BASE}/emp_leave/employees-on-leave-today`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+      const attendance: AttendanceRowPayload = {
+        empId: employee.id,
+        attendanceDate,
+        startedAt: null,
+        endedAt: null,
+        working_status: status === "WFH" ? "WFH" : "OFFICE",
+        attendance_status:
+          status === "ABSENT" ? "ABSENT" : status === "HALF_DAY" ? "HALF_DAY" : "PRESENT",
+        ...(status === "HALF_DAY" ? { halfDayType } : {}),
+        entryType: "MANUAL_HR",
+        createdBy: localStorage.getItem("userName") || "HR Admin",
+      };
+      await attendanceService.bulkMarkAttendance([attendance]);
+      await loadBoard(false);
+      toast.success(`${employeeName(employee)} marked as ${statusLabel(status, halfDayType)} ✅`);
+    } catch (markError) {
+      toast.error(markError instanceof Error ? markError.message : "Failed to mark attendance.");
+    } finally {
+      setBusyEmployeeId(null);
+    }
+  };
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.resultCode === 100) {
-            setEmployeesOnLeave(data.employeesOnLeave || []);
-          }
-        }
+  const saveStatus = async (employee: AttendedEmployeeDTO) => {
+    const status = editedStatuses[employee.attendanceId] || "OFFICE";
+    const halfDayType = editedHalfDays[employee.attendanceId] || "MORNING";
+    setBusyEmployeeId(employee.empId);
+    try {
+      await attendanceService.updateAttendanceStatus(employee.attendanceId, {
+        status,
+        ...(status === "HALF_DAY" ? { halfDayType } : {}),
+      });
+      setEditingAttendanceId(null);
+      await loadBoard(false);
+      toast.success(`${employeeName({
+        id: employee.empId,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+      })} status updated to ${statusLabel(status, halfDayType)} ✅`);
+    } catch (saveError) {
+      toast.error(saveError instanceof Error ? saveError.message : "Failed to update attendance.");
+    } finally {
+      setBusyEmployeeId(null);
+    }
+  };
+
+  const saveOffTime = async () => {
+    if (!offTimeEmployee || !offTimeValue) return;
+    setBusyEmployeeId(offTimeEmployee.empId);
+    try {
+      await attendanceService.clockOut(offTimeEmployee.attendanceId, {
+        endedAt: offTimeValue,
+        departureReason: "Manual off-time",
+      });
+      const name = employeeName({
+        id: offTimeEmployee.empId,
+        firstName: offTimeEmployee.firstName,
+        lastName: offTimeEmployee.lastName,
+      });
+      setOffTimeEmployee(null);
+      await loadBoard(false);
+      toast.success(`Off-time recorded for ${name}.`);
+    } catch (saveError) {
+      toast.error(saveError instanceof Error ? saveError.message : "Failed to record off-time.");
+    } finally {
+      setBusyEmployeeId(null);
+    }
+  };
+
+  const cancelLeaveAndMark = async () => {
+    if (!leaveToCancel) return;
+    const employee = leaveToCancel;
+    setBusyEmployeeId(employee.id);
+    try {
+      const response = await axiosInstance.post<{
+        resultCode: number;
+        resultDesc?: string;
+      }>("/emp_leave/cancel-leave-and-mark-attendance", {
+        empId: employee.id,
+        cancellationReason: cancellationReason || "Employee came to office",
+        canceledBy: localStorage.getItem("userName") || "HR Admin",
+      });
+      if (response.data.resultCode !== 100) {
+        throw new Error(response.data.resultDesc || "Failed to cancel leave.");
       }
-    } catch (err) {
-      console.error("Failed to fetch employees on leave:", err);
+      setLeaveToCancel(null);
+      await loadBoard(false);
+      toast.success(`Leave cancelled for ${employeeName(employee)}. They can now be marked.`);
+    } catch (cancelError) {
+      toast.error(cancelError instanceof Error ? cancelError.message : "Failed to cancel leave.");
+    } finally {
+      setBusyEmployeeId(null);
     }
   };
 
-  const applyDepartmentFilter = (
-    employeeList: Employee[],
-    departmentId: number,
-  ) => {
-    let filtered = employeeList;
-
-    // Filter by department if selected
-    if (departmentId !== 0) {
-      filtered = filtered.filter(
-        (emp) => emp.department && emp.department.id === departmentId,
-      );
-    }
-
-    // Filter out employees who are on leave
-    filtered = filtered.filter((emp) => !isEmployeeOnLeave(emp.id));
-
-    setFilteredEmployees(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
-  };
-
-  const handleDepartmentChange = (departmentId: number) => {
-    setSelectedDepartment(departmentId);
-    applyDepartmentFilter(employees, departmentId);
-  };
-
-  const hasActiveAttendance = (employee: Employee): Attendance | null => {
-    if (employee.attendanceList && employee.attendanceList.length > 0) {
-      const latestAttendance = employee.attendanceList[0];
-      if (latestAttendance.startedAt && latestAttendance.endedAt === null) {
-        return latestAttendance;
-      }
-    }
-    return null;
-  };
-
-  const isEmployeeOnLeave = (empId: number): boolean => {
-    return employeesOnLeave.some((leave) => leave.empId === empId);
-  };
-
-  const getEmployeeLeaveInfo = (empId: number): EmployeeOnLeave | null => {
-    return employeesOnLeave.find((leave) => leave.empId === empId) || null;
-  };
-
-  // Get employees who are on leave for the leave table
-  const getEmployeesOnLeaveData = (): Employee[] => {
-    return employees.filter((emp) => isEmployeeOnLeave(emp.id));
-  };
-
-  // Columns for employees on leave table
-  const leaveTableColumns = [
-    {
-      key: "photo",
-      title: "Photo",
-      render: (item: Employee) => {
-        const imageUrl = photoUrls[item.id] || null;
-        return (
-          <div className="flex items-center justify-center w-10 h-10">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={`${item.firstName} ${item.lastName}`}
-                className="w-8 h-8 rounded-full object-cover"
-                onError={() => {
-                  setPhotoUrls((prev) => {
-                    const next = { ...prev };
-                    const existing = next[item.id];
-                    if (existing) {
-                      try {
-                        URL.revokeObjectURL(existing);
-                      } catch {
-                        // no-op
-                      }
-                      delete next[item.id];
-                    }
-                    return next;
-                  });
-                }}
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User size={16} className="text-gray-500" />
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: "name",
-      title: "Name",
-      render: (item: Employee) => {
-        const leaveInfo = getEmployeeLeaveInfo(item.id);
-        return (
-          <div>
-            <span className="text-xs">{`${item.firstName} ${item.lastName}`}</span>
-            {leaveInfo && (
-              <div className="text-xs text-red-600 font-medium">On Leave</div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: "epfNo",
-      title: "Employee ID",
-      render: (item: Employee) => <span className="text-xs">{item.epfNo}</span>,
-    },
-    {
-      key: "department",
-      title: "Department",
-      render: (item: Employee) => (
-        <span className="text-xs">{item.department?.dpt_name || "N/A"}</span>
-      ),
-    },
-    {
-      key: "leaveType",
-      title: "Leave Type",
-      render: (item: Employee) => {
-        const leaveInfo = getEmployeeLeaveInfo(item.id);
-        return <span className="text-xs">{leaveInfo?.leaveType || "N/A"}</span>;
-      },
-    },
-    {
-      key: "leavePeriod",
-      title: "Leave Period",
-      render: (item: Employee) => {
-        const leaveInfo = getEmployeeLeaveInfo(item.id);
-        if (leaveInfo) {
-          const startDate = new Date(
-            leaveInfo.leaveStartDay,
-          ).toLocaleDateString();
-          const endDate = new Date(leaveInfo.leaveEndDay).toLocaleDateString();
-          return (
-            <span className="text-xs">
-              {startDate} - {endDate}
-            </span>
-          );
-        }
-        return <span className="text-xs">N/A</span>;
-      },
-    },
-    {
-      key: "leaveReason",
-      title: "Leave Reason",
-      render: (item: Employee) => {
-        const leaveInfo = getEmployeeLeaveInfo(item.id);
-        return (
-          <span className="text-xs">{leaveInfo?.leaveReason || "N/A"}</span>
-        );
-      },
-    },
-    {
-      key: "actions",
-      title: "Actions",
-      render: (item: Employee) => {
-        return (
-          <button
-            onClick={(e) => handleCancelLeaveAndMarkAttendance(item, e)}
-            className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"
-            aria-label="Cancel Leave & Mark Attendance"
-          >
-            <span className="text-xs text-blue-600">
-              Cancel Leave & Mark Attendance
-            </span>
-          </button>
-        );
-      },
-    },
-  ];
-
-  const columns = [
-    {
-      key: "photo",
-      title: "Photo",
-      render: (item: Employee) => {
-        const imageUrl = photoUrls[item.id] || null;
-        return (
-          <div className="flex items-center justify-center w-10 h-10">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={`${item.firstName} ${item.lastName}`}
-                className="w-8 h-8 rounded-full object-cover"
-                onError={() => {
-                  setPhotoUrls((prev) => {
-                    const next = { ...prev };
-                    const existing = next[item.id];
-                    if (existing) {
-                      try {
-                        URL.revokeObjectURL(existing);
-                      } catch {
-                        // no-op
-                      }
-                      delete next[item.id];
-                    }
-                    return next;
-                  });
-                }}
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User size={16} className="text-gray-500" />
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: "name",
-      title: "Name",
-      render: (item: Employee) => (
-        <span className="text-xs">{`${item.firstName} ${item.lastName}`}</span>
-      ),
-    },
-    {
-      key: "epfNo",
-      title: "Employee ID",
-      render: (item: Employee) => <span className="text-xs">{item.epfNo}</span>,
-    },
-    {
-      key: "department",
-      title: "Department",
-      render: (item: Employee) => (
-        <span className="text-xs">{item.department.dpt_name}</span>
-      ),
-    },
-    {
-      key: "attendanceStatus",
-      title: "Attendance Status",
-      render: (item: Employee) => {
-        const activeAttendance = hasActiveAttendance(item);
-        let clockInDisplay = "";
-        if (activeAttendance && activeAttendance.startedAt) {
-          clockInDisplay = activeAttendance.startedAt.includes("T")
-            ? activeAttendance.startedAt.split("T")[1].substring(0, 5)
-            : activeAttendance.startedAt.substring(0, 5);
-        }
-        return activeAttendance ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <span>🟢 Working</span>
-            {clockInDisplay && (
-              <span className="text-emerald-700 font-medium">
-                ({clockInDisplay})
-              </span>
-            )}
-          </span>
-        ) : (
-          <select
-            className="p-1 border rounded-md text-xs"
-            value={attendanceStatus[item.id] || "OFFICE"}
-            onChange={(e) =>
-              handleAttendanceStatusChange(
-                item.id,
-                e.target.value as "OFFICE" | "WFH" | "FIELD_VISIT",
-                e,
-              )
-            }
-            onClick={(e) => e.stopPropagation()}
-          >
-            <option value="OFFICE">🏢 Office</option>
-            <option value="WFH">🏠 Work From Home (WFH)</option>
-            <option value="FIELD_VISIT">📍 Field Visit</option>
-          </select>
-        );
-      },
-    },
-    {
-      key: "actions",
-      title: "Actions",
-      render: (item: Employee) => {
-        const activeAttendance = hasActiveAttendance(item);
-        return activeAttendance ? (
-          <button
-            onClick={(e) => handleOpenClockOutModal(item, activeAttendance, e)}
-            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-sm"
-            aria-label="Clock Out"
-          >
-            <span>🚪</span>
-            <span>Clock Out (Off)</span>
-          </button>
-        ) : (
-          <button
-            onClick={(e) => handleMarkAttendance(item.id, e)}
-            className="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-colors"
-            aria-label="Mark Attendance"
-          >
-            <span className="text-xs text-green-600">Mark Attendance</span>
-          </button>
-        );
-      },
-    },
-  ];
+  const attendanceStatusSelect = (
+    value: AttendanceStatus,
+    onChange: (status: AttendanceStatus) => void,
+    name: string,
+  ) => (
+    <select
+      aria-label={`${name} attendance status`}
+      value={value}
+      onChange={(event) => onChange(event.target.value as AttendanceStatus)}
+      className="min-w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+    >
+      <option value="OFFICE">🏢 Office</option>
+      <option value="WFH">🏠 Work From Home</option>
+      <option value="HALF_DAY">⏰ Half Day</option>
+      <option value="ABSENT">❌ Absent</option>
+    </select>
+  );
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+      <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+        Loading attendance...
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div
-        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error!</strong>
-        <span className="block sm:inline"> {error}</span>
-        <button
-          className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-          onClick={() => {
-            setError("");
-            setLoading(true);
-            fetchEmployees();
-          }}
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  if (employees.length === 0) {
-    return (
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg shadow-md">
-          <p className="text-lg font-semibold text-gray-700">
-            No employees found
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Add an employee to start marking attendance.
-          </p>
-          <button
-            className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
-            onClick={() => (window.location.href = "/employee/new")} // Adjust the route as needed
-          >
-            Add Employee
-          </button>
-          <ToastContainer />
-        </div>
-      </div>
-    );
-  }
-
-  const totalPages = Math.ceil(filteredEmployees.length / rowsPerPage);
-  const paginatedData = filteredEmployees.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage,
-  );
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Department Filter */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-700">
-              Department:
-            </label>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => handleDepartmentChange(Number(e.target.value))}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value={0}>All Departments</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.dpt_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="text-sm text-gray-600">
-            Showing {filteredEmployees.length} of {employees.length} employees
-            available for attendance
-          </div>
-        </div>
+    <div className="space-y-5">
+      <style>{`@keyframes attendanceSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } } .attendance-slide-in { animation: attendanceSlideIn 240ms ease-out; }`}</style>
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          Department
+          <select
+            value={selectedDepartment}
+            onChange={(event) => setSelectedDepartment(Number(event.target.value))}
+            className="min-w-52 rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal"
+          >
+            <option value={0}>All departments</option>
+            {departments.map((department) => (
+              <option key={department.id} value={department.id}>
+                {department.dpt_name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={() => void loadBoard()}
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Refresh
+        </button>
       </div>
-
-      {/* Employees Available for Attendance */}
-      <div>
-        <Table
-          columns={columns}
-          data={paginatedData}
-          title="Mark Attendance"
-          searchKeys={["firstName", "lastName", "epfNo", "department.dpt_name"]}
-          pagination={{
-            currentPage,
-            totalPages,
-            onPageChange: setCurrentPage,
-          }}
-        />
-      </div>
-
-      {/* Employees on Leave */}
-      {getEmployeesOnLeaveData().length > 0 && (
-        <div>
-          <Table
-            columns={leaveTableColumns}
-            data={getEmployeesOnLeaveData()}
-            title="Employees on Leave (Cannot Mark Attendance)"
-            searchKeys={[
-              "firstName",
-              "lastName",
-              "epfNo",
-              "department.dpt_name",
-            ]}
-            pagination={undefined}
-          />
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <span>{error}</span>
+          <button type="button" onClick={() => void loadBoard()} className="font-semibold underline">
+            Try again
+          </button>
         </div>
       )}
 
-      {/* Clock Out / Off Modal */}
-      {clockOutModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl border border-gray-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-lg font-bold text-gray-800">
-                Clock Out (Off) - {clockOutModal.name}
+      <SectionCard
+        title="Pending Attendance"
+        count={pendingInDepartment.length}
+        search={pendingSearch}
+        onSearchChange={setPendingSearch}
+      >
+        {filteredPending.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            {pendingInDepartment.length === 0
+              ? "All eligible employees have been marked today ✅"
+              : "No pending employees match your search."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white">
+                <tr>
+                  {["Photo", "Name", "Employee ID", "Department", "Status", "Actions"].map((heading) => (
+                    <th key={heading} className={tableHeadClass}>{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPending.map((record) => {
+                  const employee = toPendingEmployee(record);
+                  const status = pendingStatuses[employee.id] || "OFFICE";
+                  return (
+                    <tr key={employee.id} className={`${rowClass} attendance-slide-in`}>
+                      <EmployeeCells employee={employee} photoUrl={photoUrls[employee.id]} />
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {attendanceStatusSelect(status, (nextStatus) =>
+                            setPendingStatuses((previous) => ({ ...previous, [employee.id]: nextStatus })),
+                          employeeName(employee))}
+                          {status === "HALF_DAY" && (
+                            <select
+                              aria-label={`${employeeName(employee)} half-day period`}
+                              value={pendingHalfDays[employee.id] || "MORNING"}
+                              onChange={(event) =>
+                                setPendingHalfDays((previous) => ({
+                                  ...previous,
+                                  [employee.id]: event.target.value as HalfDayType,
+                                }))
+                              }
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm"
+                            >
+                              <option value="MORNING">Morning Half</option>
+                              <option value="AFTERNOON">Afternoon Half</option>
+                            </select>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          disabled={busyEmployeeId === employee.id}
+                          onClick={() => void markAttendance(employee)}
+                          className="whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          {busyEmployeeId === employee.id ? "Saving..." : "Mark Attendance"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Marked Today (Working)"
+        count={workingInDepartment.length}
+        search={markedSearch}
+        onSearchChange={setMarkedSearch}
+      >
+        {filteredWorking.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            {workingInDepartment.length === 0
+              ? "No working employees have been marked today."
+              : "No marked employees match your search."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white">
+                <tr>
+                  {["Photo", "Name", "Employee ID", "Department", "Current Status", "Marked At", "Actions"].map((heading) => (
+                    <th key={heading} className={tableHeadClass}>{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWorking.map((employee) => {
+                  const isEditing = editingAttendanceId === employee.attendanceId;
+                  const currentStatus: AttendanceStatus =
+                    employee.status.toUpperCase() === "ABSENT"
+                      ? "ABSENT"
+                      : employee.status.toUpperCase() === "HALF_DAY"
+                        ? "HALF_DAY"
+                        : employee.workingStatus.toUpperCase() === "WFH"
+                          ? "WFH"
+                          : "OFFICE";
+                  const editStatus = editedStatuses[employee.attendanceId] || currentStatus;
+                  const directoryEmployee: DirectoryEmployee = {
+                    id: employee.empId,
+                    epfNo: employee.epfNo,
+                    firstName: employee.firstName,
+                    lastName: employee.lastName,
+                    departmentId: employee.departmentId,
+                    departmentName: employee.departmentName,
+                  };
+                  return (
+                    <tr key={employee.attendanceId} className={`${rowClass} attendance-slide-in`}>
+                      <EmployeeCells employee={directoryEmployee} photoUrl={photoUrls[employee.empId]} />
+                      <td className="px-4 py-3">
+                        {isEditing ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {attendanceStatusSelect(editStatus, (nextStatus) =>
+                              setEditedStatuses((previous) => ({
+                                ...previous,
+                                [employee.attendanceId]: nextStatus,
+                              })),
+                            employeeName(directoryEmployee))}
+                            {editStatus === "HALF_DAY" && (
+                              <select
+                                aria-label={`${employeeName(directoryEmployee)} half-day period`}
+                                value={editedHalfDays[employee.attendanceId] || employee.halfDayType || "MORNING"}
+                                onChange={(event) =>
+                                  setEditedHalfDays((previous) => ({
+                                    ...previous,
+                                    [employee.attendanceId]: event.target.value as HalfDayType,
+                                  }))
+                                }
+                                className="rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm"
+                              >
+                                <option value="MORNING">Morning Half</option>
+                                <option value="AFTERNOON">Afternoon Half</option>
+                              </select>
+                            )}
+                          </div>
+                        ) : statusBadge(employee)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                        {employee.clockInTime
+                          ? markedAtLabel(employee.clockInTime)
+                          : "Time not recorded"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled={busyEmployeeId === employee.empId}
+                                onClick={() => void saveStatus(employee)}
+                                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingAttendanceId(null)}
+                                className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAttendanceId(employee.attendanceId);
+                                setEditedStatuses((previous) => ({
+                                  ...previous,
+                                  [employee.attendanceId]: currentStatus,
+                                }));
+                                setEditedHalfDays((previous) => ({
+                                  ...previous,
+                                  [employee.attendanceId]:
+                                    (employee.halfDayType as HalfDayType) || "MORNING",
+                                }));
+                              }}
+                              className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                            >
+                              Edit Status
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            disabled={busyEmployeeId === employee.empId}
+                            onClick={() => {
+                              setOffTimeEmployee(employee);
+                              setOffTimeValue(
+                                employee.clockOutTime ||
+                                  `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
+                              );
+                            }}
+                            className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                          >
+                            Mark Off-Time
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Off Today"
+        count={offTodayEmployees.length}
+        search={offTodaySearch}
+        onSearchChange={setOffTodaySearch}
+      >
+        {filteredOffToday.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            {offTodayEmployees.length === 0
+              ? "No employees have recorded an off-time today."
+              : "No employees off today match your search."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white">
+                <tr>
+                  {["Photo", "Name", "Employee ID", "Department", "Current Status", "Marked At", "Off-Time", "Actions"].map((heading) => (
+                    <th key={heading} className={tableHeadClass}>{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOffToday.map((employee) => {
+                  const directoryEmployee: DirectoryEmployee = {
+                    id: employee.empId,
+                    epfNo: employee.epfNo,
+                    firstName: employee.firstName,
+                    lastName: employee.lastName,
+                    departmentId: employee.departmentId,
+                    departmentName: employee.departmentName,
+                  };
+                  return (
+                    <tr key={employee.attendanceId} className={`${rowClass} attendance-slide-in`}>
+                      <EmployeeCells employee={directoryEmployee} photoUrl={photoUrls[employee.empId]} />
+                      <td className="px-4 py-3">{statusBadge(employee)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                        {employee.clockInTime ? markedAtLabel(employee.clockInTime) : "Time not recorded"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700">
+                        {markedAtLabel(employee.clockOutTime)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          disabled={busyEmployeeId === employee.empId}
+                          onClick={() => {
+                            setOffTimeEmployee(employee);
+                            setOffTimeValue(employee.clockOutTime);
+                          }}
+                          className="whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          Edit Off-Time
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Absent Today"
+        count={absentInDepartment.length}
+        search={absentSearch}
+        onSearchChange={setAbsentSearch}
+      >
+        {filteredAbsent.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            {absentInDepartment.length === 0
+              ? "No employees are marked absent today."
+              : "No absent employees match your search."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white">
+                <tr>
+                  {["Photo", "Name", "Employee ID", "Department", "Status", "Marked At", "Actions"].map((heading) => (
+                    <th key={heading} className={tableHeadClass}>{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAbsent.map((employee) => {
+                  const directoryEmployee: DirectoryEmployee = {
+                    id: employee.empId,
+                    epfNo: employee.epfNo,
+                    firstName: employee.firstName,
+                    lastName: employee.lastName,
+                    departmentId: employee.departmentId,
+                    departmentName: employee.departmentName,
+                  };
+                  return (
+                    <tr key={employee.attendanceId} className={rowClass}>
+                      <EmployeeCells employee={directoryEmployee} photoUrl={photoUrls[employee.empId]} />
+                      <td className="px-4 py-3">{statusBadge(employee)}</td>
+                      <td className="px-4 py-3 text-slate-500">—</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAttendanceId(employee.attendanceId);
+                            setEditedStatuses((previous) => ({
+                              ...previous,
+                              [employee.attendanceId]: "ABSENT",
+                            }));
+                          }}
+                          className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                        >
+                          Edit Status
+                        </button>
+                        {editingAttendanceId === employee.attendanceId && (
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {attendanceStatusSelect(
+                              editedStatuses[employee.attendanceId] || "ABSENT",
+                              (nextStatus) =>
+                                setEditedStatuses((previous) => ({
+                                  ...previous,
+                                  [employee.attendanceId]: nextStatus,
+                                })),
+                              employeeName(directoryEmployee),
+                            )}
+                            <button
+                              type="button"
+                              disabled={busyEmployeeId === employee.empId}
+                              onClick={() => void saveStatus(employee)}
+                              className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Employees on Leave"
+        count={onLeaveEmployees.length}
+        search={leaveSearch}
+        onSearchChange={setLeaveSearch}
+      >
+        {filteredOnLeave.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            {onLeaveEmployees.length === 0
+              ? "No employees on leave today"
+              : "No employees on leave match your search."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white">
+                <tr>
+                  {["Photo", "Name", "Employee ID", "Department", "Leave Type", "Period", "Reason", "Actions"].map((heading) => (
+                    <th key={heading} className={tableHeadClass}>{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOnLeave.map((employee) => (
+                  <tr key={employee.id} className={rowClass}>
+                    <EmployeeCells employee={employee} photoUrl={photoUrls[employee.id]} />
+                    <td className="px-4 py-3 text-slate-600">{employee.leaveType || "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {new Date(employee.leaveStartDay).toLocaleDateString()} – {new Date(employee.leaveEndDay).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{employee.leaveReason || "—"}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        disabled={busyEmployeeId === employee.id}
+                        onClick={() => {
+                          setCancellationReason("Employee came to office");
+                          setLeaveToCancel(employee);
+                        }}
+                        className="whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                      >
+                        Cancel Leave &amp; Mark Attendance
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {offTimeEmployee && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="mark-off-time-title"
+              className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl"
+            >
+              <h3 id="mark-off-time-title" className="text-lg font-semibold text-slate-800">
+                Mark Off-Time
               </h3>
-              <button
-                onClick={() => setClockOutModal({ open: false })}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-4 space-y-4">
-              {clockOutModal.clockInTime && (
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center justify-between">
-                  <span className="font-semibold">Clocked In Time:</span>
-                  <span className="font-bold text-sm">
-                    {clockOutModal.clockInTime}
-                  </span>
-                </div>
-              )}
-              <label className="block text-sm font-medium text-gray-700">
-                End / Off Time
+              <p className="text-sm text-slate-600">
+                Record the off-time for {employeeName({
+                  id: offTimeEmployee.empId,
+                  firstName: offTimeEmployee.firstName,
+                  lastName: offTimeEmployee.lastName,
+                })}.
+              </p>
+              <label className="block text-sm font-medium text-slate-700">
+                Off-time
                 <input
                   type="time"
-                  value={clockOutModal.defaultEndedAt || ""}
-                  onChange={(e) =>
-                    setClockOutModal((s) => ({
-                      ...s,
-                      defaultEndedAt: e.target.value,
-                    }))
-                  }
-                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  required
+                  value={offTimeValue}
+                  onChange={(event) => setOffTimeValue(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
-                Departure Reason
-                <select
-                  value={clockOutModal.reason || "Standard Off-Time"}
-                  onChange={(e) =>
-                    setClockOutModal((s) => ({ ...s, reason: e.target.value }))
-                  }
-                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOffTimeEmployee(null)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700"
                 >
-                  <option value="Standard Off-Time">Standard Off-Time</option>
-                  <option value="Personal Reason">Personal Reason</option>
-                  <option value="Medical Emergency">Medical Emergency</option>
-                  <option value="Official Field Work">
-                    Official Field Work
-                  </option>
-                  <option value="Other">Other</option>
-                </select>
-              </label>
-              <label className="block text-sm font-medium text-gray-700">
-                Notes / Remarks (optional)
-                <textarea
-                  value={clockOutModal.notes || ""}
-                  onChange={(e) =>
-                    setClockOutModal((s) => ({ ...s, notes: e.target.value }))
-                  }
-                  placeholder="Any departure notes or reason..."
-                  rows={2}
-                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                />
-              </label>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!offTimeValue || busyEmployeeId === offTimeEmployee.empId}
+                  onClick={() => void saveOffTime()}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                >
+                  Save Off-Time
+                </button>
+              </div>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
+          </div>
+        )}
+      </SectionCard>
+
+      {leaveToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-leave-title"
+            className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl"
+          >
+            <h3 id="cancel-leave-title" className="text-lg font-semibold text-slate-800">
+              Cancel Leave &amp; Mark Attendance
+            </h3>
+            <p className="text-sm text-slate-600">
+              {employeeName(leaveToCancel)} · {leaveToCancel.leaveType} ·{" "}
+              {new Date(leaveToCancel.leaveStartDay).toLocaleDateString()} –{" "}
+              {new Date(leaveToCancel.leaveEndDay).toLocaleDateString()}
+            </p>
+            <p className="text-sm text-slate-600">Reason: {leaveToCancel.leaveReason || "—"}</p>
+            <label className="block text-sm font-medium text-slate-700">
+              Cancellation reason
+              <input
+                value={cancellationReason}
+                onChange={(event) => setCancellationReason(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+              />
+            </label>
+            <div className="flex justify-end gap-2">
               <button
-                onClick={() => setClockOutModal({ open: false })}
-                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                type="button"
+                onClick={() => setLeaveToCancel(null)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700"
               >
                 Cancel
               </button>
               <button
-                onClick={handleConfirmClockOut}
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700"
+                type="button"
+                disabled={busyEmployeeId === leaveToCancel.id}
+                onClick={() => void cancelLeaveAndMark()}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                Confirm Clock Out (Off)
+                Confirm &amp; Mark Attendance
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <ToastContainer />
     </div>
   );
 };

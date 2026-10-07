@@ -50,6 +50,9 @@ public class Attendance implements Serializable {
 
     private String attendance_status;
 
+    @Column(name = "half_day_type")
+    private String halfDayType;
+
     // Optional reason for an early or standard departure. Populated when an employee is clocked out.
     @Column(name = "departure_reason")
     @JsonAlias({"reason", "departureReason"})
@@ -99,6 +102,10 @@ public class Attendance implements Serializable {
     @PrePersist
     @PreUpdate
     public void calculateTotalTime() {
+        if ("ABSENT".equalsIgnoreCase(this.attendance_status)) {
+            this.startedAt = null;
+            this.endedAt = null;
+        }
         if (this.startedAt != null) {
             this.dayName = this.startedAt.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH).toUpperCase();
         }

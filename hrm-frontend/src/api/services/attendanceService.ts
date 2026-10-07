@@ -8,6 +8,7 @@ export type AttendanceRowPayload = {
   endedAt: string | null;
   working_status: string;
   attendance_status: string;
+  halfDayType?: "MORNING" | "AFTERNOON" | null;
   entryType: string;
   createdBy: string;
   reason?: string | null;
@@ -49,6 +50,7 @@ export type AttendedEmployeeDTO = {
   status: string;
   attendanceDate: string;
   attendanceId: number;
+  halfDayType?: "MORNING" | "AFTERNOON" | null;
 };
 
 export type AttendanceDepartmentDTO = {
@@ -70,6 +72,17 @@ export type BulkAttendanceDataResponse = {
   pendingEmployees: PendingEmployeeDTO[];
   attendedEmployees: AttendedEmployeeDTO[];
   excludedEmployees: ExcludedEmployeeDTO[];
+};
+
+export type EmployeeLeaveDTO = {
+  id: number;
+  empId: number;
+  leaveType: string;
+  leaveStartDay: string;
+  leaveEndDay: string;
+  leaveDays: number;
+  leaveReason: string;
+  leaveStatus: string;
 };
 
 export type AttendanceOverviewSummary = {
@@ -120,6 +133,64 @@ export const attendanceService = {
       params: { companyId, attendanceDate, departmentId },
     });
     return response.data.attendanceData;
+  },
+
+  fetchPendingAttendance: async (
+    companyId: string | number,
+    date: string,
+    departmentId?: number,
+  ) => {
+    const response = await axiosInstance.get<{
+      resultCode: number;
+      resultDesc: string;
+      pendingEmployees: PendingEmployeeDTO[];
+    }>(ENDPOINTS.ATTENDANCE.PENDING, {
+      params: { companyId, date, departmentId },
+    });
+    return response.data.pendingEmployees ?? [];
+  },
+
+  fetchMarkedAttendance: async (
+    companyId: string | number,
+    date: string,
+    departmentId?: number,
+  ) => {
+    const response = await axiosInstance.get<{
+      resultCode: number;
+      resultDesc: string;
+      attendedEmployees: AttendedEmployeeDTO[];
+    }>(ENDPOINTS.ATTENDANCE.MARKED, {
+      params: { companyId, date, departmentId },
+    });
+    return response.data.attendedEmployees ?? [];
+  },
+
+  fetchEmployeesOnLeave: async (
+    companyId: string | number,
+    date: string,
+  ) => {
+    const response = await axiosInstance.get<{
+      resultCode: number;
+      resultDesc: string;
+      employeesOnLeave: EmployeeLeaveDTO[];
+    }>(ENDPOINTS.ATTENDANCE.ON_LEAVE, {
+      params: { companyId, date },
+    });
+    return response.data.employeesOnLeave ?? [];
+  },
+
+  updateAttendanceStatus: async (
+    attendanceId: number,
+    payload: {
+      status: "OFFICE" | "WFH" | "HALF_DAY" | "ABSENT";
+      halfDayType?: "MORNING" | "AFTERNOON";
+    },
+  ) => {
+    const response = await axiosInstance.put(
+      `${ENDPOINTS.ATTENDANCE.BASE}/${attendanceId}/status`,
+      payload,
+    );
+    return response.data;
   },
 
   fetchAttendanceOverview: async (

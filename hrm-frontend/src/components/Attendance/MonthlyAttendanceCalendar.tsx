@@ -13,7 +13,7 @@ import { API_BASE } from "../../api/endpoints";
 interface AttendanceRecord {
   id: number;
   attendanceDate?: string | null;
-  startedAt: string;
+  startedAt: string | null;
   endedAt: string | null;
   working_status: string;
   attendance_status?: string | null;
@@ -938,7 +938,9 @@ const MonthlyAttendanceCalendar = () => {
                                     <span>{statusIcon}</span>
                                     <span>{status}</span>
                                   </span>
-                                  {attendanceRecords.length > 0 && (
+                                  {attendanceRecords.length > 0 &&
+                                    (attendanceRecords[0].attendance_status ?? "")
+                                      .toUpperCase() !== "ABSENT" && (
                                     <button
                                       onClick={() => {
                                         const att = attendanceRecords[0];

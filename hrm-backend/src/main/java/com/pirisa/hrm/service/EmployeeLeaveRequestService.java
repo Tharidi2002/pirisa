@@ -38,6 +38,10 @@ public class EmployeeLeaveRequestService {
         return employeeLeaveRequestRepository.findEmployeesOnLeaveForDate(currentDate);
     }
 
+    public List<EmployeeLeave> getEmployeesOnLeaveDuringDay(LocalDateTime startInclusive, LocalDateTime endExclusive) {
+        return employeeLeaveRequestRepository.findEmployeesOnLeaveDuringDay(startInclusive, endExclusive);
+    }
+
     public EmployeeLeave cancelLeaveAndMarkAttendance(long empId, String cancellationReason, String canceledBy) {
         LocalDateTime now = LocalDateTime.now();
         

@@ -76,6 +76,37 @@ class AttendanceServiceTest {
     }
 
     @Test
+    void markBulkAttendance_shouldSetServerTimeWhenManualAttendanceHasNoStartTime() {
+        ReflectionTestUtils.setField(attendanceService, "attendanceValidator", new AttendanceValidator());
+
+        LocalDate attendanceDate = LocalDate.now();
+        Employee employee = new Employee();
+        employee.setId(15L);
+        employee.setDateOfJoining(attendanceDate.minusDays(1).toString());
+
+        Attendance attendance = new Attendance();
+        attendance.setEmpId(15L);
+        attendance.setAttendanceDate(attendanceDate);
+        attendance.setStartedAt(null);
+        attendance.setAttendance_status("PRESENT");
+        attendance.setWorking_status("OFFICE");
+        attendance.setEntryType("MANUAL_HR");
+
+        when(employeeRepository.findById(15L)).thenReturn(Optional.of(employee));
+        when(attendanceRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LocalDateTime beforeMark = LocalDateTime.now();
+        List<Attendance> saved = attendanceService.markBulkAttendance(List.of(attendance));
+        LocalDateTime afterMark = LocalDateTime.now();
+
+        assertThat(saved.get(0).getStartedAt()).isNotNull();
+        assertThat(saved.get(0).getStartedAt().toLocalDate()).isEqualTo(attendanceDate);
+        assertThat(saved.get(0).getStartedAt()).isBetween(
+                attendanceDate.atTime(beforeMark.toLocalTime()),
+                attendanceDate.atTime(afterMark.toLocalTime()));
+    }
+
+    @Test
     void exportAttendanceToExcel_shouldQueryWithinCompanyAndRequestedFilters() throws Exception {
         LocalDate startDate = LocalDate.of(2026, 10, 1);
         LocalDate endDate = LocalDate.of(2026, 10, 31);
@@ -111,5 +142,79 @@ class AttendanceServiceTest {
         assertThatThrownBy(() -> attendanceService.markBulkAttendance(List.of(attendance)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("prior to the join date");
+    }
+
+    @Test
+    void updateAttendanceStatus_shouldSaveHalfDayType() {
+        Attendance attendance = new Attendance();
+        attendance.setId(11L);
+        attendance.setAttendance_status("PRESENT");
+        attendance.setWorking_status("OFFICE");
+        when(attendanceRepository.findById(11L)).thenReturn(Optional.of(attendance));
+        when(attendanceRepository.save(attendance)).thenReturn(attendance);
+
+        Attendance updated = attendanceService.updateAttendanceStatus(11L, "half_day", "afternoon");
+
+        assertThat(updated.getAttendance_status()).isEqualTo("HALF_DAY");
+        assertThat(updated.getWorking_status()).isEqualTo("OFFICE");
+        assertThat(updated.getHalfDayType()).isEqualTo("AFTERNOON");
+        verify(attendanceRepository).save(attendance);
+    }
+
+    @Test
+    void updateAttendanceStatus_shouldRejectHalfDayWithoutPeriod() {
+        Attendance attendance = new Attendance();
+        when(attendanceRepository.findById(12L)).thenReturn(Optional.of(attendance));
+
+        assertThatThrownBy(() -> attendanceService.updateAttendanceStatus(12L, "HALF_DAY", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Half-day type");
+    }
+
+    @Test
+    void updateAttendanceStatus_shouldClearTimesWhenMarkedAbsent() {
+        Attendance attendance = new Attendance();
+        attendance.setId(13L);
+        attendance.setStartedAt(LocalDateTime.of(2026, 10, 7, 8, 30));
+        attendance.setEndedAt(LocalDateTime.of(2026, 10, 7, 17, 0));
+        when(attendanceRepository.findById(13L)).thenReturn(Optional.of(attendance));
+        when(attendanceRepository.save(attendance)).thenReturn(attendance);
+
+        Attendance updated = attendanceService.updateAttendanceStatus(13L, "ABSENT", null);
+
+        assertThat(updated.getAttendance_status()).isEqualTo("ABSENT");
+        assertThat(updated.getStartedAt()).isNull();
+        assertThat(updated.getEndedAt()).isNull();
+        verify(attendanceRepository).save(attendance);
+    }
+
+    @Test
+    void updateAttendanceStatus_shouldSetServerTimeWhenAbsentIsChangedToPresent() {
+        Attendance attendance = new Attendance();
+        attendance.setId(16L);
+        attendance.setAttendanceDate(LocalDate.now());
+        attendance.setAttendance_status("ABSENT");
+        attendance.setStartedAt(null);
+        when(attendanceRepository.findById(16L)).thenReturn(Optional.of(attendance));
+        when(attendanceRepository.save(attendance)).thenReturn(attendance);
+
+        Attendance updated = attendanceService.updateAttendanceStatus(16L, "OFFICE", null);
+
+        assertThat(updated.getAttendance_status()).isEqualTo("PRESENT");
+        assertThat(updated.getStartedAt()).isNotNull();
+        assertThat(updated.getStartedAt().toLocalDate()).isEqualTo(LocalDate.now());
+        verify(attendanceRepository).save(attendance);
+    }
+
+    @Test
+    void clockOutAttendance_shouldRejectAbsentAttendance() {
+        Attendance attendance = new Attendance();
+        attendance.setAttendance_status("ABSENT");
+        attendance.setEndedAt(LocalDateTime.of(2026, 10, 7, 17, 0));
+        when(attendanceRepository.findById(14L)).thenReturn(Optional.of(attendance));
+
+        assertThatThrownBy(() -> attendanceService.clockOutAttendance(14L, "17:30", null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("absent employee");
     }
 }

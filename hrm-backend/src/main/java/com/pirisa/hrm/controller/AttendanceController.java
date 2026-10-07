@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pirisa.hrm.dto.AttendanceEmployeeDTO;
 import com.pirisa.hrm.dto.BulkAttendanceDataDTO;
 import com.pirisa.hrm.model.Attendance;
+import com.pirisa.hrm.model.Employee;
+import com.pirisa.hrm.model.EmployeeLeave;
+import com.pirisa.hrm.repository.EmployeeRepository;
 import com.pirisa.hrm.service.AttendanceService;
 import com.pirisa.hrm.service.CompanyAccessService;
 import com.pirisa.hrm.service.EmployeeService;
+import com.pirisa.hrm.service.EmployeeLeaveRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -19,12 +23,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/attendance")
@@ -38,6 +45,12 @@ public class AttendanceController {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private EmployeeLeaveRequestService employeeLeaveRequestService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -124,6 +137,89 @@ public class AttendanceController {
         }
     }
 
+    @GetMapping(value = "/pending", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getPendingAttendance(
+            @RequestParam("companyId") Long companyId,
+            @RequestParam("date") String dateText,
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            Authentication authentication) {
+        if (companyId == null || !companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+        try {
+            LocalDate date = LocalDate.parse(dateText, DATE_FORMATTER);
+            BulkAttendanceDataDTO data = attendanceService.getBulkAttendanceData(date, companyId, departmentId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Pending attendance fetched successfully");
+            response.put("pendingEmployees", data.getPendingEmployees());
+            return ResponseEntity.ok(response);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid date format. Use yyyy-MM-dd."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to fetch pending attendance"));
+        }
+    }
+
+    @GetMapping(value = "/marked", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getMarkedAttendance(
+            @RequestParam("companyId") Long companyId,
+            @RequestParam("date") String dateText,
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            Authentication authentication) {
+        if (companyId == null || !companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+        try {
+            LocalDate date = LocalDate.parse(dateText, DATE_FORMATTER);
+            BulkAttendanceDataDTO data = attendanceService.getBulkAttendanceData(date, companyId, departmentId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Marked attendance fetched successfully");
+            response.put("attendedEmployees", data.getAttendedEmployees());
+            return ResponseEntity.ok(response);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid date format. Use yyyy-MM-dd."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to fetch marked attendance"));
+        }
+    }
+
+    @GetMapping(value = "/on-leave", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getEmployeesOnLeave(
+            @RequestParam("companyId") Long companyId,
+            @RequestParam("date") String dateText,
+            Authentication authentication) {
+        if (companyId == null || !companyAccessService.canAccessCompany(authentication.getName(), companyId)) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+        try {
+            LocalDate date = LocalDate.parse(dateText, DATE_FORMATTER);
+            Set<Long> companyEmployeeIds = employeeRepository.findByCmpId(companyId).stream()
+                    .map(Employee::getId)
+                    .collect(Collectors.toSet());
+            List<EmployeeLeave> employeesOnLeave = employeeLeaveRequestService
+                    .getEmployeesOnLeaveDuringDay(date.atStartOfDay(), date.plusDays(1).atStartOfDay()).stream()
+                    .filter(leave -> companyEmployeeIds.contains(leave.getEmpId()))
+                    .collect(Collectors.toList());
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Employees on leave fetched successfully");
+            response.put("employeesOnLeave", employeesOnLeave);
+            return ResponseEntity.ok(response);
+        } catch (DateTimeParseException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid date format. Use yyyy-MM-dd."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to fetch employees on leave"));
+        }
+    }
+
     @GetMapping(value = "/company/{companyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getCompanyAttendanceList(
             @PathVariable long companyId,
@@ -200,6 +296,36 @@ public class AttendanceController {
     private ResponseEntity<?> forbiddenCompanyAttendanceResponse() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Collections.singletonMap("error", "You do not have access to this company attendance data."));
+    }
+
+    @PutMapping(value = "/{id}/status", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateAttendanceStatus(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, String> payload,
+            Authentication authentication) {
+        Attendance existing = attendanceService.getAttendanceById(id);
+        if (existing == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "Attendance record not found."));
+        }
+        Employee employee = employeeRepository.findById(existing.getEmpId()).orElse(null);
+        if (employee == null || !companyAccessService.canAccessCompany(authentication.getName(), employee.getCmpId())) {
+            return forbiddenCompanyAttendanceResponse();
+        }
+        try {
+            Attendance updated = attendanceService.updateAttendanceStatus(
+                    id, payload.get("status"), payload.get("halfDayType"));
+            Map<String, Object> response = new HashMap<>();
+            response.put("resultCode", 100);
+            response.put("resultDesc", "Attendance status updated successfully");
+            response.put("attendance", updated);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Failed to update attendance status"));
+        }
     }
 
     @PostMapping(value = "/import-excel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

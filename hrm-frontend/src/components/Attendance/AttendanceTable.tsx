@@ -35,10 +35,12 @@ interface Attendance {
   };
   attendanceList: {
     id: number;
-    startedAt: string;
+    attendanceDate?: string | null;
+    startedAt: string | null;
     endedAt: string | null;
     working_status: string;
     attendance_status?: string | null;
+    halfDayType?: string | null;
   }[];
 }
 
@@ -70,6 +72,20 @@ interface EmpDetailsApiResponse {
   resultDesc: string;
   EmployeeList: EmpDetailsDTO[];
 }
+
+const getAttendanceDateKey = (attendance: {
+  attendanceDate?: string | null;
+  startedAt: string | null;
+}) => {
+  const attendanceDate = attendance.attendanceDate?.split("T")[0];
+  if (attendanceDate && /^\d{4}-\d{2}-\d{2}$/.test(attendanceDate)) {
+    return attendanceDate;
+  }
+  const startedAtDate = attendance.startedAt?.slice(0, 10);
+  return startedAtDate && /^\d{4}-\d{2}-\d{2}$/.test(startedAtDate)
+    ? startedAtDate
+    : null;
+};
 
 const AttendanceTable = () => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -152,12 +168,18 @@ const AttendanceTable = () => {
       return { label: "NO RECORD", className: "bg-gray-500" };
     }
 
+    if (list.some((att) => att.attendance_status?.toUpperCase() === "ABSENT")) {
+      return { label: "ABSENT", className: "bg-red-500" };
+    }
+    if (list.some((att) => att.attendance_status?.toUpperCase() === "HALF_DAY")) {
+      return { label: "HALF DAY", className: "bg-orange-500" };
+    }
     const hasInProgress = list.some((att) => !isAttendanceEnded(att));
     if (hasInProgress) {
       return { label: "IN PROGRESS", className: "bg-green-500" };
     }
 
-    return { label: "COMPLETED", className: "bg-orange-500" };
+    return { label: "PRESENT", className: "bg-blue-500" };
   };
 
   // Cleanup photo URLs on component unmount to prevent memory leaks
@@ -376,14 +398,16 @@ const AttendanceTable = () => {
   }, [fetchAttendance]);
 
   useEffect(() => {
-    if (selectedDate && attendance.length > 0) {
+    if (selectedDate) {
       const filtered = attendance.map((emp) => ({
         ...emp,
-        attendanceList: emp.attendanceList.filter(
-          (att) => toDateKeyLocal(new Date(att.startedAt)) === selectedDate,
+        attendanceList: (emp.attendanceList ?? []).filter(
+          (att) => getAttendanceDateKey(att) === selectedDate,
         ),
       }));
       applyDepartmentFilter(filtered, selectedDepartment);
+    } else {
+      applyDepartmentFilter(attendance, selectedDepartment);
     }
   }, [attendance, selectedDate, selectedDepartment]);
 
@@ -393,8 +417,8 @@ const AttendanceTable = () => {
     if (date) {
       const filtered = attendance.map((emp) => ({
         ...emp,
-        attendanceList: emp.attendanceList.filter(
-          (att) => toDateKeyLocal(new Date(att.startedAt)) === date,
+        attendanceList: (emp.attendanceList ?? []).filter(
+          (att) => getAttendanceDateKey(att) === date,
         ),
       }));
       applyDepartmentFilter(filtered, selectedDepartment);
@@ -420,11 +444,11 @@ const AttendanceTable = () => {
 
   const handleDepartmentChange = (departmentId: number) => {
     setSelectedDepartment(departmentId);
-    if (selectedDate && attendance.length > 0) {
+    if (selectedDate) {
       const filtered = attendance.map((emp) => ({
         ...emp,
-        attendanceList: emp.attendanceList.filter(
-          (att) => toDateKeyLocal(new Date(att.startedAt)) === selectedDate,
+        attendanceList: (emp.attendanceList ?? []).filter(
+          (att) => getAttendanceDateKey(att) === selectedDate,
         ),
       }));
       applyDepartmentFilter(filtered, departmentId);
@@ -617,7 +641,11 @@ const AttendanceTable = () => {
         <div className="space-y-1">
           {item.attendanceList.map((att, index) => (
             <div key={`${att.id}-${index}`} className="text-xs">
-              {new Date(att.startedAt).toLocaleString()}
+              {att.attendance_status?.toUpperCase() === "ABSENT"
+                ? "—"
+                : att.startedAt
+                  ? new Date(att.startedAt).toLocaleString()
+                  : "—"}
             </div>
           ))}
           {item.attendanceList.length === 0 && (
@@ -633,11 +661,13 @@ const AttendanceTable = () => {
         <div className="space-y-1">
           {item.attendanceList.map((att, index) => (
             <div key={`${att.id}-${index}`} className="text-xs">
-              {att.endedAt
-                ? new Date(att.endedAt).toLocaleString()
-                : isAttendanceEnded(att)
-                  ? "Completed"
-                  : "In progress"}
+              {att.attendance_status?.toUpperCase() === "ABSENT"
+                ? "—"
+                : att.endedAt
+                  ? new Date(att.endedAt).toLocaleString()
+                  : isAttendanceEnded(att)
+                    ? "Completed"
+                    : "In progress"}
             </div>
           ))}
           {item.attendanceList.length === 0 && (
@@ -653,7 +683,11 @@ const AttendanceTable = () => {
         <div className="space-y-1">
           {item.attendanceList.map((att) => (
             <div key={att.id} className="text-xs">
-              {att.working_status}
+              {att.attendance_status?.toUpperCase() === "ABSENT"
+                ? "ABSENT"
+                : att.attendance_status?.toUpperCase() === "HALF_DAY"
+                  ? `HALF DAY (${att.halfDayType === "AFTERNOON" ? "PM" : "AM"})`
+                  : att.working_status}
             </div>
           ))}
           {item.attendanceList.length === 0 && (

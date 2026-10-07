@@ -19,4 +19,5 @@ public class AttendanceDTO {
     private String attendance_status;
     private float totalTime;
     private String dayName;
+    private String halfDayType;
 }

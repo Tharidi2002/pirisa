@@ -204,7 +204,8 @@ public class EmployeeService {
                         attendance.getWorking_status(),
                         attendance.getAttendance_status(),
                         attendance.getTotalTime(),
-                        attendance.getDayName()
+                        attendance.getDayName(),
+                        attendance.getHalfDayType()
 
                 )).collect(Collectors.toList()),
                 new EmpDetailsDepartmentDTO(
@@ -591,7 +592,8 @@ public class EmployeeService {
                             latestAttendance.getWorking_status(),
                             latestAttendance.getAttendance_status(),
                             latestAttendance.getTotalTime(),
-                            latestAttendance.getDayName()
+                            latestAttendance.getDayName(),
+                            latestAttendance.getHalfDayType()
                     ));
                 } catch (Exception e) {
                     // Silent fail
@@ -795,7 +797,8 @@ public class EmployeeService {
                                     atd.getWorking_status(),
                                     atd.getAttendance_status(),
                                     atd.getTotalTime(),
-                                    atd.getDayName()
+                                    atd.getDayName(),
+                                    atd.getHalfDayType()
                             ))
                             .collect(Collectors.toList());
 

@@ -123,7 +123,7 @@ const AttendanceOverviewPage = () => {
     };
 
     void loadOverview();
-  }, [companyId, selectedDate, selectedDepartment, refreshVersion]);
+  }, [activeView, companyId, selectedDate, selectedDepartment, refreshVersion]);
 
   const tabs = useMemo(
     () => [

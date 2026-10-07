@@ -20,4 +20,5 @@ public class AttendanceAttendedEmployeeDTO {
     private String status;
     private String attendanceDate;
     private Long attendanceId;
+    private String halfDayType;
 }

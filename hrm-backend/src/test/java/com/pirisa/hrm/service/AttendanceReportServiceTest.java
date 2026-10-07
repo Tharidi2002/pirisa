@@ -79,6 +79,20 @@ class AttendanceReportServiceTest {
         assertThat(result.getAttendedEmployees()).isEmpty();
     }
 
+    @Test
+    void getBulkAttendanceData_shouldIncludeEmployeeWithoutJoinDateAsPending() {
+        LocalDate date = LocalDate.of(2026, 10, 7);
+        Employee employee = employee(4L, null);
+        when(employeeRepository.findEmployeesByCompanyIdWithDetails(5L)).thenReturn(List.of(employee));
+        when(attendanceRepository.findByAttendanceDateAndCompany(date, 5L, null)).thenReturn(List.of());
+        when(attendanceValidator.parseEmployeeJoinDate(null)).thenReturn(null);
+
+        BulkAttendanceDataDTO result = attendanceReportService.getBulkAttendanceData(date, 5L, null);
+
+        assertThat(result.getPendingEmployees()).extracting("id").containsExactly(4L);
+        assertThat(result.getExcludedEmployees()).isEmpty();
+    }
+
     private Employee employee(Long id, String joiningDate) {
         Employee employee = new Employee();
         employee.setId(id);
