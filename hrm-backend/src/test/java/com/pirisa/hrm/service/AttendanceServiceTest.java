@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +17,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,11 +32,22 @@ class AttendanceServiceTest {
     @Mock
     private EmployeeRepository employeeRepository;
 
+    @Mock
+    private AttendanceValidator attendanceValidator;
+
+    @Mock
+    private AttendanceReportService attendanceReportService;
+
+    @Mock
+    private AttendanceImportExportService attendanceImportExportService;
+
     @InjectMocks
     private AttendanceService attendanceService;
 
     @Test
     void markBulkAttendance_shouldPersistClientNotesAndReason() {
+        ReflectionTestUtils.setField(attendanceService, "attendanceValidator", new AttendanceValidator());
+
         Employee employee = new Employee();
         employee.setId(7L);
         employee.setEpfNo("EPF-100");
@@ -65,13 +79,37 @@ class AttendanceServiceTest {
     void exportAttendanceToExcel_shouldQueryWithinCompanyAndRequestedFilters() throws Exception {
         LocalDate startDate = LocalDate.of(2026, 10, 1);
         LocalDate endDate = LocalDate.of(2026, 10, 31);
-        when(attendanceRepository.findForCompanyReport(42L, 7L, 19L, startDate, endDate))
-                .thenReturn(List.of());
+        when(attendanceImportExportService.exportAttendanceToExcel(42L, 7L, 19L, startDate, endDate))
+            .thenReturn(new byte[] {1, 2, 3});
 
         byte[] workbook = attendanceService.exportAttendanceToExcel(
                 42L, 7L, 19L, startDate, endDate);
 
         assertThat(workbook).isNotEmpty();
-        verify(attendanceRepository).findForCompanyReport(42L, 7L, 19L, startDate, endDate);
+        verify(attendanceImportExportService).exportAttendanceToExcel(42L, 7L, 19L, startDate, endDate);
+    }
+
+    @Test
+    void markBulkAttendance_shouldRejectAttendanceBeforeJoinDate() {
+        ReflectionTestUtils.setField(attendanceService, "attendanceValidator", new AttendanceValidator());
+
+        Employee employee = new Employee();
+        employee.setId(8L);
+        employee.setEpfNo("EPF-200");
+        employee.setDateOfJoining("2026-10-10");
+
+        Attendance attendance = new Attendance();
+        attendance.setEmpId(8L);
+        attendance.setAttendanceDate(LocalDate.of(2026, 10, 3));
+        attendance.setStartedAt(LocalDateTime.of(2026, 10, 3, 9, 0));
+        attendance.setEndedAt(LocalDateTime.of(2026, 10, 3, 17, 0));
+        attendance.setAttendance_status("PRESENT");
+        attendance.setWorking_status("OFFICE");
+
+        when(employeeRepository.findById(8L)).thenReturn(Optional.of(employee));
+
+        assertThatThrownBy(() -> attendanceService.markBulkAttendance(List.of(attendance)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("prior to the join date");
     }
 }
